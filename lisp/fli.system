@@ -1,0 +1,24 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: CL-User; Base: 10 -*-
+(in-package :cl-user)
+
+(ds:defsystem :fli ()
+  (:config :default
+    :default-source-pathname "sys:root;platform;win;lisp;fli;" )
+  (:config :debug
+    :default-output-pathname "sys:debug;fli;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;fli;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+  (:serial
+    "fli-defpackage"
+    "fli-gen-defs"
+    "win32-fli-x86-defs"
+    "win32-kernel32-entries"
+    (:parallel
+        "fli-gen-fns"
+        "fli-win32-fns" )
+  ) ; serial
+ ) ; defsystem

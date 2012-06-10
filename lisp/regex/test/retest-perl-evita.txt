@@ -1,0 +1,123 @@
+# pattern	text	match-p	replacement	expect	comment
+a)	a)	c	-	-	Unmatched close-parenthesis
+a]	a]	y	a]	a]
+a}	a}	y	a}	a}
+|foo	foo	y	!$&!	!!
+foo|	foo	y	!$&!	!foo!
+.*		y	-	-
+x	x	y	a	a
+xyz	xyz	y	abc	abc
+xyz	<xyz>	y	abc	abc
+[-]	-	y	-	-
+[]]	]	y	-	-
+[]	-	c	-	-
+[a-c]	b	y	$&	b
+[a\-c]	b	n	-	-
+[a\]c]	]	y	$&	]
+a|b	a	y	$&	a
+a|b	b	y	$&	b
+x{}	axxxxxb	c	-	-
+x{a}	axxxxxb	c	-	-
+x{,}	axxxxxb	c	-	-
+x{1,a}	axxxxxb	c	-	-
+x{3}	axxxxxb	y	$&	xxx
+x{3,}	axxxxxb	y	$&	xxxxx
+x{3,4}	axxxxxb	y	$&	xxxx
+x{}?	axxxxxb	c	-	-
+x{3}?	axxxxxb	y	$&	xxx
+x{3,}?	axxxxxb	y	$&	xxx
+x{3,4}?	axxxxxb	y	$&	xxx
+[^ab]*	cde	y	$&	cde
+(x){}	axxxxxb	c	-	-
+(x){a}	axxxxxb	c	-	-
+(x){,}	axxxxxb	c	-	-
+(x){1,a}	axxxxxb	c	-	-
+(x){3}	axxxxxb	y	$&	xxx
+(x){3,}	axxxxxb	y	$&	xxxxx
+(x){3,4}	axxxxxb	y	$&	xxxx
+(x){}?	axxxxxb	c	-	-
+(x){3}?	axxxxxb	y	$&	xxx
+(x){3,}?	axxxxxb	y	$&	xxx
+(x){3,4}?	axxxxxb	y	$&	xxx
+a*?x	aaax	y	-	-
+`(.*)`	The `foo` is `bar`	y	!$1!	!foo` is `bar!
+`(.*)*`	The `foo` is `bar`	y	!$1!	!!
+\bfoo\b(.*)	foobar foo baz	y	$&	foo baz
+foo(?=bar)(.*)	foo foobar baz	y	$&-$1	foobar baz-bar baz
+foo(?!bar)	foobaz foobar baz	y	$&	foo
+\d+(?!\.)	OH 44272	y	$&	44272
+\d+(?=[^.])	OH 44272	y	$&	4427
+..XY	abXY	y	$&	abXY
+(..)XY	abXY	y	$&-$1	abXY-ab
+((..)XY)	abXY	y	$1-$2	abXY-ab
+..XY	xxabXY	y	$&	abXY
+(..)XY	xxabXY	y	$&-$1	abXY-ab
+((..)XY)	xxabXY	y	$1-$2	abXY-ab
+.*A.	aAa	y	$&	aAa
+<B[^>]*>.*</B>	FOO<B></B>BAR	y	$&	<B></B>
+([^:]+):(/?.*/)([^/]+)	www:/home.htm	y	$1-$2-$3	www-/-home.htm
+([^:]+):(/?.*/)([^/]+)	www:/runonce/default.asp	y	$1-$2-$3	www-/runonce/-default.asp
+http://([^.]+)\.jp\.msn\.com(/.*)?	http://www.jp.msn.com/foo.htm	y	|$1|-|$2|	|www|-|/foo.htm|
+http://([^.]+)\.jp\.msn\.com(/.*)?	http://www.jp.msn.com/	y	|$1|-|$2|	|www|-|/|
+http://([^.]+)\.jp\.msn\.com(/.*)?	http://www.jp.msn.com	y	|$1|-|$2|	|www|-||
+\S+\s+\S+	19990310   15438	y	|$&|	|19990310   15438|
+(?:(a)|(b)|(c))+	abca	y	|@-|@+|	|0 3 1 2|4 4 2 3|
+(?:(a)|(b)|(c))+	abcb	y	|@-|@+|	|0 0 3 2|4 1 4 3|
+(?:(a)|(b)|(c))+	abcc	y	|@-|@+|	|0 0 1 3|4 1 2 4|
+(?:(a)(b))*x()	ababb x	y	|@-|@+|	|6 NIL NIL 7|7 NIL NIL 7|
+(foo|bar|x\1)*	fooxfoo	y	|$&|-|$1|	|fooxfoo|-|xfoo|
+(foo|bar|x\1)*	barxbar	y	|$&|-|$1|	|barxbar|-|xbar|
+(foo|bar|x\1)*	x	y	|$&|-|$1|	||-||	match empty
+(foo|bar|x\1)+	x	n	because $1 is unbound.
+((a{0,5})*)*[c]	ac	y	|@-|@+|	|0 1 1|2 1 1|
+(){0}()	x	y	|@-|@+|	|0 NIL 0|0 NIL 0|
+((){0}.)+()	x	y	|@-|@+|	|0 0 NIL 1|1 1 NIL 1|
+\Q*foo*\E	foo *foo*	y	|$&|	|*foo*|
+
+
+######################################################################
+#
+# stringfy
+#   c = char        s = string
+#   C = char/i      S = string/i
+#
+
+[a]b	ab	y	$&	ab	c+c
+[a]bcd	abcd	y	$&	abcd	c+s
+[a]bcd[e]	abcde	y	$&	abcde	c+s+c
+[a]bcd[e][f]	abcdef	y	$&	abcdef	c+s+c+c
+
+ab[c]	abc	y	$&	abc	s+c
+ab(?:cd)	abcd	y	$&	abcd	s+s
+ab[c]de	abcde	y	$&	abcde	s+c+s
+ab(?i:cd)	abCD	y	$&	abCD	s+S
+ab(?i:12)	ab12	y	$&	ab12	s+s
+
+(?i)[a]b	ab	y	$&	ab	C+C
+(?i)[a]bcd	abcd	y	$&	abcd	C+S
+(?i)[a]bcd[e]	abcde	y	$&	abcde	C+S+C
+(?i)[a]bcd[e][f]	abcdef	y	$&	abcdef	C+S+C+C
+
+(?i)[a]1	a1	y	$&	a1	C+c
+(?i)[a]123	a123	y	$&	a123	C+s
+(?i)[a]123[e]	a123e	y	$&	a123e	C+s+C
+(?i)[a]123[e][f]	a123ef	y	$&	a123ef	C+s+C+C
+(?i)[a]123[e][f]4	a123ef4	y	$&	a123ef4	C+s+C+C+c
+
+(?i)[a][*]b	a*b	y	$&	a*b	C+c+c
+(?i)[a][*]bcd	a*bcd	y	$&	a*bcd	C+c+s
+(?i)[a][*]bcd[e]	a*bcde	y	$&	a*bcde	C+c+S+C
+(?i)[a][*]bcd[e][f]	a*bcdef	y	$&	a*bcdef	C+c+S+C
+(?i)[a][*]bcd[e]4	a*bcde4	y	$&	a*bcde4	C+c+S+c
+
+(?i)ab[c]	abc	y	$&	abc	S+C
+(?i)ab(?:cd)	abcd	y	$&	abcd	S+S
+(?i)ab[c]de	abcde	y	$&	abcde	S+C+S
+(?i)ab(?i:cd)	abCD	y	$&	abCD	S+S
+(?i)ab(?:12)	ab12	y	$&	ab12	S+s
+
+# Lookbehind with arbitrary regex
+(?<=(A |The |Mr[.]))Foo	Foo, A Foo, Mr.Foo	y	$1$&	A Foo
+a(.{3,}?)b	aHxyb	y	$&-$1	aHxyb-Hxy
+^(b+?|a){1,2}?c	bbbc	y	$&-$1	bbbc-bb
+^(b+?|a){1,2}?c	abbbbbbbbbbbc	y	$&-$1	abbbbbbbbbbbc-bbbbbbbbbbb

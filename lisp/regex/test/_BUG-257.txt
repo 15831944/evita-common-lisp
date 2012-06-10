@@ -1,0 +1,356 @@
+EXT[126]> (TEST-MATCH "((\\3|b)\\2(a)){2,}" "bbaababbabaaaaabbaaaabba" "y" "$&-$
+1-$2-$3" "bbaaaabba-bba-b-a")
+#<Regex @ 2027DEB8> is compiled form of regular expression.
+It matches at least 6 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 PUSH-INT        n=-2
+L002 PUSH-POS
+ 003 PUSH-POS
+ 004 CATCH           L010
+ 006 REFERENCE       nth=3
+ 008 GO              L012
+L010 CHAR=           #\b
+L012 CAPTURE         nth=2
+ 014 REFERENCE       nth=2
+ 016 PUSH-POS
+ 017 CHAR=           #\a
+ 019 CAPTURE         nth=3
+ 021 CAPTURE         nth=1
+ 023 MAX             L002 n=536870909
+ 026 SUCCESS
+
+
+; regex-execute: pos=0/24 start-max=18
+; <> <bbaababbab>              csp=97 vsp=49 pos=0|b| 000 PUSH-INT -2
+; <> <bbaababbab>              csp=95 vsp=48 pos=0|b| 002 PUSH-POS PUSH-POS
+; <> <bbaababbab>              csp=93 vsp=47 pos=0|b| 003 PUSH-POS CATCH
+; <> <bbaababbab>              csp=91 vsp=46 pos=0|b| 004 CATCH 10
+; <> <bbaababbab>              csp=88 vsp=46 pos=0|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <> <bbaababbab>              csp=91 vsp=46 pos=0|b| 010 CHAR= #\b
+; <b> <baababbaba>             csp=91 vsp=46 pos=1|b| 012 CAPTURE 2
+; set-capture[2]="b"
+; <b> <baababbaba>             csp=85 vsp=47 pos=1|b| 014 REFERENCE 2
+; <bb> <aababbabaa>            csp=85 vsp=47 pos=2|a| 016 PUSH-POS CHAR=
+; <bb> <aababbabaa>            csp=83 vsp=46 pos=2|a| 017 CHAR= #\a
+; <bba> <ababbabaaa>           csp=83 vsp=46 pos=3|a| 019 CAPTURE 3
+; set-capture[3]="a"
+; <bba> <ababbabaaa>           csp=77 vsp=47 pos=3|a| 021 CAPTURE 1
+; set-capture[1]="bba"
+; <bba> <ababbabaaa>           csp=71 vsp=48 pos=3|a| 023 MAX 2
+;                    need more: counter=-1
+; <bba> <ababbabaaa>           csp=69 vsp=48 pos=3|a| 002 PUSH-POS PUSH-POS
+; <bba> <ababbabaaa>           csp=67 vsp=47 pos=3|a| 003 PUSH-POS CATCH
+; <bba> <ababbabaaa>           csp=65 vsp=46 pos=3|a| 004 CATCH 10
+; <bba> <ababbabaaa>           csp=62 vsp=46 pos=3|a| 006 REFERENCE 3
+; <bbaa> <babbabaaaa>          csp=62 vsp=46 pos=4|b| 008 GO 12
+; <bbaa> <babbabaaaa>          csp=62 vsp=46 pos=4|b| 012 CAPTURE 2
+; set-capture[2]="a"
+; <bbaa> <babbabaaaa>          csp=56 vsp=47 pos=4|b| 014 REFERENCE 2
+;*** backtarck: csp=56 vsp=47 CAPTURE 2
+;*** backtarck: csp=60 vsp=47 PUSH 3
+;*** backtarck: csp=62 vsp=46 CATCH 10
+; <bba> <ababbabaaa>           csp=65 vsp=46 pos=3|a| 010 CHAR= #\b
+;*** backtarck: csp=65 vsp=46 POP NIL
+;*** backtarck: csp=67 vsp=47 POP NIL
+;*** backtarck: csp=69 vsp=48 PUSH -2
+;*** backtarck: csp=71 vsp=47 CAPTURE 1
+;*** backtarck: csp=75 vsp=47 PUSH 0
+;*** backtarck: csp=77 vsp=46 CAPTURE 3
+;*** backtarck: csp=81 vsp=46 PUSH 2
+;*** backtarck: csp=83 vsp=45 POP NIL
+;*** backtarck: csp=85 vsp=46 CAPTURE 2
+;*** backtarck: csp=89 vsp=46 PUSH 0
+;*** backtarck: csp=91 vsp=45 POP NIL
+;*** backtarck: csp=93 vsp=46 POP NIL
+;*** backtarck: csp=95 vsp=47 POP NIL
+;*** backtarck: csp=97 vsp=48 FAIL FAIL
+
+; regex-execute: pos=1/24 start-max=18
+; <b> <baababbaba>             csp=97 vsp=49 pos=1|b| 000 PUSH-INT -2
+; <b> <baababbaba>             csp=95 vsp=48 pos=1|b| 002 PUSH-POS PUSH-POS
+; <b> <baababbaba>             csp=93 vsp=47 pos=1|b| 003 PUSH-POS CATCH
+; <b> <baababbaba>             csp=91 vsp=46 pos=1|b| 004 CATCH 10
+; <b> <baababbaba>             csp=88 vsp=46 pos=1|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <b> <baababbaba>             csp=91 vsp=46 pos=1|b| 010 CHAR= #\b
+; <bb> <aababbabaa>            csp=91 vsp=46 pos=2|a| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bb> <aababbabaa>            csp=85 vsp=47 pos=2|a| 014 REFERENCE 2
+;*** backtarck: csp=85 vsp=47 CAPTURE 2
+;*** backtarck: csp=89 vsp=47 PUSH 1
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=2/24 start-max=18
+; <bb> <aababbabaa>            csp=97 vsp=49 pos=2|a| 000 PUSH-INT -2
+; <bb> <aababbabaa>            csp=95 vsp=48 pos=2|a| 002 PUSH-POS PUSH-POS
+; <bb> <aababbabaa>            csp=93 vsp=47 pos=2|a| 003 PUSH-POS CATCH
+; <bb> <aababbabaa>            csp=91 vsp=46 pos=2|a| 004 CATCH 10
+; <bb> <aababbabaa>            csp=88 vsp=46 pos=2|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bb> <aababbabaa>            csp=91 vsp=46 pos=2|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=3/24 start-max=18
+; <bba> <ababbabaaa>           csp=97 vsp=49 pos=3|a| 000 PUSH-INT -2
+; <bba> <ababbabaaa>           csp=95 vsp=48 pos=3|a| 002 PUSH-POS PUSH-POS
+; <bba> <ababbabaaa>           csp=93 vsp=47 pos=3|a| 003 PUSH-POS CATCH
+; <bba> <ababbabaaa>           csp=91 vsp=46 pos=3|a| 004 CATCH 10
+; <bba> <ababbabaaa>           csp=88 vsp=46 pos=3|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bba> <ababbabaaa>           csp=91 vsp=46 pos=3|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=4/24 start-max=18
+; <bbaa> <babbabaaaa>          csp=97 vsp=49 pos=4|b| 000 PUSH-INT -2
+; <bbaa> <babbabaaaa>          csp=95 vsp=48 pos=4|b| 002 PUSH-POS PUSH-POS
+; <bbaa> <babbabaaaa>          csp=93 vsp=47 pos=4|b| 003 PUSH-POS CATCH
+; <bbaa> <babbabaaaa>          csp=91 vsp=46 pos=4|b| 004 CATCH 10
+; <bbaa> <babbabaaaa>          csp=88 vsp=46 pos=4|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaa> <babbabaaaa>          csp=91 vsp=46 pos=4|b| 010 CHAR= #\b
+; <bbaab> <abbabaaaaa>         csp=91 vsp=46 pos=5|a| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbaab> <abbabaaaaa>         csp=85 vsp=47 pos=5|a| 014 REFERENCE 2
+;*** backtarck: csp=85 vsp=47 CAPTURE 2
+;*** backtarck: csp=89 vsp=47 PUSH 4
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=5/24 start-max=18
+; <bbaab> <abbabaaaaa>         csp=97 vsp=49 pos=5|a| 000 PUSH-INT -2
+; <bbaab> <abbabaaaaa>         csp=95 vsp=48 pos=5|a| 002 PUSH-POS PUSH-POS
+; <bbaab> <abbabaaaaa>         csp=93 vsp=47 pos=5|a| 003 PUSH-POS CATCH
+; <bbaab> <abbabaaaaa>         csp=91 vsp=46 pos=5|a| 004 CATCH 10
+; <bbaab> <abbabaaaaa>         csp=88 vsp=46 pos=5|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaab> <abbabaaaaa>         csp=91 vsp=46 pos=5|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=6/24 start-max=18
+; <bbaaba> <bbabaaaaab>        csp=97 vsp=49 pos=6|b| 000 PUSH-INT -2
+; <bbaaba> <bbabaaaaab>        csp=95 vsp=48 pos=6|b| 002 PUSH-POS PUSH-POS
+; <bbaaba> <bbabaaaaab>        csp=93 vsp=47 pos=6|b| 003 PUSH-POS CATCH
+; <bbaaba> <bbabaaaaab>        csp=91 vsp=46 pos=6|b| 004 CATCH 10
+; <bbaaba> <bbabaaaaab>        csp=88 vsp=46 pos=6|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaaba> <bbabaaaaab>        csp=91 vsp=46 pos=6|b| 010 CHAR= #\b
+; <bbaabab> <babaaaaabb>       csp=91 vsp=46 pos=7|b| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbaabab> <babaaaaabb>       csp=85 vsp=47 pos=7|b| 014 REFERENCE 2
+; <bbaababb> <abaaaaabba>      csp=85 vsp=47 pos=8|a| 016 PUSH-POS CHAR=
+; <bbaababb> <abaaaaabba>      csp=83 vsp=46 pos=8|a| 017 CHAR= #\a
+; <bbaababba> <baaaaabbaa>     csp=83 vsp=46 pos=9|b| 019 CAPTURE 3
+; set-capture[3]="a"
+; <bbaababba> <baaaaabbaa>     csp=77 vsp=47 pos=9|b| 021 CAPTURE 1
+; set-capture[1]="bba"
+; <bbaababba> <baaaaabbaa>     csp=71 vsp=48 pos=9|b| 023 MAX 2
+;                    need more: counter=-1
+; <bbaababba> <baaaaabbaa>     csp=69 vsp=48 pos=9|b| 002 PUSH-POS PUSH-POS
+; <bbaababba> <baaaaabbaa>     csp=67 vsp=47 pos=9|b| 003 PUSH-POS CATCH
+; <bbaababba> <baaaaabbaa>     csp=65 vsp=46 pos=9|b| 004 CATCH 10
+; <bbaababba> <baaaaabbaa>     csp=62 vsp=46 pos=9|b| 006 REFERENCE 3
+;*** backtarck: csp=62 vsp=46 CATCH 10
+; <bbaababba> <baaaaabbaa>     csp=65 vsp=46 pos=9|b| 010 CHAR= #\b
+; <bbaababbab> <aaaaabbaaa>    csp=65 vsp=46 pos=10|a| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbaababbab> <aaaaabbaaa>    csp=59 vsp=47 pos=10|a| 014 REFERENCE 2
+;*** backtarck: csp=59 vsp=47 CAPTURE 2
+;*** backtarck: csp=63 vsp=47 PUSH 9
+;*** backtarck: csp=65 vsp=46 POP NIL
+;*** backtarck: csp=67 vsp=47 POP NIL
+;*** backtarck: csp=69 vsp=48 PUSH -2
+;*** backtarck: csp=71 vsp=47 CAPTURE 1
+;*** backtarck: csp=75 vsp=47 PUSH 6
+;*** backtarck: csp=77 vsp=46 CAPTURE 3
+;*** backtarck: csp=81 vsp=46 PUSH 8
+;*** backtarck: csp=83 vsp=45 POP NIL
+;*** backtarck: csp=85 vsp=46 CAPTURE 2
+;*** backtarck: csp=89 vsp=46 PUSH 6
+;*** backtarck: csp=91 vsp=45 POP NIL
+;*** backtarck: csp=93 vsp=46 POP NIL
+;*** backtarck: csp=95 vsp=47 POP NIL
+;*** backtarck: csp=97 vsp=48 FAIL FAIL
+
+; regex-execute: pos=7/24 start-max=18
+; <bbaabab> <babaaaaabb>       csp=97 vsp=49 pos=7|b| 000 PUSH-INT -2
+; <bbaabab> <babaaaaabb>       csp=95 vsp=48 pos=7|b| 002 PUSH-POS PUSH-POS
+; <bbaabab> <babaaaaabb>       csp=93 vsp=47 pos=7|b| 003 PUSH-POS CATCH
+; <bbaabab> <babaaaaabb>       csp=91 vsp=46 pos=7|b| 004 CATCH 10
+; <bbaabab> <babaaaaabb>       csp=88 vsp=46 pos=7|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaabab> <babaaaaabb>       csp=91 vsp=46 pos=7|b| 010 CHAR= #\b
+; <bbaababb> <abaaaaabba>      csp=91 vsp=46 pos=8|a| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbaababb> <abaaaaabba>      csp=85 vsp=47 pos=8|a| 014 REFERENCE 2
+;*** backtarck: csp=85 vsp=47 CAPTURE 2
+;*** backtarck: csp=89 vsp=47 PUSH 7
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=8/24 start-max=18
+; <bbaababb> <abaaaaabba>      csp=97 vsp=49 pos=8|a| 000 PUSH-INT -2
+; <bbaababb> <abaaaaabba>      csp=95 vsp=48 pos=8|a| 002 PUSH-POS PUSH-POS
+; <bbaababb> <abaaaaabba>      csp=93 vsp=47 pos=8|a| 003 PUSH-POS CATCH
+; <bbaababb> <abaaaaabba>      csp=91 vsp=46 pos=8|a| 004 CATCH 10
+; <bbaababb> <abaaaaabba>      csp=88 vsp=46 pos=8|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaababb> <abaaaaabba>      csp=91 vsp=46 pos=8|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=9/24 start-max=18
+; <bbaababba> <baaaaabbaa>     csp=97 vsp=49 pos=9|b| 000 PUSH-INT -2
+; <bbaababba> <baaaaabbaa>     csp=95 vsp=48 pos=9|b| 002 PUSH-POS PUSH-POS
+; <bbaababba> <baaaaabbaa>     csp=93 vsp=47 pos=9|b| 003 PUSH-POS CATCH
+; <bbaababba> <baaaaabbaa>     csp=91 vsp=46 pos=9|b| 004 CATCH 10
+; <bbaababba> <baaaaabbaa>     csp=88 vsp=46 pos=9|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaababba> <baaaaabbaa>     csp=91 vsp=46 pos=9|b| 010 CHAR= #\b
+; <bbaababbab> <aaaaabbaaa>    csp=91 vsp=46 pos=10|a| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbaababbab> <aaaaabbaaa>    csp=85 vsp=47 pos=10|a| 014 REFERENCE 2
+;*** backtarck: csp=85 vsp=47 CAPTURE 2
+;*** backtarck: csp=89 vsp=47 PUSH 9
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=10/24 start-max=18
+; <bbaababbab> <aaaaabbaaa>    csp=97 vsp=49 pos=10|a| 000 PUSH-INT -2
+; <bbaababbab> <aaaaabbaaa>    csp=95 vsp=48 pos=10|a| 002 PUSH-POS PUSH-POS
+; <bbaababbab> <aaaaabbaaa>    csp=93 vsp=47 pos=10|a| 003 PUSH-POS CATCH
+; <bbaababbab> <aaaaabbaaa>    csp=91 vsp=46 pos=10|a| 004 CATCH 10
+; <bbaababbab> <aaaaabbaaa>    csp=88 vsp=46 pos=10|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <bbaababbab> <aaaaabbaaa>    csp=91 vsp=46 pos=10|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=11/24 start-max=18
+; <baababbaba> <aaaabbaaaa>    csp=97 vsp=49 pos=11|a| 000 PUSH-INT -2
+; <baababbaba> <aaaabbaaaa>    csp=95 vsp=48 pos=11|a| 002 PUSH-POS PUSH-POS
+; <baababbaba> <aaaabbaaaa>    csp=93 vsp=47 pos=11|a| 003 PUSH-POS CATCH
+; <baababbaba> <aaaabbaaaa>    csp=91 vsp=46 pos=11|a| 004 CATCH 10
+; <baababbaba> <aaaabbaaaa>    csp=88 vsp=46 pos=11|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <baababbaba> <aaaabbaaaa>    csp=91 vsp=46 pos=11|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=12/24 start-max=18
+; <aababbabaa> <aaabbaaaab>    csp=97 vsp=49 pos=12|a| 000 PUSH-INT -2
+; <aababbabaa> <aaabbaaaab>    csp=95 vsp=48 pos=12|a| 002 PUSH-POS PUSH-POS
+; <aababbabaa> <aaabbaaaab>    csp=93 vsp=47 pos=12|a| 003 PUSH-POS CATCH
+; <aababbabaa> <aaabbaaaab>    csp=91 vsp=46 pos=12|a| 004 CATCH 10
+; <aababbabaa> <aaabbaaaab>    csp=88 vsp=46 pos=12|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <aababbabaa> <aaabbaaaab>    csp=91 vsp=46 pos=12|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=13/24 start-max=18
+; <ababbabaaa> <aabbaaaabb>    csp=97 vsp=49 pos=13|a| 000 PUSH-INT -2
+; <ababbabaaa> <aabbaaaabb>    csp=95 vsp=48 pos=13|a| 002 PUSH-POS PUSH-POS
+; <ababbabaaa> <aabbaaaabb>    csp=93 vsp=47 pos=13|a| 003 PUSH-POS CATCH
+; <ababbabaaa> <aabbaaaabb>    csp=91 vsp=46 pos=13|a| 004 CATCH 10
+; <ababbabaaa> <aabbaaaabb>    csp=88 vsp=46 pos=13|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <ababbabaaa> <aabbaaaabb>    csp=91 vsp=46 pos=13|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=14/24 start-max=18
+; <babbabaaaa> <abbaaaabba>    csp=97 vsp=49 pos=14|a| 000 PUSH-INT -2
+; <babbabaaaa> <abbaaaabba>    csp=95 vsp=48 pos=14|a| 002 PUSH-POS PUSH-POS
+; <babbabaaaa> <abbaaaabba>    csp=93 vsp=47 pos=14|a| 003 PUSH-POS CATCH
+; <babbabaaaa> <abbaaaabba>    csp=91 vsp=46 pos=14|a| 004 CATCH 10
+; <babbabaaaa> <abbaaaabba>    csp=88 vsp=46 pos=14|a| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <babbabaaaa> <abbaaaabba>    csp=91 vsp=46 pos=14|a| 010 CHAR= #\b
+;*** backtarck: csp=91 vsp=46 POP NIL
+;*** backtarck: csp=93 vsp=47 POP NIL
+;*** backtarck: csp=95 vsp=48 POP NIL
+;*** backtarck: csp=97 vsp=49 FAIL FAIL
+
+; regex-execute: pos=15/24 start-max=18
+; <abbabaaaaa> <bbaaaabba>     csp=97 vsp=49 pos=15|b| 000 PUSH-INT -2
+; <abbabaaaaa> <bbaaaabba>     csp=95 vsp=48 pos=15|b| 002 PUSH-POS PUSH-POS
+; <abbabaaaaa> <bbaaaabba>     csp=93 vsp=47 pos=15|b| 003 PUSH-POS CATCH
+; <abbabaaaaa> <bbaaaabba>     csp=91 vsp=46 pos=15|b| 004 CATCH 10
+; <abbabaaaaa> <bbaaaabba>     csp=88 vsp=46 pos=15|b| 006 REFERENCE 3
+;*** backtarck: csp=88 vsp=46 CATCH 10
+; <abbabaaaaa> <bbaaaabba>     csp=91 vsp=46 pos=15|b| 010 CHAR= #\b
+; <bbabaaaaab> <baaaabba>      csp=91 vsp=46 pos=16|b| 012 CAPTURE 2
+; set-capture[2]="b"
+; <bbabaaaaab> <baaaabba>      csp=85 vsp=47 pos=16|b| 014 REFERENCE 2
+; <babaaaaabb> <aaaabba>       csp=85 vsp=47 pos=17|a| 016 PUSH-POS CHAR=
+; <babaaaaabb> <aaaabba>       csp=83 vsp=46 pos=17|a| 017 CHAR= #\a
+; <abaaaaabba> <aaabba>        csp=83 vsp=46 pos=18|a| 019 CAPTURE 3
+; set-capture[3]="a"
+; <abaaaaabba> <aaabba>        csp=77 vsp=47 pos=18|a| 021 CAPTURE 1
+; set-capture[1]="bba"
+; <abaaaaabba> <aaabba>        csp=71 vsp=48 pos=18|a| 023 MAX 2
+;                    need more: counter=-1
+; <abaaaaabba> <aaabba>        csp=69 vsp=48 pos=18|a| 002 PUSH-POS PUSH-POS
+; <abaaaaabba> <aaabba>        csp=67 vsp=47 pos=18|a| 003 PUSH-POS CATCH
+; <abaaaaabba> <aaabba>        csp=65 vsp=46 pos=18|a| 004 CATCH 10
+; <abaaaaabba> <aaabba>        csp=62 vsp=46 pos=18|a| 006 REFERENCE 3
+; <baaaaabbaa> <aabba>         csp=62 vsp=46 pos=19|a| 008 GO 12
+; <baaaaabbaa> <aabba>         csp=62 vsp=46 pos=19|a| 012 CAPTURE 2
+; set-capture[2]="a"
+; <baaaaabbaa> <aabba>         csp=56 vsp=47 pos=19|a| 014 REFERENCE 2
+; <aaaaabbaaa> <abba>          csp=56 vsp=47 pos=20|a| 016 PUSH-POS CHAR=
+; <aaaaabbaaa> <abba>          csp=54 vsp=46 pos=20|a| 017 CHAR= #\a
+; <aaaabbaaaa> <bba>           csp=54 vsp=46 pos=21|b| 019 CAPTURE 3
+; set-capture[3]="a"
+; <aaaabbaaaa> <bba>           csp=48 vsp=47 pos=21|b| 021 CAPTURE 1
+; set-capture[1]="aaa"
+; <aaaabbaaaa> <bba>           csp=42 vsp=48 pos=21|b| 023 MAX 2
+;                    try more: counter=0
+; <aaaabbaaaa> <bba>           csp=37 vsp=48 pos=21|b| 002 PUSH-POS PUSH-POS
+; <aaaabbaaaa> <bba>           csp=35 vsp=47 pos=21|b| 003 PUSH-POS CATCH
+; <aaaabbaaaa> <bba>           csp=33 vsp=46 pos=21|b| 004 CATCH 10
+; <aaaabbaaaa> <bba>           csp=30 vsp=46 pos=21|b| 006 REFERENCE 3
+;*** backtarck: csp=30 vsp=46 CATCH 10
+; <aaaabbaaaa> <bba>           csp=33 vsp=46 pos=21|b| 010 CHAR= #\b
+; <aaabbaaaab> <ba>            csp=33 vsp=46 pos=22|b| 012 CAPTURE 2
+; set-capture[2]="b"
+; <aaabbaaaab> <ba>            csp=27 vsp=47 pos=22|b| 014 REFERENCE 2
+; <aabbaaaabb> <a>             csp=27 vsp=47 pos=23|a| 016 PUSH-POS CHAR=
+; <aabbaaaabb> <a>             csp=25 vsp=46 pos=23|a| 017 CHAR= #\a
+; <abbaaaabba> <>              csp=25 vsp=46 pos=24|NIL| 019 CAPTURE 3
+; set-capture[3]="a"
+; <abbaaaabba> <>              csp=19 vsp=47 pos=24|NIL| 021 CAPTURE 1
+; set-capture[1]="bba"
+; <abbaaaabba> <>              csp=13 vsp=48 pos=24|NIL| 023 MAX 2
+;                    try more: counter=1

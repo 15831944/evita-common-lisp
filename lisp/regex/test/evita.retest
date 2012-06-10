@@ -1,0 +1,117 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: CL-USER; Base: 10 -*-
+;;; Regex Test Case - Evita Extension
+;;; evita.retest
+;;;
+;;;
+;
+
+;;;;; Named Captures
+
+;;;; evita/1
+;;;
+;;; Note: Compare this pattern and /(a)(\1b)*/. Later captures:
+;;; ("aabab" "a" "ab")
+;
+(test-case
+    "evita/1"
+    "(?<1>a)(?<1>\\1b)*"
+    "aababb"
+    nil
+    '("aababb" "abb") )
+
+;;;; evita/2
+;;;
+;;; Named capture and if
+;
+(test-case
+    "evita/2"
+    "((?(foo)2|1)(?<foo>foo))+"
+    "1foo2foo"
+    nil
+    '("1foo2foo" "2foo" "foo") )
+
+;;;; evita/3
+;;;
+;;; Union with \p{Any}.
+;
+(test-case "evita/3" "\\p{Any}" "a" nil '("a"))
+(test-case "evita/4" "\\P{Any}" "a" nil nil)
+(test-case "evita/5" "\\p{^Any}" "a" nil nil)
+(test-case "evita/6" "\\P{^Any}" "a" nil '("a"))
+
+(test-case "evita/7"  "[\\p{Any}]"   "a" nil '("a"))
+(test-case "evita/8"  "[\\P{Any}]"   "a" nil nil)
+(test-case "evita/9"  "[\\p{^Any}]"  "a" nil nil)
+(test-case "evita/10" "[\\P{^Any}]"  "a" nil '("a"))
+
+(test-case "evita/11" "[^\\p{Any}]"   "a" nil nil)
+(test-case "evita/12" "[^\\P{Any}]"   "a" nil '("a"))
+(test-case "evita/13" "[^\\p{^Any}]"  "a" nil '("a"))
+(test-case "evita/14" "[^\\P{^Any}]"  "a" nil nil)
+
+;;;; evita/15
+;;; For compile-or: each branches must save/restor captures.
+(test-case "evita/15" "((a)|(ab))x" "abx" nil '("abx" "ab" nil "ab"))
+
+;;;; evita/16
+;;; For compile-and: repetition must save/restore captures.
+;;; Note: This result is from .NET. Perl makes $2 undef.
+(test-case "evita/16" "(a(b)?)*x" "abax" nil '("abax" "a" "b"))
+(test-case "evita/17" "(a(b)*)*x" "abax" nil '("abax" "a" "b"))
+
+;;;; evita/18
+;;; Repetition must restore captures in subexpr
+;;;  Matcher @ 0
+;;;   1. subexpr/1 $1=foo $2=foo $3=nil
+;;;   2. subexpr/2 $1=foobar $2=foo $3=bar
+;;;   3. subexpr/3 backtrack => $1=$2=$3=nil
+;;;  Matcher at 7
+;;;   1. subexpr/1 $1=bar $2=nil $3=bar
+(test-case "evita/18" "((foo)|(bar))*x" "foobarx" nil
+  '("foobarx" "bar" "foo" "bar") )
+
+;;;; evita/19
+;;; "---" disables effect of min-rest checking.
+(test-case "evita/19" "([xy])*xyx" "xyyxxxxyx---" nil '("xyyxxxxyx" "x"))
+
+;;;; evita/20
+;;; Repetition isn't occured. Match empty string.
+(test-case "evita/20" "(\\1)*" "aa" nil '("" nil))
+
+;;;; evita/21
+;;; $ in backward
+;
+(test-case "evita/21"
+    (backslash "\\n$")
+    (backslash "\\n")
+    '(:from-end t)
+    (list (backslash "\\n")) )
+
+(test-case "evita/22" "foo$" "foo"    '(:from-end t) '("foo"))
+(test-case "evita/23" "foo$" (backslash "foo\\n") '(:from-end t) '("foo"))
+
+(test-case "evita/24" "foo$" "foo"
+    '(:from-end t :multiple-lines t)
+    '("foo") )
+
+(test-case "evita/25" "foo$" (backslash "foo\\n")
+    '(:from-end t :multiple-lines t)
+    '("foo") )
+
+(test-case "evita/26" "foo$" (backslash "bar\\nfoo\\nbaz\\n")
+  '(:from-end t :multiple-lines t)
+  '("foo") )
+
+;;;; evita/27
+;;; Scanner which uses search-backward-cs.
+(test-case "evita/27" "foo$" "bar__fooN" '(:from-end t) nil)
+
+;;;; evita/28
+;;; Fixed repetition
+(test-case "evita/28" "(a|b){3}c" "abbabc" nil '("babc" "b"))
+(test-case "evita/29" "(a|){3}c" "abbabc" nil '("c" ""))
+
+;;;; Sanity
+(test-case "evita/30" "" "" nil '(""))
+(test-case "evita/31" "(?=)" "x" nil '(""))
+(test-case "evita/32" "(?!)" "x" nil nil)   ; always fail

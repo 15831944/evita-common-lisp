@@ -1,0 +1,213 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="x64">
+      <UniqueIdentifier>{9dbec4db-c6c7-4937-a4fa-88d584ea5384}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{ffac4e0a-aed8-4c7e-8dd4-bdbccef76de7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86x64">
+      <UniqueIdentifier>{d3f2fb04-b4cc-440b-9c30-7c7b84665e74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{ddee0b15-b0bc-49a6-b247-075ed0a2f961}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="generic">
+      <UniqueIdentifier>{1db2158d-92b0-4e7b-b950-f02d7ec9fa0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mini">
+      <UniqueIdentifier>{f7df9460-9310-4c11-8596-7ef921939afc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="big">
+      <UniqueIdentifier>{14f0b557-87a1-4ab7-876d-953dbf0bed0c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="genesis.def">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="gs_03_env.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_03_eval.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_05_ctrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_06_iteration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_07_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_09_cond.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_11_package.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_12_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_14_cons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_15_array.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_17_sequence.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_23_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_24_syscon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_25_env.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_25_inspect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_25_room.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_25_time.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_49_internal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_50_lock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_cmdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_init.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_init_21_stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_lisp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gs_toplevel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\genesis\x64_gs_25_disasm.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\genesis\x64_gs_fns.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\genesis\x64_gs_init.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\genesis\x86_gs_25_disasm.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\genesis\x86_gs_fns.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\genesis\x86_gs_init.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\genesis\x86x64_gs_25_disasm.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\genesis\x86x64_gs_fns.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\win_crt.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\win_dllcrt.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\genesis\win_gs_init.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\genesis\win_gs_x64_init.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\genesis\win_gs_x86_init.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_21_stream.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_22_format.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_22_printer.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_22_printer.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="precomp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gs_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gs_init.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gs_lisp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\genesis\x86x64_gs_25_disasm.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\generic\genesis\gen_gs_25_disasm_cics.h">
+      <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_21_stream.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_22_printer.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="precomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="genesis.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\arch\x64\genesis\x64_gs_init.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\genesis\x86_gs_init.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+</Project>

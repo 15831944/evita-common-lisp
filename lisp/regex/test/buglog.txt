@@ -1,0 +1,145 @@
+BLD     FAIL
+2606    77
+2608    87
+2608    85  #cstack=99
+2608    77  #cstack=149
+2608    71  #cstack=90 factor out and merge loop. 806, 807, 808, 818, 819, 820
+2614    12  #cstack=199 automatic cstack enlarging
+2617    13  perl-584/924: we support variable length lookbehind.
+
+; 539: FAIL: MATCH
+(TEST-MATCH "(?(?=a)b|a)" "a" "n" "-" "-")
+
+
+; 257: FAIL: EVAL: deep 13-99
+(TEST-MATCH "((\\3|b)\\2(a)){2,}" "bbaababbabaaaaabbaaaabba" "y" "$&-$1-$2-$3" "bbaaaabba-bba-b-a")
+
+
+; 427: FAIL: EVAL: deep: 15-99
+(TEST-MATCH "(((a{2}){2})+)" "aaaaaaaaaa" "y" "$1" "aaaaaaaa")
+
+
+
+;; Note: Perl detect super-linear match for "bbbbXcX12".
+
+EXT[226]> (compile-regex ".X(.+)+X")
+; compile-loop-normal: NIL (CAPTURE 1 (MAX 1 536870911 :ANY))
+#<Regex @ 203E06D8>
+EXT[227]> des
+#<Regex @ 203E06D8> is compiled form of regular expression.
+It matches at least 4 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 ANY
+ 001 CHAR=           #\X
+L003 PUSH-POS
+ 004 REPEAT-ANY      rest=1
+ 006 CAPTURE         nth=1
+ 008 REST            rest=1
+                                <- insert positive-lookahead for checking
+                                <- "X".
+ 010 CATCH           L014
+ 012 GO              L003
+L014 CHAR=           #\X
+ 016 SUCCESS
+
+>Error occured in #<Function EXT::REGEX-EXECUTE @ 205C8930>
+>Error: Regex-Too-Deep-Recursion:
+
+
+;;; Factor out capture and merge loop
+EXT[346]> (compile-regex ".X(.+)+X")
+#<Regex @ 204250B0>
+EXT[347]> des
+#<Regex @ 204250B0> is compiled form of regular expression.
+It matches at least 4 characters.
+
+Compiled form:
+ 000 ANY
+ 001 CHAR=           #\X
+ 003 CATCH           L007
+ 005 REPEAT-ANY      rest=2
+L007 PUSH-POS
+ 008 REPEAT-ANY      rest=1
+ 010 CAPTURE         nth=1
+ 012 CHAR=           #\X
+ 014 SUCCESS
+
+;;; Factor out capture
+EXT[265]> (compile-regex ".X(?:(?:.+)*(.+))X")
+#<Regex @ 20502858>
+EXT[266]> des
+#<Regex @ 20502858> is compiled form of regular expression.
+It matches at least 4 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 ANY
+ 001 CHAR=           #\X
+ 003 CATCH           L013
+L005 REPEAT-ANY      rest=2
+ 007 REST            rest=2
+ 009 CATCH           L013
+ 011 GO              L005
+L013 PUSH-POS
+ 014 REPEAT-ANY      rest=1
+ 016 CAPTURE         nth=1
+ 018 CHAR=           #\X
+ 020 SUCCESS
+
+(test-match "((a{0,5})*)*[c]" "ac" "y" "|@-|@+|" "|0 1 1|2 1 1|")
+
+FIXED:421: Decrement counter on backtrack for counter = max-min
+(test-match "^(a\\1?){4}$" "aaaaaaaaaaa" "n" "-" "-")
+
+FIXED:483: Add instruction reference/i
+(test-match "'(ab)\\d\\1'i" "Ab4ab" "y" "$1" "Ab")
+
+FIXED:462: parse-factor/option
+(test-match "'(?:(?-i)a)b'i" "Ab" "n" "-" "-")
+
+FIXED:877: Implementation of :meol
+(test-match "'b\\s^'m" "a\\nb\\n" "n" "-" "-")
+
+FIXED:860: unbound capture
+(test-match "^(a(b)?)+$" "aba" "y" "-$1-$2-" "-a--")
+
+FIXED:860: unbound capture
+(test-match "^(aa(bb)?)+$" "aabbaa" "y" "-$1-$2-" "-aa--")
+
+FIXED:602: $=eosl instead of eos
+(test-match "$" "a\\nb\\n" "y" "$-[0]" "3")
+
+FIXED:605
+(test-match "$" "b\\na\\n" "y" "$-[0]" "3")
+
+FIXED:420: forward reference
+(test-match "^(a\\1?){4}$" "aaaaaa" "y" "$1" "aa")
+
+FIXED:257: drop unbound captures
+(test-match "((\\3|b)\\2(a)){2,}" "bbaababbabaaaaabbaaaabba" "y" "$&-$1-$2-$3" "bbaaaabba-bba-b-a")
+
+FIXED:502: restore mark-pos on backtrack loop-max
+(test-match "^(?:a?b?)*$" "a--" "n" "-" "-")
+
+FIXED:869 ?
+(test-match "^(b+?|a){1,2}c" "bbbac" "y" "$1" "a")
+
+loop-max-counter DECF Backtrack
+===============================
+counter == max  decf
+counter <  min  decf
+counter >= min  decf + loop next-pc pos loop mark-pos
+
+; 236: FAIL: MATCH: Should decrement counter when counter < min
+(TEST-MATCH "(([a-c])b*?\\2){3}" "ababbbcbc" "y" "$&-$1-$2" "ababbbcbc-cbc-c")
+
+; 420: FAIL: MATCH Should decremente counter when counter == max
+(TEST-MATCH "^(a\\1?){4}$" "aaaaaaaaa" "n" "-" "-")
+
+; 421: FAIL: MATCH: Should decremente counter when counter == max
+(TEST-MATCH "^(a\\1?){4}$" "aaaaaaaaaaa" "n" "-" "-")
+
+; 866: FAIL: MATCH: Should decrement counter when counter < min
+(TEST-MATCH "^(a\\1?){4}$" "aaaaaa" "y" "$1" "aa")

@@ -1,0 +1,341 @@
+;;; evcl - genesis - module definition
+;;; genesis/genesis.def
+;;;
+;;; This file is part of Evita Common Lisp.
+;;;
+;;; Copyright (C) 1996-2007 by Project Vogue.
+;;; Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
+;;;
+;;; @(#)$Id: //proj/evcl3/mainline/genesis/genesis.def#24 $
+;;;
+
+LIBRARY "genesis.dll"
+EXPORTS
+    GetEngine
+
+    ;; 03 Evlauation and Compilation
+    C_constantp
+    C_macroexpand_1
+    C_macro_function
+    C_setf_macro_function
+
+    intern_dll_entry
+    register_caller
+
+    compile_form
+    eval
+
+    expand_lambda
+
+    GS_call_macro_expander
+
+    ;; 05 Data and Control-Flow
+    expand_and
+    expand_cond
+    expand_defconstant
+    expand_defun
+    expand_defvar
+    expand_multiple_value_bind
+    expand_multiple_value_list
+    expand_nth_value
+    expand_or
+    expand_prog1
+    expand_psetq
+    expand_return
+    expand_setf
+    expand_unless
+    expand_when
+
+    Pdefconstant
+    Pdefun
+    Pdefvar
+
+    C_eql
+    C_equal
+    C_funcall
+
+    values_list
+
+    setf_fdefinition
+
+    make_undefined_function_function
+    update_callers
+
+    ;; 06 Iteration
+    expand_do
+    expand_doA
+    expand_dolist
+    expand_dotimes
+    expand_loop
+
+    ;; 07 Objects
+    C_find_class
+    C_subst_in_function
+
+    allocate_funcallable_instance
+    funcallable_instance_function
+    set_funcallable_instance_function
+
+    genesis_discriminator
+
+    ;; 09 Conditions
+    C_error
+
+    invoke_debugger
+
+    thread_error_hook
+
+    expand_assert
+    expand_check_type
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 10 Symbols
+    ;;
+    symbol_value
+
+    setf_symbol_function
+    setf_symbol_value
+
+    C_make_symbol
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 11 Pacakges
+    ;;
+    find_package
+
+    Zin_package
+    C_intern
+
+    expand_in_package
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 12 Numbers
+    ;;
+    RTL_add
+    RTL_div
+    RTL_mul
+    RTL_neg
+    RTL_sub
+
+    C_eq
+    C_ne
+    C_le 
+    C_lt
+    C_ge 
+    C_gt
+
+    ;; Integers
+    RTL_ash
+    RTL_gcd
+    C_logbitp
+
+    RTL_logand
+    RTL_logior
+    RTL_logxor
+
+    coerce_bignum_float32
+    coerce_bignum_float64
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; Real
+    ;;
+    float32_truncate
+    float64_truncate
+
+    truncate_2
+
+    op_1P
+    op_1_
+    C_minusp
+    C_plusp
+    C_zerop
+
+    ;; Macros
+    expand_decf
+    expand_incf
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 14 Conses
+    ;;
+    Z_cons
+    GS_last
+    C_list
+    C_listA
+    C_nconc
+
+    expand_push
+    expand_pop
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 15 Arrays
+    ;;
+    C_replace_vector
+    sbit
+    setf_sbit
+
+    bit_not
+
+    bit_and
+    bit_andc1
+    bit_andc2
+    bit_eqv
+    bit_ior
+    bit_nand
+    bit_nor
+    bit_orc1
+    bit_orc2
+    bit_xor
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 16 Strings
+    ;;
+    Zallocate_string
+    to_string
+
+    ;; 17 Sequences
+    nreverse
+
+    ;; 18 Hash Tables
+    C_gethash_eq
+    C_setf_gethash_eq
+
+    sxhash_eq
+    sxhash_eql
+    sxhash
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 21 Streams
+    ;;
+    platform_stream_clear_input
+    platform_stream_clear_output
+    platform_stream_finish_output
+    platform_stream_force_output
+    platform_stream_fresh_line
+    platform_stream_line_number
+    platform_stream_line_column
+    platform_stream_listen
+    platform_stream_output_width
+    platform_stream_peek_char
+    platform_stream_read_byte
+    platform_stream_read_char
+    platform_stream_read_char_no_hang
+    platform_stream_start_line_p
+
+    platform_stream_close
+    platform_stream_read_bytes
+    platform_stream_unread_char
+    platform_stream_write_byte
+    platform_stream_write_bytes
+    platform_stream_write_char
+    platform_stream_write_string
+
+    realize_instance_console_stream
+    realize_instance_debug_output_stream
+    realize_instance_file_stream
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; 22 Printer
+    ;;
+    C_format
+
+    ;; 24 System Construction
+    C_load
+
+    ;; 25 Environment
+    gs_room
+
+    get_universal_time  ; genesis only
+
+    get_decoded_time
+
+    get_computer_name   ; should be asm
+    get_process_times   ; should be asm
+    get_thread_times    ; should be asm
+    software_version    ; should be asm
+
+    disassemble         ; genesis only
+    inspect             ; genesis only
+
+    time_it             ; genesis only
+    expand_time         ; genesis only
+
+    ;; 49 Internal
+    exit_process        ; should be asm
+    intern_setf_cell
+    internal_save_image
+
+    C_static_object_p
+
+    expand_ref
+    expand_without_garbage_collection
+
+    ;; 50 External
+    C_Zdeftlv
+    expand_with_latch
+    lock_latch
+    make_weak_vector
+    unlock_latch
+
+    big_collect_garbage
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; Allocation
+    ;;
+    Zallocate_binobj
+    Zallocate_binvec
+    Zallocate_funobj
+    Zallocate_instance
+    Zallocate_record
+    Zallocate_vector
+
+    allocate_weakobj
+
+    ;; Compiler support
+    Dmake_closure
+    Dmake_closed_cell
+
+    ;; Thread Service
+    SVC_C_alloc_bino_area
+    SVC_C_alloc_code_area
+    SVC_C_alloc_cons_area
+    SVC_C_alloc_reco_area
+
+    C_go
+    C_return_from
+    C_throw
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; Platform
+    ;;
+    create_directory
+    current_directory
+    setf_current_directory
+    delete_file
+    file_attributes
+    find_close
+    find_first_file
+    find_next_file
+    get_command_line
+    remove_directory
+    rename_file
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; Genesis
+    ;;
+    command_loop
+    genesis_toplevel
+
+backtrace
+get_frame

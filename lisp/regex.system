@@ -1,0 +1,66 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: CL-User; Base: 10 -*-
+;;;;
+;;;; evcl - Regex system definition
+;;; regex.system
+;;;
+;;; This file is part of Evita Common Lisp.
+;;;
+;;; Copyright (C) 1996-2007 by Project Vogue.
+;;; Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
+;;;
+;;; @(#)$Id: //proj/evcl3/mainline/lisp/macro/m04-type.lisp#2 $
+;
+(in-package :cl-user)
+
+(ds:defsystem :regex ()
+  (:config :default
+    :default-source-pathname "sys:source;regex;" )
+  (:config :debug
+    :default-output-pathname    "sys:debug;regex;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;regex;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+  (:serial
+    "regex-package"
+    (:parallel
+        "regex-cond"
+        "regex-defs"
+        "regex-macros" )
+    (:parallel
+
+        "regex-api"
+        "regex-cmacros"
+
+      ;; Common staff
+      (:parallel
+        "regex-fns"
+        "regex-match"
+        "regex-parse"
+        "regex-study" )
+
+      ;; Byte-code staff
+      (:serial
+        "regex-byte-defs"
+        (:parallel
+          "regex-byte-comp"
+          "regex-byte-exec"
+          "regex-byte-scan" ))
+
+      ;; Lisp-code staff
+      (:parallel
+        "regex-lisp-comp"
+        "regex-lisp-scan" )
+
+      ;; Unicode staff
+      (:parallel
+        "regex-unicode"
+        "regex-unicode-blocks"
+        "regex-unicode-category" )
+
+      ;; "regex-devel" should be compiled after all modules are compiled.
+      ;; Since, it referes variables defined in byte-compiler and
+      ;; lisp-compiler.
+      "regex-devel" )) )

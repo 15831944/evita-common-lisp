@@ -1,0 +1,97 @@
+EXT[190]> (TEST-MATCH "^([^,]{1,3},){3}d" "aaa,b,c,d" "y" "$1" "c,")
+#<Regex @ 20397E40> is compiled form of regular expression.
+It matches at least 7 characters.
+It has 2 loops.
+
+Compiled form:
+ 000 BOS
+ 001 PUSH-INT        n=-3
+L003 PUSH-POS
+ 004 PUSH-INT        n=-1
+L006 CHAR/=          #\,
+ 008 REST            rest=2
+ 010 MAX             L006 n=2
+ 013 CHAR=           #\,
+ 015 CAPTURE         nth=1
+ 017 REST            rest=1
+ 019 MAX             L003 n=0
+ 022 CHAR=           #\d
+ 024 SUCCESS
+
+
+; regex-execute: pos=0/9 start-max=2
+; <> <aaa,b,c,d>               csp=197 vsp=49 pos=0|a| 000 :BOS PUSH-INT
+; <> <aaa,b,c,d>               csp=197 vsp=49 pos=0|a| 001 PUSH-INT -3
+; <> <aaa,b,c,d>               csp=196 vsp=48 pos=0|a| 003 PUSH-POS PUSH-INT
+; <> <aaa,b,c,d>               csp=195 vsp=47 pos=0|a| 004 PUSH-INT -1
+; <> <aaa,b,c,d>               csp=194 vsp=46 pos=0|a| 006 CHAR/= #\,
+; <a> <aa,b,c,d>               csp=194 vsp=46 pos=1|a| 008 REST 2
+; <a> <aa,b,c,d>               csp=194 vsp=46 pos=1|a| 010 MAX 6
+;                    try more: counter=0
+; <a> <aa,b,c,d>               csp=188 vsp=46 pos=1|a| 006 CHAR/= #\,
+; <aa> <a,b,c,d>               csp=188 vsp=46 pos=2|a| 008 REST 2
+; <aa> <a,b,c,d>               csp=188 vsp=46 pos=2|a| 010 MAX 6
+;                    try more: counter=1
+; <aa> <a,b,c,d>               csp=182 vsp=46 pos=2|a| 006 CHAR/= #\,
+; <aaa> <,b,c,d>               csp=182 vsp=46 pos=3|,| 008 REST 2
+; <aaa> <,b,c,d>               csp=182 vsp=46 pos=3|,| 010 MAX 6
+;                    matched: counter=2
+; <aaa> <,b,c,d>               csp=180 vsp=47 pos=3|,| 013 CHAR= #\,
+; <aaa,> <b,c,d>               csp=180 vsp=47 pos=4|b| 015 CAPTURE 1
+; set-capture[1]="aaa,"
+; <aaa,> <b,c,d>               csp=174 vsp=48 pos=4|b| 017 REST 1
+; <aaa,> <b,c,d>               csp=174 vsp=48 pos=4|b| 019 MAX 3
+;                    need more: counter=-2
+; <aaa,> <b,c,d>               csp=171 vsp=48 pos=4|b| 003 PUSH-POS PUSH-INT
+; <aaa,> <b,c,d>               csp=170 vsp=47 pos=4|b| 004 PUSH-INT -1
+; <aaa,> <b,c,d>               csp=169 vsp=46 pos=4|b| 006 CHAR/= #\,
+; <aaa,b> <,c,d>               csp=169 vsp=46 pos=5|,| 008 REST 2
+; <aaa,b> <,c,d>               csp=169 vsp=46 pos=5|,| 010 MAX 6
+;                    try more: counter=0
+; <aaa,b> <,c,d>               csp=163 vsp=46 pos=5|,| 006 CHAR/= #\,
+;*** backtarck: csp=163 vsp=46 CATCH 13
+; <aaa,b> <,c,d>               csp=166 vsp=46 pos=5|,| 013 CHAR= #\,
+; <aaa,b,> <c,d>               csp=166 vsp=46 pos=6|c| 015 CAPTURE 1
+; set-capture[1]="aaa,b,"
+; <aaa,b,> <c,d>               csp=160 vsp=47 pos=6|c| 017 REST 1
+; <aaa,b,> <c,d>               csp=160 vsp=47 pos=6|c| 019 MAX 3
+;                    try more: counter=5
+; <aaa,b,> <c,d>               csp=154 vsp=47 pos=6|c| 003 PUSH-POS PUSH-INT
+; <aaa,b,> <c,d>               csp=153 vsp=46 pos=6|c| 004 PUSH-INT -1
+; <aaa,b,> <c,d>               csp=152 vsp=45 pos=6|c| 006 CHAR/= #\,
+; <aaa,b,c> <,d>               csp=152 vsp=45 pos=7|,| 008 REST 2
+; <aaa,b,c> <,d>               csp=152 vsp=45 pos=7|,| 010 MAX 6
+;                    try more: counter=0
+; <aaa,b,c> <,d>               csp=146 vsp=45 pos=7|,| 006 CHAR/= #\,
+;*** backtarck: csp=146 vsp=45 CATCH 13
+; <aaa,b,c> <,d>               csp=149 vsp=45 pos=7|,| 013 CHAR= #\,
+; <aaa,b,c,> <d>               csp=149 vsp=45 pos=8|d| 015 CAPTURE 1
+; set-capture[1]="aaa,b,c,"
+; <aaa,b,c,> <d>               csp=143 vsp=46 pos=8|d| 017 REST 1
+; <aaa,b,c,> <d>               csp=143 vsp=46 pos=8|d| 019 MAX 3
+;                    try more: counter=7
+; <aaa,b,c,> <d>               csp=137 vsp=46 pos=8|d| 003 PUSH-POS PUSH-INT
+; <aaa,b,c,> <d>               csp=136 vsp=45 pos=8|d| 004 PUSH-INT -1
+; <aaa,b,c,> <d>               csp=135 vsp=44 pos=8|d| 006 CHAR/= #\,
+; <aaa,b,c,d> <>               csp=135 vsp=44 pos=9|NIL| 008 REST 2
+;*** backtarck: csp=135 vsp=44 POP POP
+;*** backtarck: csp=136 vsp=45 POP CATCH
+;*** backtarck: csp=137 vsp=46 CATCH 22
+; <aaa,b,c,> <d>               csp=140 vsp=46 pos=8|d| 022 CHAR= #\d
+; Match: 0 <> <aaa,b,c,d> <>
+#<Regex-Match @ 20398A60> is an instance of class REGEX-MATCH.
+
+ It has 10 instance slots:
+  REGEX          #<Regex @ 20397E40>
+  STRING         "aaa,b,c,d"
+  START          0
+  END            9
+  START-VECTOR   #(0 0)
+  END-VECTOR     #(9 8)
+  TEMP-VECTOR    #(0 0)
+  POSITION       9
+  COUNTER-VECTOR #(0 0)
+  MARKER-VECTOR  #(0 0)
+
+; Values[0]=#<Regex @ 20397E40>
+; Values[1]="aaa,b,c,"

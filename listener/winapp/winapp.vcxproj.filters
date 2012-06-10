@@ -1,0 +1,364 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Controls">
+      <UniqueIdentifier>{3718d894-0216-434c-9c19-400e386bf945}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modes">
+      <UniqueIdentifier>{91b24eab-d87e-46bc-b945-3b266a7d2970}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Buffer">
+      <UniqueIdentifier>{4b845edd-03e4-4e87-abc0-f02ae750b33e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Charset">
+      <UniqueIdentifier>{a1443834-b863-4c30-9d59-8ac2827559da}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ap_input_history.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ap_lisp_thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ap_listener_buffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ap_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cm_CmdProc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cm_Commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="li_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_BaseWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Buffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_BufferListPane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_DialogBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_EditPane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_FileDialogBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_FileIo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_FindDialogBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Gateway.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_IoManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Listener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Page.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Pane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Selection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_Style.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vi_TextEditWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="z_debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl_StatusBar.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl_TabBand.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl_TitleBar.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_Mode.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Config.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Cxx.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Haskell.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Lisp.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Mason.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Perl.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_PlainText.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_Xml.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_Buffer.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_BufferCore.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_BufferFind.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_Interval.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_Range.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ed_Undo.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="ExactStringMatch.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="RegexMatch.cpp">
+      <Filter>Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="precomp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vcsupport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\charset\CharsetDecoder.cpp">
+      <Filter>Charset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\charset\CharsetDetector.cpp">
+      <Filter>Charset</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ap_input_history.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ap_lisp_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ap_listener_buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cm_CmdProc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrl_TabBand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="li_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="listener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_BaseWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_BufferListPane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_CommandWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_DialogBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_EditPane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_FileDialogBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_FileIo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_FindDialogBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Gateway.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_IoManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Listener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Page.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Pane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Selection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Style.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_TextEditWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrl_StatusBar.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrl_TitleBar.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Mode.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Config.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Cxx.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Haskell.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Lisp.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Mason.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Perl.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_PlainText.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Xml.h">
+      <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_BinTree.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Buffer.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_BufferCore.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_defs.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Interval.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Range.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Style.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_Undo.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ed_util.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="ExactStringMatch.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="IStringCursor.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="RegexMatch.h">
+      <Filter>Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="precomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\charset\CharsetDetector.h">
+      <Filter>Charset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\charset\Charset.h">
+      <Filter>Charset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\charset\CharsetDecoder.h">
+      <Filter>Charset</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\evcl.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="winapp.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

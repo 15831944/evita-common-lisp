@@ -1,0 +1,475 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{496876b8-8e37-46da-8531-8d32d707b0bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mini">
+      <UniqueIdentifier>{84d9acad-f402-44f1-be33-51b910f95736}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{19ab9eb4-9e37-442e-97e5-a74e0601a386}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{1cab92b0-bb0f-485d-baa7-ce033d03c74c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x64">
+      <UniqueIdentifier>{33e4541d-2662-4b84-b44d-73ad2f8c5b29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86x64">
+      <UniqueIdentifier>{f7f1fc3a-84a2-4de8-87bb-93335343c668}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bt_build_04_type.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_07_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_09_cond.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_12_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_13_char.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_22_printer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_build_23_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_fns.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_verify.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bt_writer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compiler\boot\cm_bt_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_arch.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_debugger.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_executive.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_frame.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_lock.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_memory.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_spinlock.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_thread.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_util.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\kernel\ke_weak.cpp">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_direct_call.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_dll_link.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_eval.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_04_type.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_05_ctrl.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_07_object.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_09_cond.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_10_symbol.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_11_package.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_12_number.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_13_char.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_14_cons.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_15_array.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_16_string.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_17_sequence.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_18_hash_table.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_21_stream.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_22_format.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_22_printer.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_23_reader.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_49_cell.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_49_tlv.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_50_lock.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_50_weak.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_lisp.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_thread.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\generic\mini\pl_mini_21_stream.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\x86_asm.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_03_eval.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_04_type.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_05_control.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_07_object.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_08_struct.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_10_symbol.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_12_number.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_13_char.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_14_cons.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_15_array.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_16_string.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_49_internal.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\boot\x86_bt_builder.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\mini\x86_mini_03_direct_call.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\mini\x86_mini_07_fin.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\boot\win_boot_stream.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\boot\win_bt_builder.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\mini\win_mini_21_stream.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\x64_asm.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_03_eval.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_04_type.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_05_control.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_07_object.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_08_struct.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_10_symbol.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_12_number.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_13_char.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_14_cons.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_15_array.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_16_string.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_49_internal.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\boot\x64_bt_builder.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\mini\x64_mini_03_direct_call.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\mini\x64_mini_07_fin.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\mini\x86x64_mini_07_fin.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\mini\x86x64_mini_49_fun.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="precomp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bt_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bt_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_arch.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_debugger.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_defs.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_executive.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_frame.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_layout.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_memory.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_spinlock.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_thread.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_util.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\kernel\ke_weak.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_03_eval.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_04_type.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_05_ctrl.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_07_object.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_09_cond.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_10_symbol.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_11_package.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_12_number.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_13_char.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_14_cons.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_15_array.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_16_string.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_17_sequence.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_18_hash_table.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_21_stream.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_22_printer.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_23_reader.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_49_cell.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_defs.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_inline.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_lisp.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_thread.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\platform\generic\mini\pl_mini_21_stream.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="precomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bt_object.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="bt_package_cl.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="bt_package_keyword.inc">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\arch\generic\kernel\gen_ke_arch32.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_arch.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_asm.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\boot\x86_bt_builder.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_frame.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_layout.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_mach.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_thread.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_opcode.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\generic\kernel\gen_ke_arch64.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\x64_asm.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_layout.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_mach.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\x64_opcode.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+</Project>

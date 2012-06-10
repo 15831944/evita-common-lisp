@@ -1,0 +1,526 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="x64">
+      <UniqueIdentifier>{b52a8575-43e1-48ef-a333-dd272fc80af0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{10f7881f-8312-4b13-8996-02030d67fd3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mini">
+      <UniqueIdentifier>{f3f372fd-c394-497f-b430-046a74053e72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{e1b422e9-dd23-459b-a2d0-42306102d5bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="generic">
+      <UniqueIdentifier>{a2ede8f6-1756-478b-9f01-a382d543cce2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="big">
+      <UniqueIdentifier>{a9b6c2d0-7003-4405-9540-261b8afa56f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86x64">
+      <UniqueIdentifier>{8b29240f-2477-4ac8-ab11-64a461ad570e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ke_arch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_dll_link.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_executive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_format.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_gc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_gc_finalize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_gc_format.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_gc_weak.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_lock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_spinlock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_sxhash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ke_weak.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\x64_asm.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\kernel\x64_ke_frame.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\kernel\x64_ke_gc.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\kernel\x64_ke_interrupt.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\kernel\x64_ke_mach.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\kernel\x64_ke_thread.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\mini\x64_mini_03_direct_call.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\mini\x64_mini_07_fin.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\x86_asm.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\big\x86_big_12_float.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_dll_link.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_frame.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_gc.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_interrupt.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_mach.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\kernel\x86_ke_thread.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\mini\x86_mini_03_direct_call.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\mini\x86_mini_07_fin.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_direct_call.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_dll_link.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_03_eval.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_04_type.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_05_ctrl.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_07_object.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_09_cond.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_10_symbol.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_11_package.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_12_number.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_13_char.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_14_cons.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_15_array.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_16_string.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_17_sequence.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_18_hash_table.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_49_cell.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_49_tlv.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_50_finalize.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_50_lock.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_50_weak.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_lisp.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mini\mini_thread.cpp">
+      <Filter>mini</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_20_file.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_21_console.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_21_debug_stream.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_21_stream.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_25_env.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_25_time.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\big\win_big_49_image.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\kernel\win_ke_image.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\kernel\win_ke_thread.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\win\mini\win_mini_21_stream.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\generic\kernel\gen_ke_frame.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\generic\mini\gen_mini_15_bitvec.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\generic\big\pl_big_21_stream.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\platform\generic\mini\pl_mini_21_stream.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_bignum.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_complex.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_float.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_integer.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_number.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_ratio.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_12_real.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_13_char.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_15_array.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_18_hash_table.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_21_stream.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\big\big_49_cell.cpp">
+      <Filter>big</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\big\x86x64_big_25_debugger.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\big\x86x64_big_fns.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\kernel\x86x64_ke_gc.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\kernel\x86x64_ke_interrupt.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\kernel\x86x64_ke_stack_walker.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\mini\x86x64_mini_07_fin.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\mini\x86x64_mini_49_fun.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="precomp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ke_sxhash.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_thread.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_arch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_dll_link.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_executive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_finalize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_float.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_gc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_layout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_lock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_mach.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_spinlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_support.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ke_weak.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_03_eval.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_04_type.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_05_ctrl.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_07_object.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_09_cond.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_10_symbol.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_11_package.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_12_number.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_13_char.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_14_cons.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_15_array.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_16_string.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_17_sequence.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_18_hash_table.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_defs.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_inline.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_lisp.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mini\mini_thread.h">
+      <Filter>mini</Filter>
+    </ClInclude>
+    <ClInclude Include="..\platform\win\mini\win_mini_21_stream.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\generic\kernel\gen_ke_frame.h">
+      <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\platform\generic\mini\pl_mini_21_stream.h">
+      <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_bignum.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_complex.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_float.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_number.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_ratio.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_12_real.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_21_stream.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\big\big_lisp.h">
+      <Filter>big</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\kernel\x86x64_ke_gcmap.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\kernel\x86x64_ke_interrupt.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="precomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\arch\x64\x64_arch.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\x64_asm.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_frame.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_layout.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_mach.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\kernel\x64_ke_thread.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\x64_opcode.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_arch.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_asm.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_frame.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_layout.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_mach.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\kernel\x86_ke_thread.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\x86_opcode.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\arch\x64\big\x64_big_12_float.asm">
+      <Filter>x64</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\arch\x64\kernel\x64_ke.asm">
+      <Filter>x64</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

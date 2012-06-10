@@ -1,0 +1,78 @@
+# Pattern	Limit	Text	Expect	Comment
+:	0	:a:b:c:	|a|b|c	trailing null field
+:	3	:a:b:c:	|a|b:c:	three fields
+:	0	:a::b:c:	|a||b|c	
+	0	abc	a|b|c	null delimiter
+ *	0	hi there	h|i|t|h|e|r|e	possible null delimiter
+ *	0	hi     there	h|i|t|h|e|r|e	possible null delimiter
+ *	100	hi there	h|i|t|h|e|r|e|	trailing null field
+(-|,)	0	1-10,20	1|-|10|,|20	
+(-)|(,)	0	1-10,20	1|-|nil|10|nil|,|20	
+
+# from perl-5.8.4/t/op/split.t
+:	0	a:b:c::::	a|b|c
+\s+	0	 a b\tc \t d	|a|b|c|d	\s+ yields null iniital fields
+ *	0	foo  bar bie\tdoll	f|o|o|b|a|r|b|i|e|\t|d|o|l|l
+
+# Test limit argument
+ 	3	1 2 3 4 5 6	1|2|3 4 5 6
+
+# Does the 999 suppress null field chopping?
+:	999	1:2:3:4:5:6:::	1|2|3|4|5|6|||
+
+# do subpatterns generate additional fields (without trailing nulls)?
+,|(-)	-1	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+
+# do subpatterns generate additional fields (with a limit)?
+,|(-)	0	1-10,20,,,	1|-|10|nil|20	; 5 elts.
+,|(-)	1	1-10,20,,,	1-10,20,,,	; 1 elts.
+,|(-)	2	1-10,20,,,	1|-|10,20,,,	; 3 elts.
+,|(-)	3	1-10,20,,,	1|-|10|nil|20,,,	; 5 elts.
+,|(-)	4	1-10,20,,,	1|-|10|nil|20|nil|,,	; 7 elts.
+,|(-)	5	1-10,20,,,	1|-|10|nil|20|nil||nil|,	; 9 elts.
+,|(-)	6	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	7	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	8	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	9	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	10	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	11	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	12	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	13	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	14	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	15	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	16	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	17	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	18	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+,|(-)	19	1-10,20,,,	1|-|10|nil|20|nil||nil||nil|	; 11 elts.
+
+
+# check splitting of null string
+x	-1			; 0 elts.
+x	0			; 0 elts.
+x	1			; 0 elts.
+x	2			; 0 elts.
+
+p+	-1			null string
+.?	-1			null string
+.?	0			null string
+.x	0	xxx	|x	delimiter only
+
+# Are /^/m patterns scanned?
+(?m:^a)	20	a b a\na d a	| b a\n| d a
+(?m:a$)	20	a b a\na d a	a b |\na d |
+
+# Are /^/m patterns scanned?
+(?m:^aa)	20	aa b aa\naa d aa	| b aa\n| d aa
+(?m:aa$)	20	aa b aa\naa d aa	aa b |\naa d |
+
+# Greedyness
+\s*:\s*	0	a : b :c: d	a|b|c|d
+
+# /^/ treated as /^/m
+(?m:^)	0	ab\ncd\nef\n	ab\n|cd\n|ef\n
+
+# zero-width assertion
+(?=\w)	0	rm b	r|m |b
+
+# split /(A)|B/, "1B2" should return (1, undef, 2)
+(A)|B	0	1B2	1|nil|2

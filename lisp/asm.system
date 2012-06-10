@@ -1,0 +1,64 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: CL-User; Base: 10 -*-
+;;;;
+;;;; evcl - compiler macro system definition
+;;; lisp/cmacro.system
+;;;
+;;; This file is part of Evita Common Lisp.
+;;;
+;;; Copyright (C) 1996-2002 by Project Vogue.
+;;; Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
+;;;
+;;; @(#)$Id: //proj/evcl2/mainline/lisp/cmacro.system#1 $
+;;;
+;;; Description:
+;;;  This file contains system definition of compiler macro module.
+;
+
+(ds:defsystem :asm ()
+  (:config :default
+    :default-source-pathname    "sys:root;arch;x86x64;lisp;devel;asm;" )
+  (:config :debug
+    :default-output-pathname    "sys:debug;arch;x86x64;asm;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;arch;x86x64;asm;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+  (:serial
+    (:parallel
+        (:serial "x86x64-op-defs"  "x86x64-op-fns")
+        (:serial "x86x64-isa-defs" "x86x64-isa-fns" asm-arch) )
+    (:parallel
+        "x86x64-op-data"
+        "x86x64-disasm-api"
+        "x86x64-disasm-fns"
+        "x86x64-asm-loader"
+        (:serial
+            "x86x64-asm-defs"
+            (:parallel
+                "x86x64-asm-fns"
+                "x86x64-asm-parse"
+                "x86x64-asm-pseudo" ) ))) )
+
+#+x86
+(ds:defsystem :asm-arch ()
+  (:config :default
+    :default-source-pathname    "sys:root;arch;x86;lisp;devel;" )
+  (:config :debug
+    :default-output-pathname    "sys:debug;arch;x86;"  )
+  (:config :release
+    :default-output-pathname    "sys:release;arch;x86;" )
+  (:serial
+    "x86-d25-isa-data" ) )
+
+#+x64
+(ds:defsystem :asm-arch ()
+  (:config :default
+    :default-source-pathname    "sys:root;arch;x64;lisp;devel;" )
+  (:config :debug
+    :default-output-pathname    "sys:debug;arch;x64;"  )
+  (:config :release
+    :default-output-pathname    "sys:release;arch;x64;" )
+  (:serial
+    "x64-d25-isa-data" ) )

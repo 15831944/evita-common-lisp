@@ -1,0 +1,49 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: CL-User; Base: 10 -*-
+(in-package :cl-user)
+
+(ds:defsystem :win32 ()
+  (:config :default
+    :default-source-pathname "sys:root;platform;win;lisp;windowing;" )
+  (:config :debug
+    :default-output-pathname "sys:debug;windowing;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;windowing;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+  (:serial
+    (:serial "fli-defs" "fli-fns")
+    "win32-defpackage"
+    (:parallel
+        "win32-gdi32-defs"
+        "win32-kernel32-defs"
+        "win32-user32-defs"
+        (:serial "win32-core-defs" "win32-core-fns") )
+
+     "win32-win-defs"
+     "win32-win-fns"
+
+     "win32-x86-core-defs"
+
+    (:parallel
+        "win32-fli-fns"
+
+        "win32-x86-core-fns"
+        "win32-x86-gdi32-fns"
+        "win32-x86-kernel32-fns"
+        "win32-x86-user32-fns"
+
+        "win32-kernel32-fns"
+        "win32-gdi32-fns"
+        "win32-user32-fns"
+
+        (:serial "win32-font-defs" "win32-font-fns")
+
+        (:serial
+            "win32-comctl32-defs"
+            (:parallel
+                "win32-x86-comctl32-fns"
+                "win32-comctl32-fns" )))
+    ) ; serial
+ ) ; defsystem

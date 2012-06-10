@@ -1,0 +1,11 @@
+5959       47672    CONS
+
+(function-information 'member)
+(setq member (rest (car (third /))))
+(function-information 'intersection)
+(setq intersection (rest (car (third /))))
+(function-information 'union)
+(setq union (rest (car (third /))))
+(eq intersection union)
+(eq (cdadr member) (cdadr union))
+

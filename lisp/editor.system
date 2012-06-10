@@ -1,0 +1,35 @@
+(in-package :cl-user)
+
+(ds:defsystem :editor ()
+  (:config :default
+    :default-source-pathname "sys:root;editor;" )
+  (:config :debug
+    :default-output-pathname "sys:debug;editor;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;editor;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+  (:serial
+    "ed-defpackage"
+    "ed-defs-type"
+    "ed-defs-condition"
+
+    "ed-text-buffer-defs"
+    "ed-edit-buffer-defs"
+    "ed-editor-buffer-defs"
+
+    (:parallel
+        "ed-edit-buffer-macros"
+        "ed-text-buffer-fns"
+        "ed-edit-buffer-fns"
+        "ed-editor-buffer-fns"
+        "ed-edit-journal-fns"
+        "ed-btree"
+        "ed-interval"
+        (:serial "edw-defs" "edw-fns")
+        (:serial "edw-page-defs" "edw-page-fns")
+      ) ; parallel
+    ) ; serial
+ )

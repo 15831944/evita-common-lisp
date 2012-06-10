@@ -1,0 +1,257 @@
+;;;; Dribble start at 2004-06-09 02:26:34
+; Running on KAWAUSO1 (i1586.2.9 2.7GHz)
+; Evita Common Lisp 2.0.2608.3 on Windows 5.2.3790
+EXT[230]> (test-match ".X(.+)+X" "bbbbXcX12345678")
+#<Regex @ 20500708> is compiled form of regular expression.
+It matches at least 4 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 CHAR/=          #\Newline
+ 002 CHAR=           #\X
+L004 PUSH-POS
+ 005 REPEAT-CHAR/=   rest=1 #\Newline
+ 008 CAPTURE         nth=1
+ 010 REST            rest=1
+ 012 CATCH           L016
+ 014 GO              L004
+L016 CHAR=           #\X
+ 018 SUCCESS        
+
+
+; regex-execute: pos=0/15 start-max=11
+; <> <bbbbXcX123>              csp=197 vsp=49 pos=0|b| 000 CHAR/= #\Newline
+; <b> <bbbXcX1234>             csp=197 vsp=49 pos=1|b| 002 CHAR= #\X
+;*** backtarck: csp=197 vsp=49 FAIL FAIL
+
+; regex-execute: pos=1/15 start-max=11
+; <b> <bbbXcX1234>             csp=197 vsp=49 pos=1|b| 000 CHAR/= #\Newline
+; <bb> <bbXcX12345>            csp=197 vsp=49 pos=2|b| 002 CHAR= #\X
+;*** backtarck: csp=197 vsp=49 FAIL FAIL
+
+; regex-execute: pos=2/15 start-max=11
+; <bb> <bbXcX12345>            csp=197 vsp=49 pos=2|b| 000 CHAR/= #\Newline
+; <bbb> <bXcX123456>           csp=197 vsp=49 pos=3|b| 002 CHAR= #\X
+;*** backtarck: csp=197 vsp=49 FAIL FAIL
+
+; regex-execute: pos=3/15 start-max=11
+; <bbb> <bXcX123456>           csp=197 vsp=49 pos=3|b| 000 CHAR/= #\Newline
+; <bbbb> <XcX1234567>          csp=197 vsp=49 pos=4|X| 002 CHAR= #\X
+; <bbbbX> <cX12345678>         csp=197 vsp=49 pos=5|c| 004 PUSH-POS REPEAT-CHAR/=
+; <bbbbX> <cX12345678>         csp=196 vsp=48 pos=5|c| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=192 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="cX1234567"
+; <XcX1234567> <8>             csp=186 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=186 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=183 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=183 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=182 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=182 vsp=48 POP CATCH
+;*** backtarck: csp=183 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=186 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=186 vsp=49 CAPTURE 1
+;*** backtarck: csp=190 vsp=49 PUSH 5
+;*** backtarck: csp=192 vsp=48 REPEAT 8
+;    pos=14 min-pos=5
+; <bXcX123456> <78>            csp=192 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]="cX123456"
+; <bXcX123456> <78>            csp=186 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=186 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=183 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=183 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=182 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=178 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=172 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=172 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=169 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=169 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=168 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=168 vsp=48 POP CATCH
+;*** backtarck: csp=169 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=172 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=172 vsp=49 CAPTURE 1
+;*** backtarck: csp=176 vsp=49 PUSH 13
+;*** backtarck: csp=178 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=178 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=172 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=172 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=169 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=169 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=168 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=164 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=158 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=158 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=155 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=155 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=154 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=154 vsp=48 POP CATCH
+;*** backtarck: csp=155 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=158 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=158 vsp=49 CAPTURE 1
+;*** backtarck: csp=162 vsp=49 PUSH 13
+;*** backtarck: csp=164 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=164 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=158 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=158 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=155 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=155 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=154 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=150 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=144 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=144 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=141 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=141 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=140 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=140 vsp=48 POP CATCH
+;*** backtarck: csp=141 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=144 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=144 vsp=49 CAPTURE 1
+;*** backtarck: csp=148 vsp=49 PUSH 13
+;*** backtarck: csp=150 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=150 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=144 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=144 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=141 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=141 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=140 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=136 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=130 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=130 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=127 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=127 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=126 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=126 vsp=48 POP CATCH
+;*** backtarck: csp=127 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=130 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=130 vsp=49 CAPTURE 1
+;*** backtarck: csp=134 vsp=49 PUSH 13
+;*** backtarck: csp=136 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=136 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=130 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=130 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=127 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=127 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=126 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=122 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=116 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=116 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=113 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=113 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=112 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=112 vsp=48 POP CATCH
+;*** backtarck: csp=113 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=116 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=116 vsp=49 CAPTURE 1
+;*** backtarck: csp=120 vsp=49 PUSH 13
+;*** backtarck: csp=122 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=122 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=116 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=116 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=113 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=113 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=112 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=108 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=102 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=102 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=99 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=99 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=98 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=98 vsp=48 POP CATCH
+;*** backtarck: csp=99 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=102 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=102 vsp=49 CAPTURE 1
+;*** backtarck: csp=106 vsp=49 PUSH 13
+;*** backtarck: csp=108 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=108 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=102 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=102 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=99 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=99 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=98 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=94 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=88 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=88 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=85 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=85 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=84 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=84 vsp=48 POP CATCH
+;*** backtarck: csp=85 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=88 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=88 vsp=49 CAPTURE 1
+;*** backtarck: csp=92 vsp=49 PUSH 13
+;*** backtarck: csp=94 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=94 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=88 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=88 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=85 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=85 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=84 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=80 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=74 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=74 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=71 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=71 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=70 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=70 vsp=48 POP CATCH
+;*** backtarck: csp=71 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=74 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=74 vsp=49 CAPTURE 1
+;*** backtarck: csp=78 vsp=49 PUSH 13
+;*** backtarck: csp=80 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=80 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=74 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=74 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=71 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=71 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=70 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=66 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; <XcX1234567> <8>             csp=60 vsp=49 pos=14|8| 010 REST 1
+; <XcX1234567> <8>             csp=60 vsp=49 pos=14|8| 012 CATCH 16
+; <XcX1234567> <8>             csp=57 vsp=49 pos=14|8| 014 GO 4
+; <XcX1234567> <8>             csp=57 vsp=49 pos=14|8| 004 PUSH-POS REPEAT-CHAR/=
+; <XcX1234567> <8>             csp=56 vsp=48 pos=14|8| 005 REPEAT-CHAR/= 1
+;*** backtarck: csp=56 vsp=48 POP CATCH
+;*** backtarck: csp=57 vsp=49 CATCH 16
+; <XcX1234567> <8>             csp=60 vsp=49 pos=14|8| 016 CHAR= #\X
+;*** backtarck: csp=60 vsp=49 CAPTURE 1
+;*** backtarck: csp=64 vsp=49 PUSH 13
+;*** backtarck: csp=66 vsp=48 REPEAT 8
+;    pos=14 min-pos=13
+; <bXcX123456> <78>            csp=66 vsp=48 pos=13|7| 008 CAPTURE 1
+; set-capture[1]=""
+; <bXcX123456> <78>            csp=60 vsp=49 pos=13|7| 010 REST 1
+; <bXcX123456> <78>            csp=60 vsp=49 pos=13|7| 012 CATCH 16
+; <bXcX123456> <78>            csp=57 vsp=49 pos=13|7| 014 GO 4
+; <bXcX123456> <78>            csp=57 vsp=49 pos=13|7| 004 PUSH-POS REPEAT-CHAR/=
+; <bXcX123456> <78>            csp=56 vsp=48 pos=13|7| 005 REPEAT-CHAR/= 1
+; <XcX1234567> <8>             csp=52 vsp=48 pos=14|8| 008 CAPTURE 1
+; set-capture[1]="7"
+; Re-enter command level 0.
+
+EXT[232]> (dribble); Dribble file #p"../lisp/regex/_BUG-806.txt" closed.
+;;;; Dribble end at 2004-06-09 02:26:59

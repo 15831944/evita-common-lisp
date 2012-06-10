@@ -1,0 +1,489 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2928C793-C47E-4ABF-BB8E-66C95BF02ADD}</ProjectGuid>
+    <RootNamespace>compiler</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(OutDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
+      <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(OutDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MinSpace</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AdditionalIncludeDirectories>$(OutDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
+      <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AdditionalIncludeDirectories>$(OutDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cl\cl_03_call.cpp" />
+    <ClCompile Include="cl\cl_03_decl.cpp" />
+    <ClCompile Include="cl\cl_03_eval.cpp" />
+    <ClCompile Include="cl\cl_03_lambda.cpp" />
+    <ClCompile Include="cl\cl_04_type.cpp" />
+    <ClCompile Include="cl\cl_05_bind.cpp" />
+    <ClCompile Include="cl\cl_05_ctrl.cpp" />
+    <ClCompile Include="cl\cl_05_data.cpp" />
+    <ClCompile Include="cl\cl_05_mv.cpp" />
+    <ClCompile Include="cl\cl_12_arith.cpp" />
+    <ClCompile Include="cl\cl_12_cmp.cpp" />
+    <ClCompile Include="cl\cl_12_logarith.cpp" />
+    <ClCompile Include="cl\cl_14_cons.cpp" />
+    <ClCompile Include="cl\cl_15_array.cpp" />
+    <ClCompile Include="cl\cl_49_internal.cpp" />
+    <ClCompile Include="cl\cl_context.cpp" />
+    <ClCompile Include="cl\cl_emit.cpp" />
+    <ClCompile Include="cl\cl_env.cpp" />
+    <ClCompile Include="cl\cl_fns.cpp" />
+    <ClCompile Include="cl\cl_main.cpp" />
+    <ClCompile Include="cl\cl_option.cpp" />
+    <ClCompile Include="cl\cl_warn.cpp" />
+    <ClCompile Include="ir\ir_bblock.cpp" />
+    <ClCompile Include="ir\ir_call_graph.cpp" />
+    <ClCompile Include="ir\ir_cfg.cpp" />
+    <ClCompile Include="ir\ir_dfa.cpp" />
+    <ClCompile Include="ir\ir_dom.cpp" />
+    <ClCompile Include="ir\ir_fns.cpp" />
+    <ClCompile Include="ir\ir_function.cpp" />
+    <ClCompile Include="ir\ir_graph.cpp" />
+    <ClCompile Include="ir\ir_html_dump.cpp" />
+    <ClCompile Include="ir\ir_instruction.cpp" />
+    <ClCompile Include="ir\ir_liveness.cpp" />
+    <ClCompile Include="ir\ir_loop.cpp" />
+    <ClCompile Include="ir\ir_operand.cpp" />
+    <ClCompile Include="ir\ir_pass.cpp" />
+    <ClCompile Include="ir\ir_type.cpp" />
+    <ClCompile Include="ir\ir_variable.cpp" />
+    <ClCompile Include="ir\ir_verify.cpp" />
+    <ClCompile Include="ir\ir_insn_arith.cpp" />
+    <ClCompile Include="ir\ir_insn_BRANCH.cpp" />
+    <ClCompile Include="ir\ir_insn_CALL.cpp" />
+    <ClCompile Include="ir\ir_insn_CLOSE.cpp" />
+    <ClCompile Include="ir\ir_insn_CLOSURE.cpp" />
+    <ClCompile Include="ir\ir_insn_cmp.cpp" />
+    <ClCompile Include="ir\ir_insn_COUNT.cpp" />
+    <ClCompile Include="ir\ir_insn_JUMP.cpp" />
+    <ClCompile Include="ir\ir_insn_LOAD.cpp" />
+    <ClCompile Include="ir\ir_insn_MVRESTORE.cpp" />
+    <ClCompile Include="ir\ir_insn_OPENBIND.cpp" />
+    <ClCompile Include="ir\ir_insn_OPENBLOCK.cpp" />
+    <ClCompile Include="ir\ir_insn_PARSEKEYS.cpp" />
+    <ClCompile Include="ir\ir_insn_PHI.cpp" />
+    <ClCompile Include="ir\ir_insn_PROJECT.cpp" />
+    <ClCompile Include="ir\ir_insn_RET.cpp" />
+    <ClCompile Include="ir\ir_insn_SELECT.cpp" />
+    <ClCompile Include="ir\ir_insn_TBLJMP.cpp" />
+    <ClCompile Include="ir\ir_insn_TYPEP.cpp" />
+    <ClCompile Include="ir\ir_insn_UNREACHABLE.cpp" />
+    <ClCompile Include="ir\ir_insn_VALUES.cpp" />
+    <ClCompile Include="ir\ir_insn_VARDEF.cpp" />
+    <ClCompile Include="cm\cm_base.cpp" />
+    <ClCompile Include="cm\cm_bitvec.cpp" />
+    <ClCompile Include="cm\cm_dump.cpp" />
+    <ClCompile Include="cm\cm_fns.cpp" />
+    <ClCompile Include="cm\cm_format.cpp" />
+    <ClCompile Include="cm\cm_html_format.cpp" />
+    <ClCompile Include="cm\cm_main.cpp" />
+    <ClCompile Include="cm\cm_mm.cpp" />
+    <ClCompile Include="cm\cm_object.cpp" />
+    <ClCompile Include="cm\cm_pass.cpp" />
+    <ClCompile Include="cm\cm_session.cpp" />
+    <ClCompile Include="cm\cm_target.cpp" />
+    <ClCompile Include="cg\cg_asm.cpp" />
+    <ClCompile Include="cg\cg_asm_cics.cpp" />
+    <ClCompile Include="cg\cg_bool.cpp" />
+    <ClCompile Include="cg\cg_expand_cast.cpp" />
+    <ClCompile Include="cg\cg_expand_typep.cpp" />
+    <ClCompile Include="cg\cg_fns.cpp" />
+    <ClCompile Include="cg\cg_instruction.cpp" />
+    <ClCompile Include="cg\cg_layout.cpp" />
+    <ClCompile Include="cg\cg_main.cpp" />
+    <ClCompile Include="cg\cg_nlx.cpp" />
+    <ClCompile Include="cg\cg_operand.cpp" />
+    <ClCompile Include="cg\cg_ra.cpp" />
+    <ClCompile Include="cg\cg_ra_ls.cpp" />
+    <ClCompile Include="cg\cg_ssa2cfg.cpp" />
+    <ClCompile Include="cg\cg_upvar.cpp" />
+    <ClCompile Include="opt\opt_call.cpp" />
+    <ClCompile Include="opt\opt_cfg2ssa.cpp" />
+    <ClCompile Include="opt\opt_clean.cpp" />
+    <ClCompile Include="opt\opt_closure.cpp" />
+    <ClCompile Include="opt\opt_fns.cpp" />
+    <ClCompile Include="opt\opt_gvn_gcm.cpp" />
+    <ClCompile Include="opt\opt_inline.cpp" />
+    <ClCompile Include="opt\opt_main.cpp" />
+    <ClCompile Include="opt\opt_osr.cpp" />
+    <ClCompile Include="opt\opt_ssa2ssi.cpp" />
+    <ClCompile Include="opt\opt_type.cpp" />
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_asm.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_ensure.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_expand_trap.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_lower.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_ra_ls.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_select.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_target.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_typep.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_upvar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ty\ty_00_fns.cpp" />
+    <ClCompile Include="ty\ty_04_values.cpp" />
+    <ClCompile Include="ty\ty_12_number.cpp" />
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_asm.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_ensure.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_expand_trap.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_lower.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_ra_ls.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_select.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_target.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_typep.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_upvar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_asm.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_ensure.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_expand_trap.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_gcmap.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_lower.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_operand.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_select.cpp" />
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_typep.cpp" />
+    <ClCompile Include="util\interval.cpp" />
+    <ClCompile Include="precomp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cl\cl_defs.h" />
+    <ClInclude Include="ir\ir_bblock.h" />
+    <ClInclude Include="ir\ir_call_graph.h" />
+    <ClInclude Include="ir\ir_cfg.h" />
+    <ClInclude Include="ir\ir_defs.h" />
+    <ClInclude Include="ir\ir_dfa.h" />
+    <ClInclude Include="ir\ir_function.h" />
+    <ClInclude Include="ir\ir_fundb.h" />
+    <ClInclude Include="ir\ir_graph.h" />
+    <ClInclude Include="ir\ir_instruction.h" />
+    <ClInclude Include="ir\ir_loop.h" />
+    <ClInclude Include="ir\ir_operand.h" />
+    <ClInclude Include="ir\ir_pass.h" />
+    <ClInclude Include="ir\ir_type.h" />
+    <ClInclude Include="cm\cm_base.h" />
+    <ClInclude Include="cm\cm_bitvec.h" />
+    <ClInclude Include="cm\cm_defs.h" />
+    <ClInclude Include="cm\cm_fns.h" />
+    <ClInclude Include="cm\cm_mm.h" />
+    <ClInclude Include="cm\cm_module.h" />
+    <ClInclude Include="cm\cm_pass.h" />
+    <ClInclude Include="cm\cm_session.h" />
+    <ClInclude Include="cm\cm_target.h" />
+    <ClInclude Include="cg\cg_asm.h" />
+    <ClInclude Include="cg\cg_asm_cics.h" />
+    <ClInclude Include="cg\cg_defs.h" />
+    <ClInclude Include="cg\cg_instruction.h" />
+    <ClInclude Include="cg\cg_operand.h" />
+    <ClInclude Include="cg\cg_ra.h" />
+    <ClInclude Include="cg\cg_ra_ls.h" />
+    <ClInclude Include="cg\cg_target.h" />
+    <ClInclude Include="cg\cg_upvar.h" />
+    <ClInclude Include="opt\opt_defs.h" />
+    <ClInclude Include="opt\opt_fns.h" />
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_defs.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_instruction.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_operand.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_target.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <ClInclude Include="ty\ty_12_number.h" />
+    <ClInclude Include="ty\ty_defs.h" />
+    <CustomBuildStep Include="..\arch\x64\x64_arch.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_asm.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_defs.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_instruction.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_operand.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_target.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_asm.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_defs.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_ensure.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_expand_trap.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_gcmap.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_instruction.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_lower.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_operand.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_select.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_target.h" />
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_typep.h" />
+    <ClInclude Include="util\interval.h" />
+    <ClInclude Include="precomp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_opcode.inc">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\prepare\prepare.vcxproj">
+      <Project>{4e7377c2-f00e-47da-b448-74f0a3191175}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

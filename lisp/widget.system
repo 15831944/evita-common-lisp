@@ -1,0 +1,26 @@
+(in-package :cl-user)
+
+(ds:defsystem :widget ()
+  (:config :default
+    :default-source-pathname "sys:root;platform;win;lisp;widget;" )
+  (:config :debug
+    :default-output-pathname "sys:debug;editor;"
+    :features   (:debug)
+    :optimize   ((debug 3) (safety 3) (speed 0) (space 0)) )
+  (:config :release
+    :default-output-pathname    "sys:release;editor;"
+    :features   (:release)
+    :optimize   ((debug 0) (safety 2) (speed 3) (space 0)) )
+
+  (:serial
+    "widget-defpackage"
+    "widget-defs"
+
+    (:parallel
+        "widget-fns"
+
+        (:serial "widget-status-bar-defs" "widget-status-bar-fns")
+
+    ) ; parallel
+
+  ) )

@@ -1,0 +1,13 @@
+(ds:defsystem :stream
+  (:default-pathname "sys:source;runtime;stream;"
+   :default-output-pathname "sys:object;runtime;stream;" )
+  (:serial
+    "stream-symbols"
+    (:parallel
+      "stream-stream"
+      "stream-string-input"
+      "stream-string-output"
+      "stream-file"
+      "stream-printer"
+      "stream-api" )) )
+

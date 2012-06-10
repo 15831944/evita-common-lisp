@@ -1,0 +1,117 @@
+EXT[18]> (TEST-MATCH "^(a\\1?){4}$" "aaaaaaaaaaa" "n" "-" "-")
+#<Regex @ 203A4410> is compiled form of regular expression.
+It matches at least 4 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 BOS
+ 001 LOOP-SET-COUNTER loop=0 -min=-4
+L004 MARK            loop=0
+ 006 CAPTURE-START   nth=1
+ 008 CHAR=           #\a
+ 010 PUSH            L014
+ 012 REFERENCE       nth=1
+L014 CAPTURE-END     nth=1
+ 016 LOOP-MAX-COUNTER L004 loop=0 max-min=0
+ 020 EOL
+ 021 END
+
+
+; regex-execute: start-max=7 pos=0/11 pc=0
+; 0 pos=0|a| 000 :BOS LOOP-SET-COUNTER
+; 0 pos=0|a| 001 LOOP-SET-COUNTER 0
+; 0 pos=0|a| 004 MARK 0
+; 0 pos=0|a| 006 CAPTURE-START 1
+; 0 pos=0|a| 008 CHAR= #\a
+; 0 pos=1|a| 010 PUSH 14
+; 1 pos=1|a| 012 REFERENCE 1
+;*** backtarck: depth=1 (CONTINUE 14 1)
+; 0 pos=1|a| 014 CAPTURE-END 1
+; set-capture[1]="a"
+; 0 pos=1|a| 016 LOOP-MAX-COUNTER 4
+;                    need more: counter=-3
+; 0 pos=1|a| 004 MARK 0
+; 0 pos=1|a| 006 CAPTURE-START 1
+; 0 pos=1|a| 008 CHAR= #\a
+; 0 pos=2|a| 010 PUSH 14
+; 1 pos=2|a| 012 REFERENCE 1
+; 1 pos=3|a| 014 CAPTURE-END 1
+; set-capture[1]="aa"
+; 2 pos=3|a| 016 LOOP-MAX-COUNTER 4
+;                    need more: counter=-2
+; 2 pos=3|a| 004 MARK 0
+; 2 pos=3|a| 006 CAPTURE-START 1
+; 3 pos=3|a| 008 CHAR= #\a
+; 3 pos=4|a| 010 PUSH 14
+; 4 pos=4|a| 012 REFERENCE 1
+; 4 pos=6|a| 014 CAPTURE-END 1
+; set-capture[1]="aaa"
+; 5 pos=6|a| 016 LOOP-MAX-COUNTER 4
+;                    need more: counter=-1
+; 5 pos=6|a| 004 MARK 0
+; 5 pos=6|a| 006 CAPTURE-START 1
+; 6 pos=6|a| 008 CHAR= #\a
+; 6 pos=7|a| 010 PUSH 14
+; 7 pos=7|a| 012 REFERENCE 1
+; 7 pos=10|a| 014 CAPTURE-END 1
+; set-capture[1]="aaaa"
+; 8 pos=10|a| 016 LOOP-MAX-COUNTER 4
+;                    matched: counter=0
+; 8 pos=10|a| 020 :EOL :END
+;*** backtarck: depth=8 (CAPTURE 1 3 6)
+;*** backtarck: depth=7 (CONTINUE 14 7)
+; 6 pos=7|a| 014 CAPTURE-END 1
+; set-capture[1]="a"
+; 7 pos=7|a| 016 LOOP-MAX-COUNTER 4
+;                    try more: counter=1
+; 9 pos=7|a| 004 MARK 0
+; 9 pos=7|a| 006 CAPTURE-START 1
+; 10 pos=7|a| 008 CHAR= #\a
+; 10 pos=8|a| 010 PUSH 14
+; 11 pos=8|a| 012 REFERENCE 1
+; 11 pos=9|a| 014 CAPTURE-END 1
+; set-capture[1]="aa"
+; 12 pos=9|a| 016 LOOP-MAX-COUNTER 4
+;                    try more: counter=2
+; 14 pos=9|a| 004 MARK 0
+; 14 pos=9|a| 006 CAPTURE-START 1
+; 15 pos=9|a| 008 CHAR= #\a
+; 15 pos=10|a| 010 PUSH 14
+; 16 pos=10|a| 012 REFERENCE 1
+;*** backtarck: depth=16 (CONTINUE 14 10)
+; 15 pos=10|a| 014 CAPTURE-END 1
+; set-capture[1]="a"
+; 16 pos=10|a| 016 LOOP-MAX-COUNTER 4
+;                    try more: counter=3
+; 18 pos=10|a| 004 MARK 0
+; 18 pos=10|a| 006 CAPTURE-START 1
+; 19 pos=10|a| 008 CHAR= #\a
+; 19 pos=11|NIL| 010 PUSH 14
+; 20 pos=11|NIL| 012 REFERENCE 1
+;*** backtarck: depth=20 (CONTINUE 14 11)
+; 19 pos=11|NIL| 014 CAPTURE-END 1
+; set-capture[1]="a"
+; 20 pos=11|NIL| 016 LOOP-MAX-COUNTER 4
+;                    try more: counter=4
+; 22 pos=11|NIL| 004 MARK 0
+; 22 pos=11|NIL| 006 CAPTURE-START 1
+; 23 pos=11|NIL| 008 CHAR= #\a
+;*** backtarck: depth=23 (CAPTURE-START 1 10)
+;*** backtarck: depth=22 (LOOP 20 11 0 10)
+; 21 pos=11|NIL| 020 :EOL :END
+#<Regex-Match @ 203A4FB0> is an instance of class REGEX-MATCH.
+
+ It has 10 instance slots:
+  REGEX          #<Regex @ 203A4410>
+  STRING         "aaaaaaaaaaa"
+  START          0
+  END            11
+  START-VECTOR   #(0 10)
+  END-VECTOR     #(11 11)
+  TEMP-VECTOR    #(0 10)
+  POSITION       11
+  COUNTER-VECTOR #(4)
+  MARKER-VECTOR  #(10)
+
+; Values[0]=#<Regex @ 203A4410>
+; Values[1]="-"

@@ -1,0 +1,611 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="cl">
+      <UniqueIdentifier>{756efd82-b3c6-438b-b84c-6f07a92ebee0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ir">
+      <UniqueIdentifier>{9825f646-fa40-4664-bef8-6246a097ee46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ir\instruction">
+      <UniqueIdentifier>{fc4a050a-390c-4396-b62c-20f310c61944}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cm">
+      <UniqueIdentifier>{129ee0db-a70d-4d87-a7b8-359744fb0324}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cg">
+      <UniqueIdentifier>{c8ecc227-b88e-4512-9968-b7efe75e8aca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="opt">
+      <UniqueIdentifier>{3862f41a-49ae-4072-9670-80a38b11eebd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{d6071119-0019-4915-9b30-00719e86de16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ty">
+      <UniqueIdentifier>{9522a45a-4e9e-400b-a0c7-cf468bae1aa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x64">
+      <UniqueIdentifier>{65ef23fc-e6fc-4068-88ed-5db38721543f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86x64">
+      <UniqueIdentifier>{429d0691-ed1f-46ca-a9ac-ada9e0f91e1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{bf38081a-b745-4df3-b431-2e95f438e350}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cl\cl_03_call.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_03_decl.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_03_eval.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_03_lambda.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_04_type.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_05_bind.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_05_ctrl.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_05_data.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_05_mv.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_12_arith.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_12_cmp.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_12_logarith.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_14_cons.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_15_array.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_49_internal.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_context.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_emit.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_env.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_fns.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_main.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_option.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="cl\cl_warn.cpp">
+      <Filter>cl</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_bblock.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_call_graph.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_cfg.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_dfa.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_dom.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_fns.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_function.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_graph.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_html_dump.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_instruction.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_liveness.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_loop.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_operand.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_pass.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_type.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_variable.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_verify.cpp">
+      <Filter>ir</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_arith.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_BRANCH.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_CALL.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_CLOSE.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_CLOSURE.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_cmp.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_COUNT.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_JUMP.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_LOAD.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_MVRESTORE.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_OPENBIND.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_OPENBLOCK.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_PARSEKEYS.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_PHI.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_PROJECT.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_RET.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_SELECT.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_TBLJMP.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_TYPEP.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_UNREACHABLE.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_VALUES.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="ir\ir_insn_VARDEF.cpp">
+      <Filter>ir\instruction</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_base.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_bitvec.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_dump.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_fns.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_format.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_html_format.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_main.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_mm.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_object.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_pass.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_session.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cm\cm_target.cpp">
+      <Filter>cm</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_asm.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_asm_cics.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_bool.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_expand_cast.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_expand_typep.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_fns.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_instruction.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_layout.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_main.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_nlx.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_operand.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_ra.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_ra_ls.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_ssa2cfg.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="cg\cg_upvar.cpp">
+      <Filter>cg</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_call.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_cfg2ssa.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_clean.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_closure.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_fns.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_gvn_gcm.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_inline.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_main.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_osr.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_ssa2ssi.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="opt\opt_type.cpp">
+      <Filter>opt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_asm.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_ensure.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_expand_trap.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_lower.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_ra_ls.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_select.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_target.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_typep.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86\compiler\x86_cg_upvar.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="ty\ty_00_fns.cpp">
+      <Filter>ty</Filter>
+    </ClCompile>
+    <ClCompile Include="ty\ty_04_values.cpp">
+      <Filter>ty</Filter>
+    </ClCompile>
+    <ClCompile Include="ty\ty_12_number.cpp">
+      <Filter>ty</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_asm.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_ensure.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_expand_trap.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_lower.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_ra_ls.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_select.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_target.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_typep.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x64\compiler\x64_cg_upvar.cpp">
+      <Filter>x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_asm.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_ensure.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_expand_trap.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_gcmap.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_lower.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_operand.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_select.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arch\x86x64\compiler\x86x64_cg_typep.cpp">
+      <Filter>x86x64</Filter>
+    </ClCompile>
+    <ClCompile Include="util\interval.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="precomp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cl\cl_defs.h">
+      <Filter>cl</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_bblock.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_call_graph.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_cfg.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_defs.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_dfa.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_function.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_fundb.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_graph.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_instruction.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_loop.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_operand.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_pass.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="ir\ir_type.h">
+      <Filter>ir</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_base.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_bitvec.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_defs.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_fns.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_mm.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_module.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_pass.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_session.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cm\cm_target.h">
+      <Filter>cm</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_asm.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_asm_cics.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_defs.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_instruction.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_operand.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_ra.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_ra_ls.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_target.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="cg\cg_upvar.h">
+      <Filter>cg</Filter>
+    </ClInclude>
+    <ClInclude Include="opt\opt_defs.h">
+      <Filter>opt</Filter>
+    </ClInclude>
+    <ClInclude Include="opt\opt_fns.h">
+      <Filter>opt</Filter>
+    </ClInclude>
+    <ClInclude Include="ty\ty_12_number.h">
+      <Filter>ty</Filter>
+    </ClInclude>
+    <ClInclude Include="ty\ty_defs.h">
+      <Filter>ty</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_asm.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_defs.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_ensure.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_expand_trap.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_gcmap.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_instruction.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_lower.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_operand.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_select.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_target.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arch\x86x64\compiler\x86x64_cg_typep.h">
+      <Filter>x86x64</Filter>
+    </ClInclude>
+    <ClInclude Include="util\interval.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="precomp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_defs.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_instruction.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_opcode.inc">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_operand.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x86\compiler\x86_cg_target.h">
+      <Filter>x86</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\x64_arch.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_defs.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_instruction.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_operand.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\arch\x64\compiler\x64_cg_target.h">
+      <Filter>x64</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+</Project>

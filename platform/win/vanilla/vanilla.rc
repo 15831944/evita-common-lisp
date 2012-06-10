@@ -1,0 +1,71 @@
+//Microsoft Developer Studio generated resource script.
+//
+// @(#)$Id: //proj/evcl3/mainline/platform/win/vanilla/vanilla.rc#1 $
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+#include "../../../build.h"
+#include "./version.h"
+#include "../VerDLL.rc"
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "#include ""../../build.h""\r\n"
+    "#include ""./version.h""\r\n"
+    "#include ""../VerDLL.rc""\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// REGISTRY
+//
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_EVCL    ICON    DISCARDABLE     "res/evcl.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////

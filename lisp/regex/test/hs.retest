@@ -1,0 +1,38 @@
+;;;; -*- Mode: Lisp; -*-
+;;; See http://arglist.com/regex/
+;;; ignore "-" and "b"
+
+(test-case "hs/001" "a" "a" nil '("a"))
+(test-case "hs/002" "abc" "abc" nil '("abc"))
+(test-case "hs/003" "abc|de" "abc" nil '("abc"))
+(test-case "hs/004" "a|b|c" "abc" nil '("a"))
+
+;; parentheses and perversions thereof
+(test-case "hs/005" "a(b)c" "abc" nil '("abc" "b"))
+;(test-case "hs/006" "a\\(b\\)c"  "abc" nil '("abc" "abc"))
+;(test-case "hs/007" "a("  "abc" nil 'regex-no-matched-parenthesis)
+(test-case "hs/008" "a\\("  "a(" nil '("a("))
+(test-case "hs/009" "a(b"   "a(" nil 'regex-no-matched-parenthesis)
+(test-case "hs/010" "a()b" "ab" nil '("ab" ""))
+
+;; anchoring and REG_NEWLINE
+(test-case "hs/011" "^abc$" "abc" nil '("abc"))
+(test-case "hs/012" "a^b" "a^b" nil nil) ; No match unless multiline.
+(test-case "hs/013" "^" "abc" nil '(""))
+(test-case "hs/014" "$" "abc" nil '(""))
+(test-case "hs/015" "^$" "" nil '(""))
+
+# stop retching, those are legitimate (although disgusting)
+(test-case "hs/016" "b$" "ab\\nc" nil nil)
+(test-case "hs/017" "b$" "ab\\nc" '(:multiple-lines) '("b"))
+(test-case "hs/018" "^b$" "a\\nb\\nc" nil nil)
+(test-case "hs/019" "^b$" "a\\nb\\nc" '(:multiple-lines) '("b"))
+(test-case "hs/020" "^$" "a\\n\\nb" '(:multiple-lines) '(""))
+(test-case "hs/021" "^$" "a\\n\\nb" '(:multiple-lines) nil)
+(test-case "hs/022" "^$" "abc\\n"   '(:multiple-lines) '(""))
+(test-case "hs/023" "$^" "a\\n\\nb"   '(:multiple-lines) '(""))
+;(test-case "hs/024" "^^" "a\\n\\nb"   '(:multiple-lines) '("")) NOTBOL
+(test-case "hs/025" "$$" "a\\n\\nb"   '(:multiple-lines) '(""))
+
+
+

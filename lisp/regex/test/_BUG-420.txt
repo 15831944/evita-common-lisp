@@ -1,0 +1,63 @@
+EXT[46]> (TEST-MATCH "^(a\\1?){4}$" "aaaaaaaaa" "n" "-" "-")
+#<Regex @ 20448020> is compiled form of regular expression.
+It matches at least 4 characters.
+It has 1 loops.
+
+Compiled form:
+ 000 BOS
+ 001 PUSH-INT        n=-4
+L003 PUSH-POS
+ 004 CHAR=           #\a
+ 006 CATCH           L010
+ 008 REFERENCE       nth=1
+L010 CAPTURE         nth=1
+ 012 MAX             L003 n=0
+ 015 EOL
+ 016 SUCCESS
+
+
+; regex-execute: pos=0/9 start-max=5
+; <> <aaaaaaaaa>               vsp=49 csp=98 pos=0|a| 000 :BOS PUSH-INT
+; <> <aaaaaaaaa>               vsp=49 csp=98 pos=0|a| 001 PUSH-INT -4
+; <> <aaaaaaaaa>               vsp=48 csp=98 pos=0|a| 003 PUSH-POS CHAR=
+; <> <aaaaaaaaa>               vsp=47 csp=98 pos=0|a| 004 CHAR= #\a
+; <a> <aaaaaaaa>               vsp=47 csp=98 pos=1|a| 006 CATCH 10
+; <a> <aaaaaaaa>               vsp=47 csp=94 pos=1|a| 008 REFERENCE 1
+;*** backtarck: csp=94 CONTINUE 10
+; <a> <aaaaaaaa>               vsp=47 csp=98 pos=1|a| 010 CAPTURE 1
+; set-capture[1]="a"
+; <a> <aaaaaaaa>               vsp=48 csp=94 pos=1|a| 012 MAX 3
+;                    need more: counter=-3
+; <a> <aaaaaaaa>               vsp=48 csp=94 pos=1|a| 003 PUSH-POS CHAR=
+; <a> <aaaaaaaa>               vsp=47 csp=94 pos=1|a| 004 CHAR= #\a
+; <aa> <aaaaaaa>               vsp=47 csp=94 pos=2|a| 006 CATCH 10
+; <aa> <aaaaaaa>               vsp=47 csp=90 pos=2|a| 008 REFERENCE 1
+; <aaa> <aaaaaa>               vsp=47 csp=90 pos=3|a| 010 CAPTURE 1
+; set-capture[1]="aa"
+; <aaa> <aaaaaa>               vsp=48 csp=86 pos=3|a| 012 MAX 3
+;                    need more: counter=-2
+; <aaa> <aaaaaa>               vsp=48 csp=86 pos=3|a| 003 PUSH-POS CHAR=
+; <aaa> <aaaaaa>               vsp=47 csp=86 pos=3|a| 004 CHAR= #\a
+; <aaaa> <aaaaa>               vsp=47 csp=86 pos=4|a| 006 CATCH 10
+; <aaaa> <aaaaa>               vsp=47 csp=82 pos=4|a| 008 REFERENCE 1
+; <aaaaaa> <aaa>               vsp=47 csp=82 pos=6|a| 010 CAPTURE 1
+; set-capture[1]="aaa"
+; <aaaaaa> <aaa>               vsp=48 csp=78 pos=6|a| 012 MAX 3
+;                    need more: counter=-1
+; <aaaaaa> <aaa>               vsp=48 csp=78 pos=6|a| 003 PUSH-POS CHAR=
+; <aaaaaa> <aaa>               vsp=47 csp=78 pos=6|a| 004 CHAR= #\a
+; <aaaaaaa> <aa>               vsp=47 csp=78 pos=7|a| 006 CATCH 10
+; <aaaaaaa> <aa>               vsp=47 csp=74 pos=7|a| 008 REFERENCE 1
+;*** backtarck: csp=74 CONTINUE 10
+; <aaaaaaa> <aa>               vsp=47 csp=78 pos=7|a| 010 CAPTURE 1
+; set-capture[1]="a"
+; <aaaaaaa> <aa>               vsp=48 csp=74 pos=7|a| 012 MAX 3
+;                    matched: counter=0
+; <aaaaaaa> <aa>               vsp=49 csp=74 pos=7|a| 015 :EOL SUCCESS
+;*** backtarck: csp=74 CAPTURE 1
+;*** backtarck: csp=78 CAPTURE 1
+;*** backtarck: csp=82 CONTINUE 10
+; <aaaa> <aaaaa>               vsp=47 csp=86 pos=4|a| 010 CAPTURE 1
+
+>Error occured in #<Function SUBSEQ @ 201ECF20>
+>Error: Invalid bounding indexes 6 and 4 for "aaaaaaaaa".
