@@ -33,7 +33,9 @@
 
 // Theme (Visual Style )
 #include <uxtheme.h>
+#if _MSC_VER < 1700
 #include <tmschema.h>
+#endif
 
 #define USE_GDIPLUS 1
 #include <gdiplus.h>

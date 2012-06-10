@@ -2206,7 +2206,7 @@ class TabBand : public Element {
           psG.DrawImage(&bitmap, 0, 0);
         }
 
-        if (!m_pInsertBefore) {
+        if (!!m_pInsertBefore) {
           drawInsertMarker(ps.hdc, m_pInsertBefore->GetRect());
         }
 

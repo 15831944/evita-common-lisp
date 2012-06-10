@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_RegexMatcher_h)
 #define INCLUDE_RegexMatcher_h
 
-#include "../../../evedit2/regex/IRegex.h"
+#include "../../regex/IRegex.h"
 
 namespace Private
 {
