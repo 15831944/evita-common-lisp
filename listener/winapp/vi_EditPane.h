@@ -48,16 +48,16 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: typedef DoubleLinkedList_<Window> Windows;
 
   // Used for layout boxes
-  public: class Box : public DoubleLinkedNode_<Box> {
+  public: class LeafBox : public DoubleLinkedNode_<LeafBox> {
     private: HWND m_hwndVScrollBar;
     private: Window* m_pWindow;
     private: RECT m_rc;
 
-    public: Box(Window* pWindow)
+    public: LeafBox(Window* pWindow)
         : m_hwndVScrollBar(NULL),
           m_pWindow(pWindow) {}
 
-    public: ~Box();
+    public: ~LeafBox();
 
     // [D]
     public: void DetachWindow() { m_pWindow = NULL; }
@@ -71,7 +71,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     public: HWND SetVScrollBar(HWND hwnd) { return m_hwndVScrollBar = hwnd; }
   };
 
-  private: typedef DoubleLinkedList_<Box> Boxes;
+  private: typedef DoubleLinkedList_<LeafBox> Boxes;
 
   private: class SplitterDrag {
     public: enum State {
@@ -80,7 +80,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
       State_DragSingle,
     };
 
-    public: Box* m_pBox;
+    public: LeafBox* m_pBox;
     public: State m_eState;
 
     public: SplitterDrag()
@@ -115,13 +115,12 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: void drawSplitters();
 
   // [E]
-  public: class EnumBox : public Boxes::Enum {
-      public: EnumBox(const EditPane* pPane)
-        : Boxes::Enum(&pPane->m_oBoxes) {}
+  private: class EnumBox : public Boxes::Enum {
+    public: EnumBox(const EditPane* pPane) : Boxes::Enum(&pPane->m_oBoxes) {}
   };
 
   // [G]
-  private: Box* getActiveBox() const;
+  private: LeafBox* getActiveBox() const;
   public: Window* GetActiveWindow() const;
   public: Buffer* GetBuffer() const;
 
@@ -138,7 +137,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     return m_oWindows.GetFirst() != m_oWindows.GetLast();
   }
 
-  private: Element hitTest(POINT, Box**) const;
+  private: Element hitTest(POINT, LeafBox**) const;
 
   // [M]
   public: virtual Command::KeyBindEntry* MapKey(uint) override;
@@ -148,13 +147,13 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
 
   // [R]
-  private: void realizeBox(Box*);
+  private: void realizeBox(LeafBox*);
 
   // [S]
   private: void setupStatusBar();
-  private: void setBoxPos(Box*) const;
-  public:  Window* SplitVertically();
-  public:  Box* splitVertically(Box*, int);
+  private: void setBoxPos(LeafBox*) const;
+  public: Window* SplitVertically();
+  public: LeafBox* splitVertically(LeafBox*, int);
 
   // [U]
   public: virtual void UpdateStatusBar() override;

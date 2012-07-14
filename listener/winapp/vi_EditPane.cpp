@@ -34,7 +34,7 @@ k_rgwszNewline[4] = {
 
 static HCURSOR s_hVSplitCursor;
 
-EditPane::Box::~Box() {
+EditPane::LeafBox::~LeafBox() {
   #if DEBUG_DESTORY
       DEBUG_PRINTF(L"%p\n", this);
   #endif
@@ -60,7 +60,7 @@ void EditPane::SplitterDrag::Stop() {
 EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
-  auto pBox = new Box(pWindow);
+  auto pBox = new LeafBox(pWindow);
   m_oBoxes.Append(pBox);
   m_oWindows.Append(pWindow);
   m_pwszName = pBuffer->GetName();
@@ -107,9 +107,9 @@ void EditPane::drawSplitters(HDC hdc) {
     rc.bottom = rc.top + k_cySplitterBig;
     drawSplitter(hdc, &rc, BF_RECT);
   } else {
-    auto pAbove = static_cast<Box*>(nullptr);
+    auto pAbove = static_cast<LeafBox*>(nullptr);
     foreach (EnumBox, oEnum, this) {
-      Box* pBox = oEnum.Get();
+      LeafBox* pBox = oEnum.Get();
       if (pAbove) {
         rc.top = pAbove->GetRect()->bottom;
         rc.bottom = pBox->GetRect()->top;
@@ -126,7 +126,7 @@ void EditPane::drawSplitters() {
 }
 
 // Returns the last active Box.
-EditPane::Box* EditPane::getActiveBox() const {
+EditPane::LeafBox* EditPane::getActiveBox() const {
   auto pActive = m_oBoxes.GetFirst();
   foreach (EnumBox, oEnum, this) {
     auto const pBox = oEnum.Get();
@@ -188,7 +188,7 @@ bool EditPane::HasFocus() const {
   return ::GetFocus() == *GetActiveWindow();
 }
 
-EditPane::Element EditPane::hitTest(POINT pt, Box** out_pBox) const {
+EditPane::Element EditPane::hitTest(POINT pt, LeafBox** out_pBox) const {
   *out_pBox = nullptr;
   auto cxVScroll = ::GetSystemMetrics(SM_CXVSCROLL);
 
@@ -420,7 +420,7 @@ LRESULT EditPane::onMessage(
         return FALSE;
       }
 
-      Box* pBox;
+      LeafBox* pBox;
       switch (hitTest(pt, &pBox)) {
         case Element_Splitter:
         case Element_SplitterBig:
@@ -455,7 +455,7 @@ LRESULT EditPane::onMessage(
       goto resize;
 
     case WM_VSCROLL: {
-      auto const pBox = reinterpret_cast<Box*>(
+      auto const pBox = reinterpret_cast<LeafBox*>(
           ::GetWindowLongPtr(
               reinterpret_cast<HWND>(lParam),
               GWLP_USERDATA));
@@ -493,7 +493,7 @@ LRESULT EditPane::onMessage(
         auto const cyNewWin = cyNewPane / cBoxes;
         auto yBox = m_rc.top;
         auto cySplitter = 0;
-        auto pBox = static_cast<Box*>(nullptr);
+        auto pBox = static_cast<LeafBox*>(nullptr);
         foreach (EnumBox, oEnum, this) {
           pBox = oEnum.Get();
           auto const prc = pBox->GetRect();
@@ -511,7 +511,7 @@ LRESULT EditPane::onMessage(
         tryAgain:
           auto yBox = m_rc.top;
           auto cySplitter = 0;
-          auto pBox = static_cast<Box*>(nullptr);
+          auto pBox = static_cast<LeafBox*>(nullptr);
           foreach (EnumBox, oEnum, this) {
             pBox = oEnum.Get();
             auto const prc = pBox->GetRect();
@@ -563,7 +563,7 @@ LRESULT EditPane::onMessage(
   return Pane::onMessage(uMsg, wParam, lParam);
 }
 
-void EditPane::realizeBox(Box* pBox) {
+void EditPane::realizeBox(LeafBox* pBox) {
   auto const pWindow = pBox->GetWindow();
   auto const hwndVertScrollBar = ::CreateWindowEx(
         0,
@@ -610,7 +610,7 @@ void EditPane::setupStatusBar() {
   GetFrame()->SetStatusBarParts(rgiRight, lengthof(rgiRight));
 }
 
-void EditPane::setBoxPos(Box* pBox) const {
+void EditPane::setBoxPos(LeafBox* pBox) const {
   auto const pWindow = pBox->GetWindow();
   auto const hwndVScrollBar = pWindow->GetScrollBarHwnd(SB_VERT);
   auto const prc = pBox->GetRect();
@@ -661,7 +661,7 @@ EditPane::Window* EditPane::SplitVertically() {
   return pBelow->GetWindow();
 }
 
-EditPane::Box* EditPane::splitVertically(Box* pBelow, int cyBox) {
+EditPane::LeafBox* EditPane::splitVertically(LeafBox* pBelow, int cyBox) {
   auto const prcBelow = pBelow->GetRect();
   ASSERT(prcBelow->bottom - prcBelow->top > cyBox);
 
@@ -679,7 +679,7 @@ EditPane::Box* EditPane::splitVertically(Box* pBelow, int cyBox) {
   pWindow->GetSelection()->SetStartIsActive(
       pSelection->IsStartActive());
 
-  auto const pAbove = new Box(pWindow);
+  auto const pAbove = new LeafBox(pWindow);
   auto const prcAbove = pAbove->GetRect();
 
   m_oBoxes.InsertBefore(pAbove, pBelow);
