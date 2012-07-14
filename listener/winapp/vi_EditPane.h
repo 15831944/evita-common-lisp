@@ -134,7 +134,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   // [H]
   public: virtual bool HasFocus() const override;
 
-  public:  bool HasMultipleWindows() const {
+  private: bool HasMultipleWindows() const {
     return m_oWindows.GetFirst() != m_oWindows.GetLast();
   }
 
