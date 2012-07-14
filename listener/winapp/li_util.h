@@ -153,6 +153,15 @@ class DoubleLinkedList_
         return m_pLast = pItem;
     } // Append
 
+    // [C]
+    public: int Count() const {
+      auto num_items = 0;
+      foreach (Enum, it, this) {
+        ++num_items;
+      }
+      return num_items;
+    }
+
     // [D]
     public: Item_* Delete(Item_* pItem)
     {
@@ -203,8 +212,11 @@ class DoubleLinkedList_
     public: class Enum
     {
         private: Item_* m_pRunner;
+        public: Enum(List_& r) : m_pRunner(r.m_pFirst) {}
+        public: Enum(const List_& r) : m_pRunner(r.m_pFirst) {}
         public: Enum(List_* p) : m_pRunner(p->m_pFirst) {}
         public: Enum(const List_* p) : m_pRunner(p->m_pFirst) {}
+        public: Item_* operator ->() { return Get(); }
         public: bool AtEnd() const { return m_pRunner == NULL; }
         public: Item_* Get() { return m_pRunner; }
         public: void Next()
