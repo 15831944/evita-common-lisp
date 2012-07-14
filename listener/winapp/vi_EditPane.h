@@ -119,7 +119,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   };
 
   // [G]
-  private: LeafBox* getActiveBox() const;
+  private: LeafBox* GetActiveLeafBox() const;
   public: Window* GetActiveWindow() const;
   public: Buffer* GetBuffer() const;
 

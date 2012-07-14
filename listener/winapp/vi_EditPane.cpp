@@ -126,7 +126,7 @@ void EditPane::drawSplitters() {
 }
 
 // Returns the last active Box.
-EditPane::LeafBox* EditPane::getActiveBox() const {
+EditPane::LeafBox* EditPane::GetActiveLeafBox() const {
   auto pActive = m_oBoxes.GetFirst();
   foreach (EnumBox, oEnum, this) {
     auto const pBox = oEnum.Get();
@@ -140,7 +140,7 @@ EditPane::LeafBox* EditPane::getActiveBox() const {
 
 // Returns the last active Box.
 EditPane::Window* EditPane::GetActiveWindow() const {
-  auto const pBox = getActiveBox();
+  auto const pBox = GetActiveLeafBox();
   return pBox ? pBox->GetWindow() : nullptr;
 }
 
@@ -642,7 +642,7 @@ void EditPane::setBoxPos(LeafBox* pBox) const {
 }
 
 EditPane::Window* EditPane::SplitVertically() {
-  auto const pBelow = getActiveBox();
+  auto const pBelow = GetActiveLeafBox();
   auto const prcBelow = pBelow->GetRect();
 
   // Active Box is too small to split.
