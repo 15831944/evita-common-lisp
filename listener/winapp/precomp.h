@@ -34,7 +34,7 @@
 // Theme (Visual Style )
 #include <uxtheme.h>
 #if _MSC_VER < 1700 // Before Visual Studio 2012
-#include <tmschema.h>
+#include <vssym32.h>
 #define final
 #endif
 
