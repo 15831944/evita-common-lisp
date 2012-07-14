@@ -138,10 +138,7 @@ EditPane::LeafBox* EditPane::getActiveBox() const {
   return pActive;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// EditPane::GetActiveWindow
-//  Returns the last active Box.
+// Returns the last active Box.
 EditPane::Window* EditPane::GetActiveWindow() const {
   auto const pBox = getActiveBox();
   return pBox ? pBox->GetWindow() : nullptr;
