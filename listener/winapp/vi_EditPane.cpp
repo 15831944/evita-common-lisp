@@ -9,11 +9,8 @@
 //
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_EditPane.cpp#3 $
 //
-#define DEBUG_CARET 0
-#define DEBUG_FOCUS 0
-#define DEBUG_KEY 0
 #define DEBUG_REDRAW 0
-#define DEBUG_SPLIT 1
+#define DEBUG_SPLIT 0
 #include "./vi_EditPane.h"
 
 #include "./ed_Mode.h"
@@ -78,6 +75,15 @@ EditPane::LeafBox* EditPane::LayoutBox::GetActiveLeafBox() const {
   return candiate;
 }
 
+void EditPane::LayoutBox::CloseAllBut(Window* window) {
+  auto runner = boxes_.GetFirst();
+  while (runner) {
+    auto const next = runner->GetNext();
+    runner->CloseAllBut(window);
+    runner = next;
+  }
+}
+
 uint EditPane::LayoutBox::CountLeafBox() const {
   auto count = 0u;
   foreach (BoxList::Enum, it, boxes_) {
@@ -132,6 +138,12 @@ EditPane::LeafBox::~LeafBox() {
   }
 }
 
+void EditPane::LeafBox::CloseAllBut(Window* window) {
+  if (GetWindow() != window) {
+    GetWindow()->Destroy();
+  }
+}
+
 void EditPane::LeafBox::Destroy() {
     GetWindow()->Destroy();
 }
@@ -183,6 +195,7 @@ void EditPane::LeafBox::Realize(HWND hwndParent, const Rect& rect) {
 
    m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, hwndParent);
    m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
+   SetRect(rect);
 }
 
 void EditPane::LeafBox::SetRect(const Rect& rect) {
@@ -432,8 +445,8 @@ EditPane::LeafBox& EditPane::VirticalLayoutBox::Split(
   auto const prcBelow = &pBelow->rect();
   ASSERT(prcBelow->bottom - prcBelow->top > cyBox);
 
-  auto const pWindow = new Window(
-      this,
+  auto const pWindow = new TextEditWindow(
+      pBelow->GetWindow()->GetHost<EditPane>(),
       pBelow->GetWindow()->GetBuffer(),
       pBelow->GetWindow()->GetStart());
 
@@ -514,9 +527,7 @@ EditPane::~EditPane() {
 }
 
 void EditPane::CloseAllBut(Window* window) {
-  if (auto const leaf_box = root_box_->GetLeafBox(*window)) {
-    leaf_box->Destroy();
-  }
+  root_box_->CloseAllBut(window);
 }
 
 // Returns the last active Box.
@@ -708,10 +719,7 @@ LRESULT EditPane::onMessage(
     }
 
     case WM_SETFOCUS:
-      #if DEBUG_FOCUS
-          DEBUG_PRINTF(L"WM_SETFOCUS %p\n", this);
-      #endif
-
+      DEBUG_PRINTF("WM_SETFOCUS %p\n", this);
       Pane::onMessage(uMsg, wParam, lParam);
       if (auto const pWindow = GetActiveWindow()) {
         pWindow->Activate();

@@ -68,6 +68,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     public: LayoutBox* outer() const { return outer_; }
     public: const Rect& rect() const { return rect_; }
     public: Rect& rect() { return rect_; }
+    public: virtual void CloseAllBut(Window*) = 0;
     public: virtual uint CountLeafBox() const = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(HDC) { }
@@ -87,6 +88,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     protected: LayoutBox(LayoutBox*);
     public: virtual ~LayoutBox();
     public: void Add(Box& box) { boxes_.Append(&box); }
+    public: virtual void CloseAllBut(Window*) override final;
     public: virtual uint CountLeafBox() const override final;
     public: virtual void Destroy() override final;
     public: virtual void MoveSplitter(const Point&, Box&) = 0;
@@ -112,6 +114,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     public: ~LeafBox();
 
     // [C]
+    public: virtual void CloseAllBut(Window*) override final;
     public: virtual uint CountLeafBox() const { return 1; }
 
     // [D]
