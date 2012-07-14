@@ -64,11 +64,10 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
 
     // [G]
     public: RECT* GetRect() { return &m_rc; }
-    public: HWND GetVScrollBar() const { return m_hwndVScrollBar; }
     public: Window* GetWindow() const { return m_pWindow; }
 
-    // [S]
-    public: HWND SetVScrollBar(HWND hwnd) { return m_hwndVScrollBar = hwnd; }
+    // [R]
+    public: void Realize(HWND);
   };
 
   private: typedef DoubleLinkedList_<LeafBox> Boxes;
@@ -145,9 +144,6 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   // [O]
   public:  virtual bool OnIdle(uint) override;
   private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
-
-  // [R]
-  private: void realizeBox(LeafBox*);
 
   // [S]
   private: void setupStatusBar();

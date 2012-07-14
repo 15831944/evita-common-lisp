@@ -253,7 +253,7 @@ LRESULT EditPane::onMessage(
       foreach (EnumBox, oEnum, this) {
         auto const pBox = oEnum.Get();
         *pBox->GetRect() = m_rc;
-        realizeBox(pBox);
+        pBox->Realize(*this);
       }
       break;
     }
@@ -560,30 +560,28 @@ LRESULT EditPane::onMessage(
   return Pane::onMessage(uMsg, wParam, lParam);
 }
 
-void EditPane::realizeBox(LeafBox* pBox) {
-  auto const pWindow = pBox->GetWindow();
-  auto const hwndVertScrollBar = ::CreateWindowEx(
+void EditPane::LeafBox::Realize(HWND hwndParent) {
+  m_hwndVScrollBar = ::CreateWindowExW(
         0,
         L"SCROLLBAR",
-        nullptr,   // title
+        nullptr, // title
         WS_CHILD | WS_VISIBLE | SBS_VERT,
-        0,      // x
-        0,      // y
-        0,      // width
-        0,      // height
-        *this,  // parent
-        nullptr,   // menu
+        0, // x
+        0, // y
+        0, // width
+        0, // height
+        hwndParent, // parent
+        nullptr, // menu
         g_hInstance,
         nullptr);
 
   ::SetWindowLongPtr(
-      hwndVertScrollBar,
+      m_hwndVScrollBar,
       GWLP_USERDATA,
-      reinterpret_cast<LONG_PTR>(pBox));
+      reinterpret_cast<LONG_PTR>(this));
 
-   pBox->SetVScrollBar(hwndVertScrollBar);
-   pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, *this);
-   pWindow->SetScrollBar(hwndVertScrollBar, SB_VERT);
+   m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, hwndParent);
+   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
 }
 
 void EditPane::setupStatusBar() {
@@ -681,7 +679,7 @@ EditPane::LeafBox* EditPane::splitVertically(LeafBox* pBelow, int cyBox) {
 
   m_oBoxes.InsertBefore(pAbove, pBelow);
   m_oWindows.InsertBefore(pWindow, pBelow->GetWindow());
-  realizeBox(pAbove);
+  pAbove->Realize(*this);
 
   prcAbove->left = prcBelow->left;
   prcAbove->right = prcBelow->right;
