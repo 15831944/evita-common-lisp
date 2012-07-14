@@ -16,8 +16,6 @@
 #define DEBUG_TOOLTIP   0
 #include "./ctrl_tabBand.h"
 
-#undef override
-
 // C4481: nonstandard extension used: override specifier 'override'
 #pragma warning(disable: 4481)
 #pragma comment(lib, "gdiplus.lib")

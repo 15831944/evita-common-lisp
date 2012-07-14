@@ -56,18 +56,18 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane>
     public: HWND GetListWindow() const
         { return m_hwndListView; }
 
-    public: override int GetTitle(char16*, int);
+    public: virtual int GetTitle(char16*, int) override;
 
     // [L]
     public: void Refresh();
 
     // [M]
-    public: override Command::KeyBindEntry* MapKey(uint);
+    public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
     // [O]
     private: void onCreate(CREATESTRUCT*);
     private: void onKeyDown(uint);
-    private: override LRESULT onMessage(uint, WPARAM, LPARAM);
+    private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
 }; // BufferListPane
 
 #endif //!defined(INCLUDE_visual_BufferListPane_h)

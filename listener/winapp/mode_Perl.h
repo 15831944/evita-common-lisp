@@ -27,13 +27,13 @@ class PerlModeFactory : public ModeFactory
     public: PerlModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"pl pm t"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Perl"; }
 }; // PerlModeFactory
 

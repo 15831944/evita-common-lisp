@@ -497,7 +497,7 @@ class Buffer :
         } // Cursor
 
         // [C]
-        public: override bool CanMove(int iDelta)
+        public: virtual bool CanMove(int iDelta) override
             { return isValidPosn(m_lCurStart + iDelta); }
 
         public: void Collapse(CollapseWhich eCollapse)
@@ -570,14 +570,14 @@ class Buffer :
         } // FindForward
 
         // [G]
-        public: override char16 GetChar(int iDelta)
+        public: virtual char16 GetChar(int iDelta) override
         {
             Posn lPosn = m_lCurStart + iDelta;
             return isValidPosn(lPosn) ? m_pBuffer->GetCharAt(lPosn) : 0;
         } // GetChar
 
         public:          Posn GetEnd()   const { return m_lCurEnd; }
-        public: override Posn GetPosition()    { return m_lCurStart; }
+        public: virtual Posn GetPosition() override { return m_lCurStart; }
         public:          Posn GetStart() const { return m_lCurStart; }
 
         // [I]
@@ -585,16 +585,16 @@ class Buffer :
             { return ensurePosn(lPosn) == lPosn; }
 
         // [M]
-        public: override bool Match(const char16* pwch, int cwch, uint rgf)
+        public: virtual bool Match(const char16* pwch, int cwch, uint rgf) override
             { return m_pBuffer->Match(m_lCurStart, pwch, cwch, rgf); }
 
-        public: override long Move(int iDelta)
+        public: virtual long Move(int iDelta) override
             { return m_lCurStart = ensurePosn(m_lCurStart + iDelta); }
 
-        public: override long MoveToEnd()
+        public: virtual long MoveToEnd() override
             { return m_lCurStart = m_lEnd; }
 
-        public: override long MoveToStart()
+        public: virtual long MoveToStart() override
             { return m_lCurStart = m_lStart; }
 
         // [S]

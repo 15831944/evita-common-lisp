@@ -7,8 +7,6 @@
 //
 #include "./CharsetDecoder.h"
 
-#undef override
-
 namespace Charset {
 
 namespace {

@@ -86,7 +86,6 @@ typedef unsigned int uint;
 typedef unsigned int uint32;
 typedef wchar_t char16;
 
-#define override virtual
 #define unless(mp_exp)  if (! (mp_exp))
 #define when(mp_exp)    if (mp_exp)
 #define NoReturn __declspec(noreturn)

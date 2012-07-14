@@ -158,10 +158,10 @@ class EditPane : public CommandWindow_<EditPane, Pane>
     public: Window* GetLastWindow() const
         { return m_oWindows.GetLast(); }
 
-    public: override int GetTitle(char16*, int);
+    public: virtual int GetTitle(char16*, int) override;
 
     // [H]
-    public: override bool HasFocus() const;
+    public: virtual bool HasFocus() const override;
 
     public:  bool HasMultipleWindows() const
         { return m_oWindows.GetFirst() != m_oWindows.GetLast(); }
@@ -170,7 +170,7 @@ class EditPane : public CommandWindow_<EditPane, Pane>
 
 
     // [M]
-    public: override Command::KeyBindEntry* MapKey(uint);
+    public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
     // [O]
     public:  virtual bool    OnIdle(uint);

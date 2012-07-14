@@ -718,7 +718,7 @@ class PerlMode : public Mode
         Mode(pFactory, pBuffer) {}
 
     // [D]
-    public: override bool DoColor(Count lCount)
+    public: virtual bool DoColor(Count lCount) override
     {
         return m_oLexer.Run(lCount);
     } // DoColor

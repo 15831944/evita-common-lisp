@@ -27,13 +27,13 @@ class CxxModeFactory : public ModeFactory
     public: CxxModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"cc cpp cxx c hpp hxx h css cs ev"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"C++"; }
 }; // CxxModeFactory
 
@@ -46,13 +46,13 @@ class JavaModeFactory : public ModeFactory
     public: JavaModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"java js"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Java"; }
 }; // JavaModeFactory
 

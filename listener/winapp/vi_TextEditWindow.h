@@ -168,7 +168,7 @@ class TextEditWindow :
     public:  int LargeScroll(int, int, bool = true);
 
     // [M]
-    public: override Command::KeyBindEntry* MapKey(uint);
+    public: virtual Command::KeyBindEntry* MapKey(uint) override;
     public: void MakeSelectionVisible();
     public: Posn MapPointToPosn(POINT);
     public: int  MapPosnToPoint(Posn, POINT* = NULL);

@@ -35,7 +35,7 @@ class Castable_
 template<class T, class Base_, typename KindType_ = const char*>
 class HasKind_ : public Base_
 {
-    public: override KindType_ GetKind() const
+    public: virtual KindType_ GetKind() const override
         { return T::Kind_(); }
 
     public: static bool Is_(const Base_* p)

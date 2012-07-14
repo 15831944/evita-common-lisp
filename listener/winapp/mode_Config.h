@@ -27,17 +27,17 @@ class ConfigModeFactory : public ModeFactory
     public: ConfigModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"cfg mk stanza"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Config"; }
 
     // [I]
-    public: override bool IsSupported(const char16*) const;
+    public: virtual bool IsSupported(const char16*) const override;
 }; // ConfigModeFactory
 
 } // Edit

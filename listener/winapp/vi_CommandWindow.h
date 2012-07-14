@@ -52,7 +52,7 @@ class CommandWindow_ : public Parent_
     public: static bool Is_(const CommandWindow* p)
         { return T::GetClass_() == p->GetClass(); }
 
-    public: override const char16* GetClass() const
+    public: virtual const char16* GetClass() const override
         { return T::GetClass_(); }
 }; // CommandWindow_
 

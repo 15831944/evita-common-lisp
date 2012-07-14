@@ -53,13 +53,13 @@ class FindDialogBox : public DialogBox
     private: bool findFirst(RegexMatcher*);
 
     // [G]
-    protected: override int GetTemplate() const
+    protected: virtual int GetTemplate() const override
         { return IDD_FIND; }
 
     // [O]
     protected: void            onCancel();
-    protected: override bool   onCommand(WPARAM, LPARAM);
-    protected: override bool   onInitDialog();
+    protected: virtual bool   onCommand(WPARAM, LPARAM) override;
+    protected: virtual bool   onInitDialog() override;
     protected: virtual INT_PTR onMessage(UINT, WPARAM, LPARAM);
     protected: void            onFindNext();
     protected: void            onFindPrevious();

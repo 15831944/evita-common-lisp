@@ -690,7 +690,7 @@ class LispMode : public Mode
     /// <summary>
     ///   Color buffer with Lisp syntax.
     /// </summary>
-    public: override bool DoColor(Count lCount)
+    public: virtual bool DoColor(Count lCount) override
     {
         return m_oLexer.Run(lCount);
     } // DoColor

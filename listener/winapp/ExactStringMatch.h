@@ -120,10 +120,10 @@ class ExactStringMatch : public IStringMatcher
     public: ExactStringMatch(const SearchParameters*);
 
     // [F]
-    public: override bool FirstMatch(IStringCursor*);
+    public: virtual bool FirstMatch(IStringCursor*) override;
 
     // [G]
-    public: override bool GetMatched(int iIndex, StringRange* out_oRange)
+    public: virtual bool GetMatched(int iIndex, StringRange* out_oRange) override
     {
         if (0 != iIndex) return false;
         if (! m_fMatched) return false;
@@ -144,7 +144,7 @@ class ExactStringMatch : public IStringMatcher
     } // getShift
 
     // [N]
-    public: override bool NextMatch();
+    public: virtual bool NextMatch() override;
 }; // ExactStringMatch
 
 #endif //!defined(INCLUDE_ExactStringMatch_h)

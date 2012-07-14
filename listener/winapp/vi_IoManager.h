@@ -46,7 +46,7 @@ class IoManager : public BaseWindow
         Count );
 
     // [O]
-    protected: override LRESULT onMessage(UINT, WPARAM, LPARAM);
+    protected: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
 
     // [R]
     public: void Realize();

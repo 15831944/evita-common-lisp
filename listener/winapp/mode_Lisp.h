@@ -25,13 +25,13 @@ class LispModeFactory : public ModeFactory
     public: LispModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"cl l lisp lsp scm el"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Lisp"; }
 }; // LispModeFactory
 

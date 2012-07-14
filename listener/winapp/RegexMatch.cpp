@@ -56,7 +56,7 @@ class CompileContext : public Regex::ICompileContext
         delete m_prgoCapture;
     } // ~CompileContext
 
-    private: override void* AllocRegex(size_t cb, int cCaptures)
+    private: virtual void* AllocRegex(size_t cb, int cCaptures) override
     {
         ASSERT(0 == m_cCaptures);
 
@@ -70,7 +70,7 @@ class CompileContext : public Regex::ICompileContext
         return m_prgbBlob;
     } // Alloc
 
-    private: override bool SetCapture(int iNth, const char16* pwsz)
+    private: virtual bool SetCapture(int iNth, const char16* pwsz) override
     {
         int cwch = ::lstrlenW(pwsz);
         char16* pwszSave = new char16[cwch + 1];
@@ -79,7 +79,7 @@ class CompileContext : public Regex::ICompileContext
         return true;
     } // SetCapture
 
-    private: override void SetError(int nPosn, int nError)
+    private: virtual void SetError(int nPosn, int nError) override
     {
         m_nError = nError;
         m_nPosn  = nPosn;
@@ -186,23 +186,23 @@ class BufferMatchContext : public Regex::IMatchContext
 
     // Regex::IMatchContext
     // [B]
-    override bool BackwardFindCharCi(char16, Posn*, Posn) const;
-    override bool BackwardFindCharCs(char16, Posn*, Posn) const;
+    virtual bool BackwardFindCharCi(char16, Posn*, Posn) const override;
+    virtual bool BackwardFindCharCs(char16, Posn*, Posn) const override;
 
     // [F]
-    override bool ForwardFindCharCi(char16, Posn*, Posn) const;
-    override bool ForwardFindCharCs(char16, Posn*, Posn) const;
+    virtual bool ForwardFindCharCi(char16, Posn*, Posn) const override;
+    virtual bool ForwardFindCharCs(char16, Posn*, Posn) const override;
 
     // [G]
-    override bool GetCapture(int, Posn*, Posn*) const;
+    virtual bool GetCapture(int, Posn*, Posn*) const override;
 
-    override char16 GetChar(Posn lPosn) const
+    virtual char16 GetChar(Posn lPosn) const override
         { return m_oRange.GetBuffer()->GetCharAt(lPosn); }
 
-    override Posn GetEnd() const
+    virtual Posn GetEnd() const override
         { return m_oRange.GetEnd(); }
 
-    override void GetInfo(Regex::SourceInfo* p) const
+    virtual void GetInfo(Regex::SourceInfo* p) const override
     {
         p->m_lStart = 0;
         p->m_lEnd   = m_oRange.GetBuffer()->GetEnd();
@@ -211,17 +211,17 @@ class BufferMatchContext : public Regex::IMatchContext
         p->m_lScanEnd   = m_oRange.GetEnd();
     } // GetInfo
 
-    override Posn GetStart() const
+    virtual Posn GetStart() const override
         { return m_oRange.GetStart(); }
 
     // [R]
-    override void ResetCapture(int);
-    override void ResetCaptures();
+    virtual void ResetCapture(int) override;
+    virtual void ResetCaptures() override;
 
     // [S]
-    override void SetCapture(int, Posn, Posn);
-    override bool StringEqCi(const char16*, int, Posn) const;
-    override bool StringEqCs(const char16*, int, Posn) const;
+    virtual void SetCapture(int, Posn, Posn) override;
+    virtual bool StringEqCi(const char16*, int, Posn) const override;
+    virtual bool StringEqCs(const char16*, int, Posn) const override;
 }; // BufferMatchContext
 
 // [B]

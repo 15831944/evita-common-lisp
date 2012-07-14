@@ -23,9 +23,6 @@
 #include "../charset/CharsetDetector.h"
 using namespace Charset;
 
-// FIXME(yosi@msn.com) 2011-12-29 We should remove override macro.
-#undef override
-
 DWORD  IoRequest::sm_dwThread;
 HANDLE IoRequest::sm_hIoCompletionPort;
 HANDLE IoRequest::sm_hThread;

@@ -44,7 +44,7 @@ class Pane :
         { return ::GetFocus() == m_hwnd; }
 
     // [I]
-    public: override bool IsPane() const { return true; }
+    public: virtual bool IsPane() const override { return true; }
 
     public: static bool Is_(const CommandWindow* p)
         { return p->IsPane(); }

@@ -25,17 +25,17 @@ class MasonModeFactory : public ModeFactory
     public: MasonModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer*);
+    public: virtual Mode* Create(Buffer*) override;
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"m mi"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Mason"; }
 
     // [I]
-    public: override bool IsSupported(const char16*) const;
+    public: virtual bool IsSupported(const char16*) const override;
 }; // MasonModeFactory
 
 } // Edit

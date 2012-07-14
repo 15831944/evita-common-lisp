@@ -26,7 +26,7 @@ class PlainTextMode : public Mode
     public: PlainTextMode(ModeFactory*, Buffer*);
 
     // [D]
-    public: override bool DoColor(Count) { return false; }
+    public: virtual bool DoColor(Count) override { return false; }
 }; // PlainTextMode
 
 
@@ -40,14 +40,14 @@ class PlainTextModeFactory : public ModeFactory
     public: PlainTextModeFactory();
 
     // [C]
-    public: override Mode* Create(Buffer* pBuffer)
+    public: virtual Mode* Create(Buffer* pBuffer) override
         { return new PlainTextMode(this, pBuffer); }
 
     // [G]
-    protected: override const char16* getExtensions() const
+    protected: virtual const char16* getExtensions() const override
         { return L"txt"; }
 
-    public: override const char16* GetName() const
+    public: virtual const char16* GetName() const override
         { return L"Plain"; }
 }; // PlainTextModeFactory
 
