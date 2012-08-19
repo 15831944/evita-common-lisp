@@ -1182,6 +1182,37 @@ DEFCOMMAND(SelectAll)
     pSelection->SetStartIsActive(false);
 } // SelectAll
 
+DEFCOMMAND(SplitWindowHorizontally)
+{
+    if (NULL == pCtx->GetSelection()) return;
+
+    EditPane* pPane = Application::Get()->GetActiveFrame()->
+        GetActivePane()->DynamicCast<EditPane>();
+
+    if (NULL == pPane)
+    {
+        return;
+    }
+
+    TextEditWindow* pWindow = pPane->SplitHorizontally();
+    if (NULL == pWindow)
+    {
+        Application::Get()->ShowMessage(
+            MessageLevel_Warning,
+            IDS_CAN_NOT_SPLIT );
+        return;
+    }
+
+    Selection* pSelection = pCtx->GetSelection();
+
+    pWindow->GetSelection()->SetRange(
+        pSelection->GetStart(),
+        pSelection->GetEnd() );
+
+    pWindow->MakeSelectionVisible();
+    pSelection->GetWindow()->MakeSelectionVisible();
+} // SplitWindowHorizontally
+
 DEFCOMMAND(SplitWindowVertically)
 {
     if (NULL == pCtx->GetSelection()) return;
@@ -1695,6 +1726,7 @@ void Processor::GlobalInit()
     BIND_KEY(Mod_CtrlShift | '2', SplitWindowVertically);
     BIND_KEY(Mod_CtrlShift | '3', NewFrame);
     BIND_KEY(Mod_CtrlShift | '4', NewFrameAndClose);
+    BIND_KEY(Mod_CtrlShift | '5', SplitWindowHorizontally);
     BIND_KEY(Mod_CtrlShift | '9', CloseOtherFrames);
     BIND_KEY(Mod_CtrlShift | 'W', Exit);
 

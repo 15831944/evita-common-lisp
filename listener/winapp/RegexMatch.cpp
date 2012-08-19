@@ -138,8 +138,9 @@ class BufferMatchContext : public Regex::IMatchContext
     // [G]
     public: Edit::Range* GetCapture(int nNth) const
     { 
-        ASSERT(static_cast<uint>(nNth) <= static_cast<uint>(m_cCaptures));
-        return m_prgoCapture[nNth].m_pRange;
+        return uint(nNth) <= uint(m_cCaptures)
+            ? m_prgoCapture[nNth].m_pRange
+            : nullptr;
     } // GetCapture
 
     public: Edit::Range* GetCapture(
@@ -1136,7 +1137,10 @@ void RegexMatcher::Replace(
         break;
 
     case State_Capture:
-        oStream.Write(GetMatched(iAcc));
+        if (auto const range = GetMatched(iAcc))
+        {
+            oStream.Write(GetMatched(iAcc));
+        }
         break;
     } // switch eState
 } // RegexMatcher::Replace
