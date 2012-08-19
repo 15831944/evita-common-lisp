@@ -21,6 +21,9 @@ class TextEditWindow;
 // them vertically with draggable splitter.
 class EditPane : public CommandWindow_<EditPane, Pane> {
   private: enum Limits {
+    k_cxSplitter = 8,
+    k_cxSplitterBig = 11,
+    k_cxMinBox = 50,
     k_cySplitter = 8,
     k_cySplitterBig = 11,
     k_cyMinBox = k_cySplitter,
@@ -44,6 +47,9 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: struct HitTestResult {
     enum Type {
       None,
+      HScrollBar,
+      HSplitter,
+      HSplitterBig,
       VScrollBar,
       VSplitter,
       VSplitterBig,
@@ -60,43 +66,57 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: typedef TextEditWindow Window;
   private: typedef DoubleLinkedList_<Window> Windows;
 
-  private: class Box : public DoubleLinkedNode_<Box> {
+  private: class Box
+        : public DoubleLinkedNode_<Box>,
+          public RefCounted_<Box> {
+    private: bool is_removed_;
+    private: LayoutBox* outer_;
     private: Rect rect_;
-    private: LayoutBox* const outer_;
-    protected: Box(LayoutBox* outer) : outer_(outer) {}
-    public: virtual ~Box() {}
+    protected: Box(LayoutBox*);
+    public: virtual ~Box();
+    public: bool is_removed() const { return is_removed_; }
     public: LayoutBox* outer() const { return outer_; }
     public: const Rect& rect() const { return rect_; }
     public: Rect& rect() { return rect_; }
+    public: void set_outer(LayoutBox& outer) { outer_ = &outer; }
     public: virtual void CloseAllBut(Window*) = 0;
     public: virtual uint CountLeafBox() const = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(HDC) { }
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
+    public: virtual LeafBox* GetFirstLeafBox() const = 0;
     public: virtual LeafBox* GetLeafBox(HWND) const = 0;
     public: virtual HitTestResult HitTest(Point) const = 0;
+    public: virtual bool IsLeafBox() const = 0;
     public: virtual bool OnIdle(uint) = 0;
     public: virtual void Realize(HWND, const Rect&);
+    public: void Removed();
     public: virtual void SetRect(const Rect&);
     DISALLOW_COPY_AND_ASSIGN(Box);
   };
 
   private: class LayoutBox : public Box {
-    private: typedef DoubleLinkedList_<Box> BoxList;
+    protected: typedef DoubleLinkedList_<Box> BoxList;
     protected: BoxList boxes_;
     protected: HWND hwndParent_;
     protected: LayoutBox(LayoutBox*);
     public: virtual ~LayoutBox();
-    public: void Add(Box& box) { boxes_.Append(&box); }
+    public: void Add(Box& box);
     public: virtual void CloseAllBut(Window*) override final;
     public: virtual uint CountLeafBox() const override final;
     public: virtual void Destroy() override final;
+    protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) = 0;
     public: virtual void MoveSplitter(const Point&, Box&) = 0;
     public: virtual LeafBox* GetActiveLeafBox() const override final;
+    public: virtual LeafBox* GetFirstLeafBox() const override final;
     public: virtual LeafBox* GetLeafBox(HWND) const override final;
+    public: virtual bool IsLeafBox() const override final { return false; }
+    public: bool IsSingle() const;
+    public: virtual bool IsVerticalLayoutBox() const = 0;
     public: virtual bool OnIdle(uint) override final;
     public: virtual void Realize(HWND, const Rect&) override;
-    public: virtual void Remove(LeafBox&) = 0;
+    public: void RemoveBox(Box&);
+    public: void Replace(Box&, Box&);
     public: virtual LeafBox& Split(Box&, int) = 0;
     public: virtual void StopSplitter(const Point&, Box&) = 0;
     protected: void UpdateSplitters();
@@ -115,23 +135,27 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
 
     // [C]
     public: virtual void CloseAllBut(Window*) override final;
-    public: virtual uint CountLeafBox() const { return 1; }
+    public: virtual uint CountLeafBox() const  override final { return 1; }
 
     // [D]
     public: virtual void Destroy() override final;
-    public: void DetachWindow() { m_pWindow = nullptr; }
+    public: void DetachWindow();
+
+    public: void EnsureInHorizontalLayoutBox();
+    public: void EnsureInVerticalLayoutBox();
 
     // [G]
-    public: virtual LeafBox* GetActiveLeafBox() const {
-
-      return const_cast<LeafBox*>(this);
-    }
+    public: virtual LeafBox* GetActiveLeafBox() const override final;
+    public: virtual LeafBox* GetFirstLeafBox() const override final;
     public: virtual LeafBox* GetLeafBox(HWND) const override final;
     public: Window* GetWindow() const { return m_pWindow; }
 
     // [H]
     private: bool HasSibling() const { return GetNext() || GetPrev(); }
     public: virtual HitTestResult HitTest(Point) const override final;
+
+    // [I]
+    public: virtual bool IsLeafBox() const override final { return true; }
 
     // [O]
     public: virtual bool OnIdle(uint) override final;
@@ -143,13 +167,31 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     public: virtual void SetRect(const Rect&) override final;
   };
 
-  private: class VirticalLayoutBox : public LayoutBox {
-    public: VirticalLayoutBox(LayoutBox*);
+  private: class HorizontalLayoutBox : public LayoutBox {
+    public: HorizontalLayoutBox(LayoutBox*);
+    public: virtual ~HorizontalLayoutBox();
+    protected: virtual void DidRemoveBox(
+        Box*, Box*, const Rect&) override final;
     public: virtual HitTestResult HitTest(Point) const override final;
     public: virtual void DrawSplitters(HDC) override final;
+    public: virtual bool IsVerticalLayoutBox() const override final;
     public: virtual void MoveSplitter(const Point&, Box&) override final;
     public: virtual void Realize(HWND, const Rect&) override final;
-    public: virtual void Remove(LeafBox&) override final;
+    public: virtual void SetRect(const Rect&) override final;
+    public: virtual LeafBox& Split(Box&, int) override final;
+    public: virtual void StopSplitter(const Point&, Box&) override final;
+  };
+
+  private: class VerticalLayoutBox : public LayoutBox {
+    public: VerticalLayoutBox(LayoutBox*);
+    public: virtual ~VerticalLayoutBox();
+    protected: virtual void DidRemoveBox(
+        Box*, Box*, const Rect&) override final;
+    public: virtual HitTestResult HitTest(Point) const override final;
+    public: virtual void DrawSplitters(HDC) override final;
+    public: virtual bool IsVerticalLayoutBox() const override final;
+    public: virtual void MoveSplitter(const Point&, Box&) override final;
+    public: virtual void Realize(HWND, const Rect&) override final;
     public: virtual void SetRect(const Rect&) override final;
     public: virtual LeafBox& Split(Box&, int) override final;
     public: virtual void StopSplitter(const Point&, Box&) override final;
@@ -162,14 +204,14 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
       State_DragSingle,
     };
 
-    public: Box* m_pBox;
-    public: State m_eState;
+    private: Box* m_pBox;
+    private: State m_eState;
 
-    public: SplitterDrag()
-        : m_eState(State_None),
-          m_pBox(nullptr) {}
-
-    public: void Start(HWND, State);
+    public: SplitterDrag();
+    public: ~SplitterDrag();
+    public: void End(const Point&);
+    public: void Move(const Point&);
+    public: void Start(HWND, State, Box&);
     public: void Stop();
   };
 
@@ -180,7 +222,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
-  private: LayoutBox* root_box_;
+  private: ScopedRefCount_<LayoutBox> root_box_;
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;
   private: RECT m_rc;
@@ -218,8 +260,8 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
 
   // [S]
   private: void setupStatusBar();
+  public: Window* SplitHorizontally();
   public: Window* SplitVertically();
-  public: LeafBox* splitVertically(LeafBox*, int);
 
   // [U]
   public: virtual void UpdateStatusBar() override final;
