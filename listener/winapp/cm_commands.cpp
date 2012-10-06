@@ -769,16 +769,16 @@ DEFCOMMAND(NewFrame)
     Frame* pFrame = Application::Get()->CreateFrame();
 
     EditPane* pPane = new EditPane(pSelection->GetBuffer());
+    pFrame->AddPane(pPane);
+    pFrame->Realize();
 
+    // Note: GetFirstWindow() is available after Realize().
     TextEditWindow* pWindow = pPane->GetFirstWindow();
 
     pWindow->GetSelection()->SetRange(
         pSelection->GetStart(),
         pSelection->GetEnd() );
 
-    pFrame->AddPane(pPane);
-
-    pFrame->Realize();
     pWindow->MakeSelectionVisible();
     pPane->Activate();
 } // NewFrame
@@ -800,18 +800,18 @@ DEFCOMMAND(NewFrameAndClose)
     Frame* pFrame = Application::Get()->CreateFrame();
 
     EditPane* pPane = new EditPane(pSelection->GetBuffer());
+    pFrame->AddPane(pPane);
+    pFrame->Realize();
 
+    // Note: GetFirstWindow() is available after Realize().
     TextEditWindow* pWindow = pPane->GetFirstWindow();
 
     pWindow->GetSelection()->SetRange(
         pSelection->GetStart(),
         pSelection->GetEnd() );
 
-    pFrame->AddPane(pPane);
-
     ::DestroyWindow(*pSelection->GetWindow());
 
-    pFrame->Realize();
     pWindow->MakeSelectionVisible();
     pPane->Activate();
 } // NewFrameAndClose
