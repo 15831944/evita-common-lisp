@@ -952,25 +952,34 @@ class NodeRange : public NodeCsBase {
 class NodeString : public NodeCsBase {
   CASTABLE(NodeString, NodeCsBase);
 
+  private: LocalHeap& heap_;
   private: int const m_cwch;
   private: const char16* const m_pwch;
 
   /// <summary>
   /// Construct NodeString.
   /// </summary>
-  public: NodeString(
+  private: NodeString(
+      LocalHeap& heap,
       Direction direction,
       const char16* pwch,
       int cwch,
-      Case case_sensivity = CaseSensitive,
-      bool not = false)
-      : NodeCsBase(direction, case_sensivity, not),
-        m_cwch(cwch),
-        m_pwch(pwch) {}
+      Case case_sensivity,
+      bool not);
+
+  public: virtual ~NodeString();
 
   // [C]
   public: virtual int ComputeMinLength() const override { return m_cwch; }
   public: virtual void Compile(Compiler*, int) override;
+
+  public: static NodeString* Create(
+      LocalHeap& heap,
+      Direction direction,
+      const char16* pwch,
+      int cwch,
+      Case case_sensivity = CaseSensitive,
+      bool not = false);
 
   // [G]
   public: int GetLength() const { return m_cwch; }
