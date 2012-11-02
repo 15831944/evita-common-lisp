@@ -95,8 +95,7 @@ Node* NodeAnd::Simplify(IEnvironment* pIEnv, LocalHeap* pHeap)
         }
         else
         {
-            NodeString* pString = NodeString::Create(
-                *pHeap,
+            NodeString* pString = new(pHeap) NodeString(
                 eDir,
                 oSink.Save(pHeap),
                 oSink.GetLength(),
@@ -123,8 +122,7 @@ Node* NodeAnd::Simplify(IEnvironment* pIEnv, LocalHeap* pHeap)
     }
     else
     {
-        NodeString* pString = NodeString::Create(
-            *pHeap,
+        NodeString* pString = new(pHeap) NodeString(
             eDir,
             oSink.Save(pHeap),
             oSink.GetLength(),
@@ -415,45 +413,18 @@ Node* NodeRange::Simplify(IEnvironment* pIEnv, LocalHeap* pHeap)
 //
 // NodeString
 //
-static char16* SaveString(
-    LocalHeap& heap,
-    const char16* const pwch,
-    int cwch) {
-  void* const saved = heap.Alloc(cwch * sizeof(char16));
-  ::CopyMemory(saved, pwch, cwch * sizeof(char16));
-  return static_cast<char16*>(saved);
-}
-
 NodeString::NodeString(
-    LocalHeap& heap,
     Direction direction,
     const char16* pwch,
     int cwch,
     Case case_sensivity,
     bool not)
     : NodeCsBase(direction, case_sensivity, not),
-      heap_(heap),
       m_cwch(cwch),
-      m_pwch(SaveString(heap, pwch, cwch)) {}
-
-NodeString::~NodeString() {
-  heap_.Free(const_cast<char16*>(m_pwch));
+      m_pwch(pwch) {
 }
 
-NodeString* NodeString::Create(
-    LocalHeap& heap,
-    Direction direction,
-    const char16* pwch,
-    int cwch,
-    Case case_sensivity,
-    bool not) {
-  return new(&heap) NodeString(
-      heap,
-      direction,
-      pwch,
-      cwch,
-      case_sensivity,
-      not);
+NodeString::~NodeString() {
 }
 
 //////////////////////////////////////////////////////////////////////

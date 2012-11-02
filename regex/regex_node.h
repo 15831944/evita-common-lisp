@@ -169,6 +169,15 @@ class WithDirection {
     return self::GetKind() == name || base::Is_(name); \
   }
 
+#define CASTABLE_FINAL(self, base) \
+  public: static const char* Kind_() { return #self; } \
+  public: virtual const char* GetKind() const override final { \
+    return Kind_(); \
+  } \
+  public: virtual bool Is_(const char* name) const override final { \
+    return self::GetKind() == name; \
+  }
+
 //////////////////////////////////////////////////////////////////////
 //
 // NodeEqBase
@@ -328,7 +337,7 @@ class NodeSubNodesBase : public Node {
 /// Parse tree node "And".
 /// </remark>
 class NodeAnd : public NodeSubNodesBase {
-  CASTABLE(NodeAnd, NodeSubNodesBase);
+  CASTABLE_FINAL(NodeAnd, NodeSubNodesBase);
 
   /// <remark>
   /// Constructs empty And node.
@@ -361,7 +370,7 @@ class NodeAnd : public NodeSubNodesBase {
   /// <summary>
   /// Sum of value of all subnodes.
   /// </summary>
-  public: int ComputeMinLength() const override {
+  public: int ComputeMinLength() const override final {
     int nMinLen = 0;
     foreach (Nodes::Enum, oEnum, &m_oNodes) {
       auto const pNode = oEnum.Get();
@@ -371,24 +380,24 @@ class NodeAnd : public NodeSubNodesBase {
     return nMinLen;
   }
 
-  public: void Compile(Compiler*, int) override;
+  public: void Compile(Compiler*, int) override final;
 
   // [S]
-  public: Node* Simplify(IEnvironment*, LocalHeap*) override;
+  public: Node* Simplify(IEnvironment*, LocalHeap*) override final;
 };
 
 /// <remark>
 /// Parse tree node for dot(.)
 /// </remark>
 class NodeAny : public Node, public WithDirection {
-  CASTABLE(NodeAny, Node);
+  CASTABLE_FINAL(NodeAny, Node);
 
   // ctor
   public: NodeAny(Direction const direction) : WithDirection(direction) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
-  public: int ComputeMinLength() const override { return 1; }
+  public: void Compile(Compiler*, int) override final;
+  public: int ComputeMinLength() const override final { return 1; }
 
   // [G]
   public: Op GetOp() const { return IsBackward() ? Op_Any_B : Op_Any_F; }
@@ -467,7 +476,7 @@ class NodeCapture : public NodeSubNodeBase, public WithDirection {
 // NodeCaptureEq -- \<n> \k<name>
 //
 class NodeCaptureEq : public NodeCaptureBase, public WithCase {
-  CASTABLE(NodeCaptureEq, NodeCaptureBase);
+  CASTABLE_FINAL(NodeCaptureEq, NodeCaptureBase);
 
   public: NodeCaptureEq(
       Direction const direction,
@@ -477,7 +486,7 @@ class NodeCaptureEq : public NodeCaptureBase, public WithCase {
           WithCase(case_sensivity) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
+  public: void Compile(Compiler*, int) override final;
 
   // [G]
   public: Op GetOp() const {
@@ -492,20 +501,20 @@ class NodeCaptureEq : public NodeCaptureBase, public WithCase {
 // NodeCaptureIfNot
 //
 class NodeCaptureIfNot : public NodeCaptureBase {
-  CASTABLE(NodeCaptureIfNot, NodeCaptureBase);
+  CASTABLE_FINAL(NodeCaptureIfNot, NodeCaptureBase);
 
   public: NodeCaptureIfNot(Direction const direction, int const nth)
       : NodeCaptureBase(direction, nth) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override { CAN_NOT_HAPPEN(); }
+  public: void Compile(Compiler*, int) override final { CAN_NOT_HAPPEN(); }
 };
 
 /// <remark>
 /// Parse tree node for character comparison.
 /// </remark>
 class NodeChar : public NodeCsBase {
-  CASTABLE(NodeChar, NodeCsBase);
+  CASTABLE_FINAL(NodeChar, NodeCsBase);
 
   private: char16 char_;
 
@@ -521,9 +530,9 @@ class NodeChar : public NodeCsBase {
         char_(char_code) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
-  public: void CompileNot(Compiler*, int) override;
-  public: int ComputeMinLength() const override { return 1; }
+  public: void Compile(Compiler*, int) override final;
+  public: void CompileNot(Compiler*, int) override final;
+  public: int ComputeMinLength() const override final { return 1; }
 
   // [G]
   public: char16 GetChar() const { return char_; }
@@ -551,13 +560,13 @@ class NodeChar : public NodeCsBase {
   }
 
   // [I]
-  public: bool IsCharSetMember(IEnvironment*, char16) const override;
+  public: bool IsCharSetMember(IEnvironment*, char16) const override final;
 
   // [S]
-  public: Node* Simplify(IEnvironment*, LocalHeap*) override;
+  public: Node* Simplify(IEnvironment*, LocalHeap*) override final;
 
   #if _DEBUG
-    public: virtual void Print() const override {
+    public: virtual void Print() const override final {
       printf("(Char%s%s%s '%c')",
           IsNot() ? "Ne" : "Eq",
           IsIgnoreCase() ? "Ci" : "Cs",
@@ -572,7 +581,7 @@ class NodeChar : public NodeCsBase {
 // NodeCharClass
 //
 class NodeCharClass: public NodeSubNodesBase, public WithDirection {
-  CASTABLE(NodeCharClass, NodeSubNodesBase);
+  CASTABLE_FINAL(NodeCharClass, NodeSubNodesBase);
 
   private: bool const not_;
 
@@ -581,8 +590,8 @@ class NodeCharClass: public NodeSubNodesBase, public WithDirection {
         not_(not) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
-  public: int ComputeMinLength() const override { return 1; }
+  public: void Compile(Compiler*, int) override final;
+  public: int ComputeMinLength() const override final { return 1; }
 
   // [I]
   public: bool IsCharSetMember(IEnvironment* pIEnv, char16 wch) const {
@@ -597,13 +606,13 @@ class NodeCharClass: public NodeSubNodesBase, public WithDirection {
   public: bool IsNot() const { return not_; }
 
   // [N]
-  public: bool NeedStack() const override { return true; }
+  public: bool NeedStack() const override final { return true; }
 
   // [S]
-  public: Node* Simplify(IEnvironment*, LocalHeap*) override;
+  public: Node* Simplify(IEnvironment*, LocalHeap*) override final;
 
   #if _DEBUG
-    public: void Print() const override {
+    public: void Print() const override final {
       printf("(CharClass%s", IsNot() ? "Not" : "");
       foreach (Nodes::Enum, oEnum, &m_oNodes) {
         printf(" ");
@@ -619,7 +628,7 @@ class NodeCharClass: public NodeSubNodesBase, public WithDirection {
 // NodeCharSet
 //
 class NodeCharSet : public NodeEqBase {
-  CASTABLE(NodeCharSet, NodeEqBase)
+  CASTABLE_FINAL(NodeCharSet, NodeEqBase)
 
   private: int m_cwch;
   private: char16* m_pwch;
@@ -635,8 +644,8 @@ class NodeCharSet : public NodeEqBase {
         m_pwch(pwch) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
-  public: int ComputeMinLength() const override { return 1; }
+  public: void Compile(Compiler*, int) override final;
+  public: int ComputeMinLength() const override final { return 1; }
 
   // [G]
   public: Op GetOp() const {
@@ -649,7 +658,8 @@ class NodeCharSet : public NodeEqBase {
   public: const char16* GetString() const { return m_pwch; }
 
   // [I]
-  public: bool IsCharSetMember(IEnvironment*, char16 wch) const override {
+  public: bool IsCharSetMember(IEnvironment*, char16 wch)
+      const override final {
     const char16* pwchEnd = m_pwch + m_cwch;
     for (const char16* pwch = m_pwch; pwch < pwchEnd; pwch++) {
       if (*pwch == wch) return !IsNot();
@@ -658,7 +668,7 @@ class NodeCharSet : public NodeEqBase {
   }
 
   #if _DEBUG
-    public: void Print() const override {
+    public: void Print() const override final {
       printf("(%s '%ls')",
           IsNot() ? "CharSetNe" : "CharSetEq",
           m_pwch);
@@ -671,7 +681,7 @@ class NodeCharSet : public NodeEqBase {
 // NodeIf
 //
 class NodeIf : public Node {
-  CASTABLE(NodeIf, Node)
+  CASTABLE_FINAL(NodeIf, Node)
 
   private: Node* m_pCond;
   private: Node* m_pElse;
@@ -684,11 +694,11 @@ class NodeIf : public Node {
       m_pElse(pElse) {}
 
   // [C]
-  public: void Compile(Compiler*, int) override;
-  public: int ComputeMinLength() const override;
+  public: void Compile(Compiler*, int) override final;
+  public: int ComputeMinLength() const override final;
 
   // [N]
-  public: bool NeedStack() const override { return true; }
+  public: bool NeedStack() const override final { return true; }
 
   // [R]
   public: Node* Reverse() override {
@@ -709,7 +719,7 @@ class NodeIf : public Node {
   }
 
   #if _DEBUG
-    public: virtual void Print() const override {
+    public: virtual void Print() const override final {
       printf("(if ");
       m_pCond->Print();
       printf(" ");
@@ -726,7 +736,7 @@ class NodeIf : public Node {
 // NodeLookaround
 //
 class NodeLookaround : public NodeSubNodeBase {
-  CASTABLE(NodeLookaround, NodeSubNodeBase);
+  CASTABLE_FINAL(NodeLookaround, NodeSubNodeBase);
 
   private: bool const m_fPositive;
 
@@ -735,14 +745,14 @@ class NodeLookaround : public NodeSubNodeBase {
         m_fPositive(fPositive) {}
 
   // [C]
-  public: virtual void Compile(Compiler*, int) override;
-  public: virtual int ComputeMinLength() const override { return 0; }
+  public: virtual void Compile(Compiler*, int) override final;
+  public: virtual int ComputeMinLength() const override final { return 0; }
 
   // [I]
   public: bool IsPositive() const { return m_fPositive; }
 
   // [N]
-  public: virtual bool NeedStack() const override { return true; }
+  public: virtual bool NeedStack() const override final { return true; }
 
   DISALLOW_COPY_AND_ASSIGN(NodeLookaround);
 };
@@ -793,13 +803,13 @@ class NodeMinMax : public NodeSubNodeBase, public WithDirection {
 // NodeMax
 //
 class NodeMax : public NodeMinMax {
-  CASTABLE(NodeMax, NodeMinMax);
+  CASTABLE_FINAL(NodeMax, NodeMinMax);
 
   public: NodeMax(Direction direction, Node* node, MinMax minmax)
       : NodeMinMax(direction, node, minmax) {}
 
   // [C]
-  public: virtual void Compile(Compiler*, int) override;
+  public: virtual void Compile(Compiler*, int) override final;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -807,13 +817,13 @@ class NodeMax : public NodeMinMax {
 // NodeMin
 //
 class NodeMin : public NodeMinMax {
-  CASTABLE(NodeMin, NodeMinMax);
+  CASTABLE_FINAL(NodeMin, NodeMinMax);
 
   public: NodeMin(Direction direction, Node* node, MinMax minmax)
       : NodeMinMax(direction, node, minmax) {}
 
   // [C]
-  public: virtual void Compile(Compiler*, int) override;
+  public: virtual void Compile(Compiler*, int) override final;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -821,22 +831,23 @@ class NodeMin : public NodeMinMax {
 // NodeOneWidth
 //
 class NodeOneWidth : public NodeOpBase {
-  CASTABLE(NodeOneWidth, NodeOpBase);
+  CASTABLE_FINAL(NodeOneWidth, NodeOpBase);
 
   public: NodeOneWidth(Op opcode) : NodeOpBase(opcode) {}
 
   // [C]
-  public: virtual void CompileNot(Compiler*, int) override;
-  public: virtual int ComputeMinLength() const override { return 1; }
+  public: virtual void CompileNot(Compiler*, int) override final;
+  public: virtual int ComputeMinLength() const override final { return 1; }
 
   // [G]
   public: Op GetNotOp() const { return static_cast<Op>(GetOp() + 1); }
 
   // [I]
-  public: virtual bool IsCharSetMember(IEnvironment*, char16 wch) const override;
+  public: virtual bool IsCharSetMember(IEnvironment*, char16 wch)
+    const override final;
 
   // [N]
-  public: virtual Node* Not() override;
+  public: virtual Node* Not() override final;
 
 };
 
@@ -845,7 +856,7 @@ class NodeOneWidth : public NodeOpBase {
 // NodeOr
 //
 class NodeOr : public NodeSubNodesBase {
-  CASTABLE(NodeOr, NodeSubNodesBase);
+  CASTABLE_FINAL(NodeOr, NodeSubNodesBase);
 
   // ctor
   public: NodeOr() {}
@@ -859,7 +870,7 @@ class NodeOr : public NodeSubNodesBase {
 
   // [C]
   // ComputeMinLength - minimum value of all subnodes.
-  public: virtual int ComputeMinLength() const override {
+  public: virtual int ComputeMinLength() const override final {
     auto nMinLen = int(Infinity);
     foreach (Nodes::Enum, oEnum, &m_oNodes) {
         auto const pNode = oEnum.Get();
@@ -868,13 +879,13 @@ class NodeOr : public NodeSubNodesBase {
     return nMinLen;
   }
 
-  public: virtual void Compile(Compiler*, int) override;
+  public: virtual void Compile(Compiler*, int) override final;
 
   // [G]
   public: Nodes* GetNodes() { return &m_oNodes; }
 
   // [N]
-  public: virtual bool NeedStack() const override { return true; }
+  public: virtual bool NeedStack() const override final { return true; }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -883,7 +894,7 @@ class NodeOr : public NodeSubNodesBase {
 // Represent simple character class, e.g. [A-Z].
 //
 class NodeRange : public NodeCsBase {
-  CASTABLE(NodeRange, NodeCsBase);
+  CASTABLE_FINAL(NodeRange, NodeCsBase);
 
   private: char16 const m_wchMin;
   private: char16 const m_wchMax;
@@ -899,9 +910,9 @@ class NodeRange : public NodeCsBase {
         m_wchMax(wchMax) {}
 
   // [C]
-  public: virtual void Compile(Compiler*, int) override;
-  public: virtual void CompileNot(Compiler*, int) override;
-  public: virtual int ComputeMinLength() const override { return 1; }
+  public: virtual void Compile(Compiler*, int) override final;
+  public: virtual void CompileNot(Compiler*, int) override final;
+  public: virtual int ComputeMinLength() const override final { return 1; }
 
   // [G]
   public: char16 GetMaxChar() const { return m_wchMax; }
@@ -930,10 +941,11 @@ class NodeRange : public NodeCsBase {
   }
 
   // [I]
-  public: virtual bool IsCharSetMember(IEnvironment*, char16) const override;
+  public: virtual bool IsCharSetMember(IEnvironment*, char16)
+    const override final;
 
   // [S]
-  public: virtual Node* Simplify(IEnvironment*, LocalHeap*) override;
+  public: virtual Node* Simplify(IEnvironment*, LocalHeap*) override final;
 
   #if _DEBUG
     public: virtual void Print() const override {
@@ -950,36 +962,29 @@ class NodeRange : public NodeCsBase {
 /// Parse tree node for string comparison.
 /// </remark>
 class NodeString : public NodeCsBase {
-  CASTABLE(NodeString, NodeCsBase);
+  CASTABLE_FINAL(NodeString, NodeCsBase);
 
-  private: LocalHeap& heap_;
   private: int const m_cwch;
   private: const char16* const m_pwch;
 
   /// <summary>
   /// Construct NodeString.
   /// </summary>
-  private: NodeString(
-      LocalHeap& heap,
-      Direction direction,
-      const char16* pwch,
-      int cwch,
-      Case case_sensivity,
-      bool not);
-
-  public: virtual ~NodeString();
-
-  // [C]
-  public: virtual int ComputeMinLength() const override { return m_cwch; }
-  public: virtual void Compile(Compiler*, int) override;
-
-  public: static NodeString* Create(
-      LocalHeap& heap,
+  public: NodeString(
       Direction direction,
       const char16* pwch,
       int cwch,
       Case case_sensivity = CaseSensitive,
       bool not = false);
+
+  public: virtual ~NodeString();
+
+  // [C]
+  public: virtual int ComputeMinLength() const override final {
+    return m_cwch;
+  }
+
+  public: virtual void Compile(Compiler*, int) override final;
 
   // [G]
   public: int GetLength() const { return m_cwch; }
@@ -1010,7 +1015,7 @@ class NodeString : public NodeCsBase {
 
   // [P]
   #if _DEBUG
-    public: virtual void Print() const override {
+    public: virtual void Print() const override final {
       printf("(String%s%s%s '%ls')",
           IsNot() ? "Ne" : "Eq",
           IsIgnoreCase() ? "Ci" : "Cs",
@@ -1024,7 +1029,7 @@ class NodeString : public NodeCsBase {
 /// Parse tree node for void. This is used for empty capture.
 /// </summary>
 class NodeVoid : public Node {
-  CASTABLE(NodeVoid, Node);
+  CASTABLE_FINAL(NodeVoid, Node);
 
   // [C]
   public: virtual void Compile(Compiler*, int) override {}
@@ -1050,7 +1055,7 @@ class NodeVoid : public Node {
 // Engine::Execute in regex_exec.cpp
 //
 class NodeZeroWidth : public NodeOpBase {
-  CASTABLE(NodeZeroWidth, NodeOpBase)
+  CASTABLE_FINAL(NodeZeroWidth, NodeOpBase)
   public: NodeZeroWidth(Op opcode) : NodeOpBase(opcode) {}
 };
 

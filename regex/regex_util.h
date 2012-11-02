@@ -18,39 +18,40 @@ namespace RegexPrivate
 {
 
 template<class T>
-class Castable_
-{
-    private: typedef Castable_<T> Self;
+class Castable_ {
+  private: typedef Castable_<T> Self;
 
-    // [D]
-    public: template<class T> T* DynamicCast() const
-    {
-        if (NULL == this) return NULL;
-        T* p = static_cast<T*>(const_cast<Self*>(this));
-        return p->Is_(T::Kind_()) ? reinterpret_cast<T*>(p) : NULL;
-    } // DynamicCast
+  // [D]
+  public: template<class T> T* DynamicCast() const {
+    return const_cast<Self*>(this)->DynamicCast<T>();
+  }
 
-    // [G]
-    public: virtual const char* GetKind() const = 0;
+  public: template<class T> T* DynamicCast() {
+    return this
+        ? Is_(T::Kind_()) ? static_cast<T*>(this) : nullptr
+        : nullptr;
+  }
 
-    // [I]
-    public: template<class T> bool Is() const
-    {
-        if (NULL == this) return false;
-        //T* p = static_cast<T*>(const_cast<Self*>(this));
-        return Is_(T::Kind_());
-    } // Is
+  // [G]
+  public: virtual const char* GetKind() const = 0;
 
-    public: virtual bool Is_(const char*) const
-        { return false; }
+  // [I]
+  public: template<class T> bool Is() const {
+    return this && Is_(T::Kind_());
+  }
 
-    // [S]
-    public: template<class T> T* StaticCast() const
-    {
-        T* p = DynamicCast<T>();
-        ASSERT(NULL != p);
-        return p;
-    } // StaticCast
+  public: virtual bool Is_(const char*) const { return false; }
+
+  // [S]
+  public: template<class T> T* StaticCast() const {
+    return const_cast<T*>(this)->StaticCast<T>();
+  }
+
+  public: template<class T> T* StaticCast() {
+    T* p = DynamicCast<T>();
+    ASSERT(!!p);
+    return p;
+  }
 }; // Castable_
 
 template<class Item_, class Parent_>

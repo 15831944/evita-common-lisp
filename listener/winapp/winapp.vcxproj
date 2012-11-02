@@ -373,9 +373,8 @@
     <ResourceCompile Include="winapp.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\evedit2\regex\regex.vcxproj">
+    <ProjectReference Include="..\..\regex\regex.vcxproj">
       <Project>{ff811653-b705-45fc-9b2a-ab680d99ddbd}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

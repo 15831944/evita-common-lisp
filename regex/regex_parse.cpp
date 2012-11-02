@@ -765,8 +765,7 @@ class Parser
 
                 if ('E' == iChar && Backslash == wchLast)
                 {
-                    return NodeString::Create(
-                        *m_pHeap,
+                    return new(m_pHeap) NodeString(
                         getDir(),
                         oSink.GetStart(),
                         oSink.GetLength() );
@@ -1862,8 +1861,7 @@ class Parser
 
         if (m_rgfOption & Regex::Option_ExactString)
         {
-            Node* pNode = NodeString::Create(
-                *m_pHeap,
+            Node* pNode = new(m_pHeap) NodeString(
                 getDir(),
                 m_pwchStart,
                 static_cast<int>(m_pwchEnd - m_pwchStart),
