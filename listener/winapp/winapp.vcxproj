@@ -260,6 +260,7 @@
     <ClCompile Include="cm_CmdProc.cpp" />
     <ClCompile Include="cm_Commands.cpp" />
     <ClCompile Include="li_util.cpp" />
+    <ClCompile Include="mode_Python.cpp" />
     <ClCompile Include="vi_Application.cpp" />
     <ClCompile Include="vi_BaseWindow.cpp" />
     <ClCompile Include="vi_Buffer.cpp" />
@@ -318,6 +319,7 @@
     <ClInclude Include="ctrl_TabBand.h" />
     <ClInclude Include="li_util.h" />
     <ClInclude Include="listener.h" />
+    <ClInclude Include="mode_Python.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="vi_Application.h" />

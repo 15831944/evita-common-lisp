@@ -18,6 +18,7 @@
 #include "./mode_Mason.h"
 #include "./mode_Perl.h"
 #include "./mode_PlainText.h"
+#include "./mode_Python.h"
 #include "./mode_Xml.h"
 
 namespace Edit
@@ -617,6 +618,7 @@ ModeFactory* ModeFactory::Get(Buffer* pBuffer)
         s_pPlainTextModeFactory = new PlainTextModeFactory;
         g_oModeFactoryes.Append(s_pPlainTextModeFactory);
         g_oModeFactoryes.Append(new XmlModeFactory);
+        g_oModeFactoryes.Append(new PythonModeFactory);
     }
 
     char16 wszMode[100];
