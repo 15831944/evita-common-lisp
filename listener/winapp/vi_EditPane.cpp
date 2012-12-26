@@ -38,6 +38,14 @@ static void DrawSplitter(HDC hdc, RECT* prc, uint grfFlag) {
   ::DrawEdge(hdc, &rc, EDGE_RAISED, grfFlag);
 }
 
+EditPane::HitTestResult::HitTestResult()
+    : box(nullptr), type(None) {}
+
+EditPane::HitTestResult::HitTestResult(Type type, const Box& box)
+    : box(const_cast<Box*>(&box)), type(type) {
+  ASSERT(type != None);
+}
+
 EditPane::Box::Box(LayoutBox* outer)
     : is_removed_(false),
       outer_(outer) {}
@@ -109,7 +117,7 @@ void EditPane::HorizontalLayoutBox::DrawSplitters(HDC hdc) {
 EditPane::HitTestResult EditPane::HorizontalLayoutBox::HitTest(
     Point pt) const {
   if (!::PtInRect(&rect(), pt)) {
-    return HitTestResult(HitTestResult::None);
+    return HitTestResult();
   }
 
   foreach (BoxList::Enum, it, boxes_) {
@@ -125,12 +133,12 @@ EditPane::HitTestResult EditPane::HorizontalLayoutBox::HitTest(
       splitterRect.left = left_box->rect().right;
       splitterRect.right = it->rect().left;
       if (::PtInRect(&splitterRect, pt)) {
-        return HitTestResult(HitTestResult::HSplitter, it.Get());
+        return HitTestResult(HitTestResult::HSplitter, *it.Get());
       }
     }
   }
 
-  return HitTestResult(HitTestResult::None);
+  return HitTestResult();
 }
 
 bool EditPane::HorizontalLayoutBox::IsVerticalLayoutBox() const {
@@ -548,18 +556,17 @@ EditPane::LeafBox* EditPane::LeafBox::GetLeafBox(HWND hwnd) const {
 }
 
 EditPane::HitTestResult EditPane::LeafBox::HitTest(Point pt) const {
-    if (!::PtInRect(&rect(), pt)) {
-    return HitTestResult(HitTestResult::None);
-  }
+  if (!::PtInRect(&rect(), pt))
+    return HitTestResult();
 
   auto const cxVScroll = ::GetSystemMetrics(SM_CXVSCROLL);
-  return HitTestResult(
-      pt.x < rect().right - cxVScroll
-        ? HitTestResult::Window
-        : !HasSibling() && pt.y < rect().top + k_cySplitterBig
-            ? HitTestResult::VSplitterBig
-            : HitTestResult::VSplitter,
-      this);
+  if (pt.x < rect().right - cxVScroll)
+    return HitTestResult(HitTestResult::Window, *this);
+
+  if (!HasSibling() && pt.y < rect().top + k_cySplitterBig)
+    return HitTestResult(HitTestResult::VSplitterBig, *this);
+
+  return HitTestResult();
 }
 
 bool EditPane::LeafBox::OnIdle(uint count) {
@@ -682,7 +689,7 @@ void EditPane::VerticalLayoutBox::DrawSplitters(HDC hdc) {
 EditPane::HitTestResult EditPane::VerticalLayoutBox::HitTest(
     Point pt) const {
   if (!::PtInRect(&rect(), pt)) {
-    return HitTestResult(HitTestResult::None);
+    return HitTestResult();
   }
 
   foreach (BoxList::Enum, it, boxes_) {
@@ -698,12 +705,12 @@ EditPane::HitTestResult EditPane::VerticalLayoutBox::HitTest(
       splitterRect.top = above_box->rect().bottom;
       splitterRect.bottom = it->rect().top;
       if (::PtInRect(&splitterRect, pt)) {
-        return HitTestResult(HitTestResult::VSplitter, it.Get());
+        return HitTestResult(HitTestResult::VSplitter, *it.Get());
       }
     }
   }
 
-  return HitTestResult(HitTestResult::None);
+  return HitTestResult();
 }
 
 bool EditPane::VerticalLayoutBox::IsVerticalLayoutBox() const {
