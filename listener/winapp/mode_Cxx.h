@@ -31,7 +31,7 @@ class CxxModeFactory : public ModeFactory
 
     // [G]
     protected: virtual const char16* getExtensions() const override
-        { return L"cc cpp cxx c hpp hxx h css cs ev"; }
+        { return L"cc cpp cxx c hpp hxx h css cs ev mm"; }
 
     public: virtual const char16* GetName() const override
         { return L"C++"; }
