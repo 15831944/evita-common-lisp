@@ -32,6 +32,8 @@ extern "C"
     double __cdecl truncate(double);
 } // extern "C"
 
+#pragma function(ceil)
+
 namespace MiniLisp
 {
 

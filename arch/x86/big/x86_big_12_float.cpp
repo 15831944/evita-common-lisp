@@ -67,6 +67,7 @@ double __declspec(naked) __cdecl rint(double)
 float __declspec(naked) __cdecl ceilf(float)
     { x86_div(dword, 8); }
 
+#pragma function(ceil)
 double __declspec(naked) __cdecl ceil(double)
     { x86_div(qword, 8); }
 

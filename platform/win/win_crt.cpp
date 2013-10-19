@@ -63,15 +63,35 @@ extern "C" void* __cdecl evcl_memmove(void* dst, const void* src, size_t count)
 } // evcl_memmove
 #endif // _M_IX86
 
+extern "C" void* __cdecl memset(void* dst, int c, size_t count);
+#pragma function(memset)
+//#pragma intrinsic(memset)
+
+
 #if _M_IX86
-void* __cdecl evcl_memset(void* dst, int c, size_t count)
+extern "C" void* __cdecl evcl_memset(void* dst, int c, size_t count)
 {
-    uint8* d = reinterpret_cast<uint8*>(dst);
-    uint8* e = d + count;
-    while (d < e) *d++ = static_cast<uint8>(c);
+    if (!(count % sizeof(uint32))) {
+        uint32* d = reinterpret_cast<uint32*>(dst);
+        uint32* e = d + count / sizeof(uint32);
+        uint32 value = c;
+        value |= value << 8;
+        value |= value << 16;
+        while (d < e) {
+          *d = value;
+          ++d;
+        }
+    } else {
+        uint8* d = reinterpret_cast<uint8*>(dst);
+        uint8* e = d + count;
+        while (d < e) {
+          *d = static_cast<uint8>(c);
+          ++d;
+        }
+    }
     return dst;
 } // evcl_memset
-#endif // 0
+#endif
 
 extern "C"
 {
