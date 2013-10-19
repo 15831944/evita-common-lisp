@@ -177,6 +177,9 @@
     <ClCompile Include="..\charset\CharsetDetector.cpp">
       <Filter>Charset</Filter>
     </ClCompile>
+    <ClCompile Include="mode_Python.cpp">
+      <Filter>Modes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -349,6 +352,9 @@
     </ClInclude>
     <ClInclude Include="..\charset\CharsetDecoder.h">
       <Filter>Charset</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_Python.h">
+      <Filter>Modes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -15,6 +15,9 @@
 ;
 (in-package :si)
 
+;; Source directory of system.
+(defvar *source-directory* nil)
+
 ;;;; start-application
 (defun start-application (arg)
     (declare (ignore arg))
@@ -33,21 +36,6 @@
         (setq *default-pathname-defaults*
           (make-pathname-using-host host nil nil nil nil nil) ) )
 
-      (setf (logical-pathname-translations "SYS") '(
-        ("ROOT;**;"             "d:/proj/evcl3/**/")
-        ("SITE;*.TRANSLATIONS"  "SYS:ROOT;*.XLTS")
-        ("SYSTEM;"              "SYS:ROOT;LISP;")
-
-        ("SOURCE;**;"           "SYS:ROOT;LISP;**;")
-        ("TESTCASE;**;"         "SYS:ROOT;TESTCASE;**;")
-
-        #+x86 ("DEBUG;**;"            "SYS:ROOT;DEBUG;WIN32;LISP;**;")
-        #+x86 ("RELEASE;**;"          "SYS:ROOT;RELEASE;WIN32;LISP;**;")
-
-        #+x64 ("DEBUG;**;"            "SYS:ROOT;DEBUG;X64;LISP;**;")
-        #+x64 ("RELEASE;**;"          "SYS:ROOT;RELEASE;X64;LISP;**;")
-        ) )
-
       (unless *terminal-io*
         (setq *terminal-io*
             (make-two-way-stream *standard-input* *standard-output*) )
@@ -60,10 +48,31 @@
       #+x86
       (populate-paltfotm-environment)
 
+      (init-logical-pathanme)
+
       (setq *debug-output*
         (let ((s (make-instance 'debug-output-stream)))
           (realize-instance s)
           s ) ) )
+
+    (init-logical-pathanme ()
+      (unless *source-directory*
+        (setq *source-directory*
+          (format nil "~A/**/" (substitute #\/ #\\ (getenv "SRCDIR")))))
+      (setf (logical-pathname-translations "SYS") `(
+        ("ROOT;**;"             ,*source-directory*)
+        ("SITE;*.TRANSLATIONS"  "SYS:ROOT;*.XLTS")
+        ("SYSTEM;"              "SYS:ROOT;LISP;")
+
+        ("SOURCE;**;"           "SYS:ROOT;LISP;**;")
+        ("TESTCASE;**;"         "SYS:ROOT;TESTCASE;**;")
+
+        #+x86 ("DEBUG;**;"            "SYS:ROOT;DEBUG;WIN32;LISP;**;")
+        #+x86 ("RELEASE;**;"          "SYS:ROOT;RELEASE;WIN32;LISP;**;")
+
+        #+x64 ("DEBUG;**;"            "SYS:ROOT;DEBUG;X64;LISP;**;")
+        #+x64 ("RELEASE;**;"          "SYS:ROOT;RELEASE;X64;LISP;**;")
+        ) ) )
 
     ;; batch-loop
     (batch-loop ()

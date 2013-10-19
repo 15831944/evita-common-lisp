@@ -44,6 +44,8 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: class LayoutBox;
   private: class LeafBox;
 
+  private: struct HitTestResult;
+
   private: struct HitTestResult {
     enum Type {
       None,
@@ -59,8 +61,8 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     Box* box;
     Type type;
 
-    HitTestResult(Type type, const Box* box = nullptr)
-        : box(const_cast<Box*>(box)), type(type) {}
+    HitTestResult();
+    HitTestResult(Type type, const Box& box);
   };
 
   private: typedef TextEditWindow Window;
