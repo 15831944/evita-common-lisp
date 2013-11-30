@@ -184,9 +184,8 @@ Val software_version()
     OSVERSIONINFOEX oInfo;
         oInfo.dwOSVersionInfoSize = sizeof(oInfo);
 
-#pragma warning(disable: 4996)
+#pragma warning(supress: 4996)
 		fSucceeded = ::GetVersionEx(reinterpret_cast<OSVERSIONINFO*>(&oInfo));
-#pragma warning(default:4996)
 
     if (fSucceeded)
     {
