@@ -38,9 +38,6 @@
 #define final
 #endif
 
-#define USE_GDIPLUS 1
-#include <gdiplus.h>
-
 #ifndef DragQueryFile
     #error "We must include ShellAPI.h"
 #endif

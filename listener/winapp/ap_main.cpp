@@ -440,14 +440,6 @@ int WINAPI WinMain(
         }
     }
 
-    #if USE_GDIPLUS
-        ULONG_PTR ulpToken;
-        {
-            Gdiplus::GdiplusStartupInput oInput;
-            Gdiplus::GdiplusStartup(&ulpToken, &oInput, NULL);
-        }
-    #endif
-
     ::TabBand__Init(g_hInstance);
 
     g_TabBand__TabDragMsg = ::RegisterWindowMessage(TabBand__TabDragMsgStr);
@@ -455,10 +447,6 @@ int WINAPI WinMain(
     int iExit = BaseWindow::Init();
     if (0 != iExit) return iExit;
     int iRet = mainLoop(&oEnumArg);
-
-    #if USE_GDIPLUS
-        Gdiplus::GdiplusShutdown(ulpToken);
-    #endif
 
     return iRet;
 } // WinMain

@@ -84,6 +84,7 @@ class DwmApi : public DllWrapper {
 
 static DwmApi* s_pDwmApi;
 
+#define USE_TABBAND_EDGE 0
 extern uint g_TabBand__TabDragMsg;
 
 /// <summary>
@@ -275,7 +276,11 @@ int Frame::getTabFromPane(Pane* const pPane) const {
 void Frame::GetPaneRect(RECT* const out_rc) {
   *out_rc = m_rc;
   out_rc->left += 2;
-  out_rc->top += m_cyTabBand + 2 + 2;
+  #if USE_TABBAND_EDGE
+    out_rc->top += m_cyTabBand + 2 + 2;
+  #else
+    out_rc->top += m_cyTabBand;
+  #endif
   out_rc->right -= 2;
   out_rc->bottom -= m_oStatusBar.GetCy() + 2;
 } // Frame::GetPaneRect
@@ -377,7 +382,8 @@ void Frame::onDropFiles(HDROP const hDrop) {
   Activate();
 } // Frame::onDropFiles
 
-void Frame::onDraw(HDC const hdc) {
+void Frame::onDraw(HDC) {
+#if USE_TABBAND_EDGE
   {
     RECT rc = m_rc;
 
@@ -410,6 +416,7 @@ void Frame::onDraw(HDC const hdc) {
     rc.bottom +=  2;
     ::DrawEdge(hdc, &rc, EDGE_SUNKEN, BF_RECT);
   }
+#endif //USE_TABBAND_EDGE
 } // Frame::onDraw
 
 /// <summary>

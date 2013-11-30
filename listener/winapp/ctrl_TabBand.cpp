@@ -1,5 +1,4 @@
 #include "precomp.h"
-// Note: You must include GdiPlus.h in precomp.h.
 //////////////////////////////////////////////////////////////////////////////
 //
 // Tab Band Control
@@ -10,67 +9,37 @@
 //
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/ctrl_TabBand.cpp#2 $
 //
-#define DEBUG_DRAG    1
-#define DEBUG_HOVER   0
-#define DEBUG_MESSAGE   0
-#define DEBUG_TOOLTIP   0
+#define DEBUG_DRAG 0
+#define DEBUG_HOVER 0
+#define DEBUG_MESSAGE 0
+#define DEBUG_TOOLTIP 0
 #include "./ctrl_tabBand.h"
 
-// C4481: nonstandard extension used: override specifier 'override'
-#pragma warning(disable: 4481)
-#pragma comment(lib, "gdiplus.lib")
-#pragma comment(lib, "msimg32.lib")
-#pragma comment(lib, "user32.lib")
-#pragma comment(lib, "uxtheme.lib")
+#include <d2d1.h>
+#pragma comment(lib, "d2d1.lib")
+using D2D1::ColorF;
+#include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
+#include <dwrite.h>
+#pragma comment(lib, "dwrite.lib")
+#include <wincodec.h>
+#pragma comment(lib, "windowscodecs.lib")
 
-#pragma warning(disable:4355) // 'this' : used in base member initializer list
+
+// C4355: 'this' : used in base member initializer list
+#pragma warning(disable:4355) 
+// C4244: 'argument' : conversion from 'int' to 'FLOAT', possible loss of data
+#pragma warning(disable:4244)
 
 #define WC_TABBANDCLASS  L"TabBandClass"
 
-#include <dwmapi.h>
+#define COM_VERIFY(expr) { \
+  auto const macro_hr = (expr); \
+  if (FAILED(macro_hr)) \
+    Debugger::Fail("hr=%08X\r\n%s\r\n", macro_hr, #expr); \
+}
 
 static HINSTANCE g_hInstance;
-
-class ScopedGetDC {
-  private: HDC m_hdc;
-  private: HWND m_hwnd;
-
-  public: ScopedGetDC(HWND hwnd) :
-      m_hdc(::GetDC(hwnd)),
-      m_hwnd(hwnd) {
-    ASSERT(m_hdc != nullptr);
-    ASSERT(m_hwnd != nullptr);
-  }
-
-  public: ~ScopedGetDC() {
-    ::ReleaseDC(m_hwnd, m_hdc);
-  }
-
-  public: operator HDC() const { return m_hdc; }
-}; // ScopedGetDC
-
-//////////////////////////////////////////////////////////////////////
-//
-// Select
-//
-class ScopedSelect {
-  private: HDC m_hdc;
-  private: HGDIOBJ m_old;
-
-  public: ScopedSelect(HDC hdc, HFONT hFont) :
-    m_hdc(hdc) {
-    m_old = ::SelectObject(hdc, hFont);
-  }
-
-  public: ScopedSelect(HDC hdc, HGDIOBJ hObj) :
-      m_hdc(hdc) {
-    m_old = ::SelectObject(hdc, hObj);
-  }
-
-  public: ~ScopedSelect() {
-    ::SelectObject(m_hdc, m_old);
-  }
-}; // Select
 
 template<class Item_>
 class DoubleLinkedList_;
@@ -97,13 +66,12 @@ class DoubleLinkedList_ {
   private: Item_* m_pFirst;
   private: Item_* m_pLast;
 
-  public: DoubleLinkedList_() :
-    m_pFirst(nullptr),
-    m_pLast(nullptr) {}
+  public: DoubleLinkedList_()
+    : m_pFirst(nullptr),
+      m_pLast(nullptr) {}
 
   // [A]
-  public: Item_* Append(Item_* pItem)
-  {
+  public: Item_* Append(Item_* pItem) {
     pItem->m_pNext = nullptr;
     pItem->m_pPrev = m_pLast;
 
@@ -183,109 +151,169 @@ class DoubleLinkedList_ {
   }
 }; // DoubleLinkedList_
 
-enum DCHF {
-  DCHF_DirLeft = 0, // <<
-  DCHF_DirRight = 1, // >>
-  DCHF_DirUp = 2, // ^
-  DCHF_DirDown = 3, // V
-  DCHF_DirMask = 3,
-  DCHF_Pushed = 1 << 2,
-  DCHF_Large = 1 << 3,
-}; // DCHF
-
-// For GDI+
-static uint s_cInstances;
-static ULONG_PTR s_GdiplusToken;
-
-static inline void
-SetVertex(TRIVERTEX* pVertex, int x, int y, DWORD rgb) {
-  pVertex->x = x;
-  pVertex->y = y;
-  pVertex->Red = static_cast<COLOR16>(((rgb >>  0) & 0xFF) << 8);
-  pVertex->Green = static_cast<COLOR16>(((rgb >>  8) & 0xFF) << 8);
-  pVertex->Blue = static_cast<COLOR16>(((rgb >> 16) & 0xFF) << 8);
-  pVertex->Alpha = 0x0000;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// DrawCheveron
-//
-void DrawChevron(HDC hdc, RECT* prc, uint rgfFlag)
-{
-  RECT rc = *prc;
-  const int cxEdge = 2;
-  const int cxLarge = 4;
-  int w = (rgfFlag & DCHF_Large) ? cxLarge : cxEdge;
-
-  switch (rgfFlag & DCHF_DirMask) {
-    case DCHF_DirDown: {
-      int x = (rc.left + rc.right) / 2;
-      int y = rc.top + 1;
-
-      for (int k = -w; k < 0; k++) {
-        ::PatBlt(hdc, x + k, y, 1, w, PATCOPY);
-        ::PatBlt(hdc, x + k, y + w * 2, 1, w, PATCOPY);
-        y += 1;
-      }
-
-      for (int k = 0; k <= w; k++) {
-        ::PatBlt(hdc, x + k, y, 1, w, PATCOPY);
-        ::PatBlt(hdc, x + k, y + w * 2, 1, w, PATCOPY);
-        y -= 1;
-      }
-
-      break;
-    }
-
-    case DCHF_DirLeft: {
-      int x = (rc.left + rc.right - w * 4) / 2;
-      int y = (rc.top + rc.bottom) / 2;
-
-      //  ** **
-      //   ** **
-      //  ** **
-      //   ** **
-      //  ** **
-      for (int k = -w; k < 0; k++) {
-        ::PatBlt(hdc, x, y + k, w, 1, PATCOPY);
-        ::PatBlt(hdc, x + w * 2, y + k, w, 1, PATCOPY);
-        x += 1;
-      }
-
-      for (int k = 0; k <= w; k++) {
-        ::PatBlt(hdc, x, y + k, w, 1, PATCOPY);
-        ::PatBlt(hdc, x + w * 2, y + k, w, 1, PATCOPY);
-        x -= 1;
-      }
-      break;
-    }
-
-    case DCHF_DirRight: {
-      int x = (rc.left + rc.right - w * 4) / 2;
-      int y = (rc.top + rc.bottom) / 2;
-
-      // ** **
-      //   ** **
-      //   ** **
-      //  ** **
-      //  ** **
-      for (int k = -w; k < 0; k++) {
-        ::PatBlt(hdc, x, y + k, w, 1, PATCOPY);
-        ::PatBlt(hdc, x + w * 2, y + k, w, 1, PATCOPY);
-        x += 1;
-      }
-
-      for (int k = 0; k <= w; k++) {
-        ::PatBlt(hdc, x, y + k, w, 1, PATCOPY);
-        ::PatBlt(hdc, x + w * 2, y + k, w, 1, PATCOPY);
-        x -= 1;
-      }
-      break;
-    }
+template<class T> class ComPtr {
+  private: T* ptr_;
+  public: ComPtr() : ptr_(nullptr) {}
+  public: ~ComPtr() {
+    if (ptr_) ptr_->Release();
   }
-}
-
+  public: operator T*() const { return ptr_; }
+  public: T* operator->() const { return ptr_; }
+  public: T** operator&() { return &ptr_; }
+  public: T** location() { return &ptr_; }
+  public: IUnknown** locationUnknown() {
+    return reinterpret_cast<IUnknown**>(&ptr_);
+  }
+};
+
+class ComInit {
+  public: ComInit() { COM_VERIFY(::CoInitialize(nullptr)); }
+  public: ~ComInit() { ::CoUninitialize(); }
+};
+
+class Graphics : private ComInit {
+  public: class Brush {
+    private: ComPtr<ID2D1SolidColorBrush> brush_;
+    public: Brush(const Graphics& gfx, ColorF color) {
+      COM_VERIFY(gfx->CreateSolidColorBrush(color, brush_.location()));
+    }
+    public: operator ID2D1SolidColorBrush*() const { return brush_; }
+  };
+
+  private: ComPtr<IWICImagingFactory> image_factory_;
+  private: ComPtr<ID2D1Factory> d2d1Factory_;
+  private: ComPtr<ID2D1HwndRenderTarget> render_target_;
+  private: ComPtr<IDWriteFactory> dwrite_factory_;
+  private: mutable ComPtr<IDWriteTextFormat> text_format_;
+  private: int dpiScaleX_;
+  private: int dpiScaleY_;
+
+  public: Graphics() {
+    COM_VERIFY(::D2D1CreateFactory(
+        D2D1_FACTORY_TYPE_SINGLE_THREADED,
+        d2d1Factory_.location()));
+    COM_VERIFY(::DWriteCreateFactory(
+        DWRITE_FACTORY_TYPE_SHARED,
+        __uuidof(IDWriteFactory),
+        dwrite_factory_.locationUnknown()));
+    COM_VERIFY(::CoCreateInstance(
+        CLSID_WICImagingFactory,
+        nullptr,
+        CLSCTX_INPROC_SERVER,
+        IID_PPV_ARGS(image_factory_.location())));
+
+    HDC screen = ::GetDC(nullptr);
+    dpiScaleX_ = ::GetDeviceCaps(screen, LOGPIXELSX) / 96.0;
+    dpiScaleY_ = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
+    ReleaseDC(nullptr, screen);
+  }
+
+  public: ~Graphics() {
+  }
+
+  public: ID2D1HwndRenderTarget* operator->() const { return render_target_; }
+
+  public: static ColorF blackColor() {
+    return ColorF(ColorF::Black);
+  }
+
+  public: static ColorF grayColor() {
+    return ColorF(ColorF::LightGray);
+  }
+
+  public: IWICImagingFactory* imageFactory() const { return image_factory_; }
+
+  D2D1_RECT_F scaledRect(int left, int top, int right, int bottom) const {
+    RECT rc;
+    rc.left = left;
+    rc.top = top;
+    rc.right = right;
+    rc.bottom = bottom;
+    return scaledRect(rc);
+  }
+
+  D2D1_RECT_F scaledRect(const RECT& rc) const {
+        return D2D1::RectF(
+            static_cast<float>(rc.left) / dpiScaleX_,
+            static_cast<float>(rc.top) / dpiScaleY_,
+            static_cast<float>(rc.right) / dpiScaleX_,
+            static_cast<float>(rc.bottom) / dpiScaleY_);
+  }
+
+  public: static ColorF sysColor(int name, float alpha = 1) {
+    COLORREF colorRef = ::GetSysColor(name);
+    return ColorF(GetRValue(colorRef) / 255.0, GetGValue(colorRef) / 255.0,
+                  GetBValue(colorRef) / 255.0, alpha);
+  }
+
+  public: static ColorF whiteColor() {
+    return ColorF(ColorF::White);
+  }
+
+  // [D]
+  public: void DrawRectangle(const Brush& brush, const RECT& rc,
+                             float strokeWidth = 1) const {
+    render_target_->DrawRectangle(scaledRect(rc), brush, strokeWidth);
+  }
+
+  public: void DrawText(const Brush& brush, const RECT& rc,
+                        const char16* pwch, size_t cwch) const {
+    RECT rc2 = rc;
+    //rc2.right -= rc.left;
+    //rc2.bottom = rc.top;
+    render_target_->DrawText(pwch, cwch, text_format_, scaledRect(rc2), brush);
+  }
+
+  // [F]
+  public: void FillRectangle(const Brush& brush, int left, int top,
+                             int right, int bottom) const {
+    RECT rc;
+    rc.left = left;
+    rc.top = top;
+    rc.right = right;
+    rc.bottom = bottom;
+    render_target_->FillRectangle(scaledRect(rc), brush);
+  }
+
+  public: void FillRectangle(const Brush& brush, const RECT& rc) const {
+    render_target_->FillRectangle(scaledRect(rc), brush);
+  }
+
+  // [I]
+  public: void Init(HWND hwnd) {
+    RECT rc;
+    ::GetClientRect(hwnd, &rc);
+    auto const pixel_format = D2D1::PixelFormat(
+        DXGI_FORMAT_B8G8R8A8_UNORM,
+        D2D1_ALPHA_MODE_PREMULTIPLIED);
+    auto const size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+    COM_VERIFY(d2d1Factory_->CreateHwndRenderTarget(
+        D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
+                                     pixel_format),
+        D2D1::HwndRenderTargetProperties(hwnd, size),
+        render_target_.location()));
+  }
+
+  // [R]
+  public: void Resize(const RECT rc) const {
+    auto size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+    render_target_->Resize(size);
+  }
+
+  // [S]
+  public: void SetFont(const LOGFONT& logFont) const {
+    COM_VERIFY(dwrite_factory_->CreateTextFormat(
+        logFont.lfFaceName,
+        nullptr,
+        DWRITE_FONT_WEIGHT_REGULAR,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        13,
+        L"en-us",
+        text_format_.location()));
+  }
+};
+
 //////////////////////////////////////////////////////////////////////
 //
 // Element
@@ -300,7 +328,6 @@ class Element : public DoubleLinkedNode_<Element> {
   protected: bool  m_fHover;
   protected: bool  m_fShow;
   protected: HIMAGELIST  m_hImageList;
-  protected: Gdiplus::Font* m_pFont;
   protected: Element* m_pParent;
   protected: RECT m_rc;
 
@@ -310,26 +337,33 @@ class Element : public DoubleLinkedNode_<Element> {
       , m_fHover(false)
       , m_fShow(true)
       , m_hImageList(nullptr)
-      , m_pFont(nullptr)
       , m_pParent(pParent) {
     m_rc.left = m_rc.top = m_rc.right = m_rc.top = 0;
   }
 
   public: virtual ~Element() {
-    delete m_pFont;
+  }
+
+  protected: ColorF backgroundColor() const {
+    if (IsSelected())
+        return Graphics::whiteColor();
+    if (IsHover())
+        return Graphics::sysColor(COLOR_3DHILIGHT, 0.8);
+    return Graphics::sysColor(COLOR_3DFACE, 0.5);
   }
 
   // [D]
-  public: virtual void Draw(HDC) const = 0;
-  public: virtual void DrawTheme(Gdiplus::Graphics&, HTHEME) const = 0;
+  public: virtual void Draw(const Graphics&) const = 0;
 
-  protected: static void fillRect(HDC hdc, int x, int y, int cx, int cy) {
+  protected: static void fillRect(const Graphics& gfx, int x, int y,
+                                  int cx, int cy) {
     RECT rc;
     rc.left = x;
     rc.right = x + cx;
     rc.top = y;
     rc.bottom = y + cy;
-    ::FillRect(hdc, &rc, reinterpret_cast<HBRUSH>(COLOR_BTNTEXT + 1));
+    Graphics::Brush brush(gfx, Graphics::blackColor());
+    gfx.FillRectangle(brush, rc);
   }
 
   public: template<class T> T* DynamicCast() {
@@ -338,17 +372,6 @@ class Element : public DoubleLinkedNode_<Element> {
 
   // [G]
   public: virtual const char16* GetClass() const = 0;
-
-  public: Gdiplus::Font* GetFont() const {
-    const Element* pRunner = this;
-    for (;;) {
-      if (auto const pFont = pRunner->m_pFont) {
-        return pFont;
-      }
-
-      pRunner = pRunner->GetParent();
-    }
-  }
 
   public: bool GetHover() const { return m_fHover; }
 
@@ -424,10 +447,6 @@ class Element : public DoubleLinkedNode_<Element> {
   }
 
   // [S]
-  public: Gdiplus::Font* SetFont(Gdiplus::Font* p) {
-    return m_pFont = p;
-  }
-
   public: bool SetHover(bool f) {
     return m_fHover = f;
   }
@@ -457,59 +476,6 @@ class Element : public DoubleLinkedNode_<Element> {
   // [U]
   protected: virtual void update() {}
 }; // Element
-
-//////////////////////////////////////////////////////////////////////
-//
-// MyFond
-//
-class MyFont {
-  private: HFONT  m_hFont;
-  private: int  m_iDescent;
-  private: int  m_iHeight;
-
-  // ctor
-  public: MyFont() :
-    m_hFont(nullptr),
-    m_iDescent(0),
-    m_iHeight(0) {}
-
-  public: ~MyFont() {
-    if (m_hFont) {
-      ::DeleteObject(m_hFont);
-    }
-  }
-
-  // operator
-  public: operator HFONT() const { return m_hFont; }
-
-  // [G]
-  public: int GetDescent() const { return m_iDescent; }
-  public: int GetHeight()  const { return m_iHeight; }
-
-  // [i]
-  public: bool Init(HDC hdc, const LOGFONT* pLogFont) {
-    if (m_hFont) {
-      ::DeleteObject(m_hFont);
-    }
-
-    m_hFont = ::CreateFontIndirect(pLogFont);
-    if (!m_hFont) {
-      return false;
-    }
-
-    ScopedSelect oSelect(hdc, m_hFont);
-
-    TEXTMETRIC tm;
-    if (!::GetTextMetrics(hdc, &tm)) {
-      return false;
-    }
-
-    m_iHeight = tm.tmHeight + tm.tmInternalLeading;
-    m_iDescent = tm.tmDescent;
-
-    return true;
-  }
-}; // MyFont
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -549,20 +515,27 @@ class CloseBox : public Element {
 
   // [D]
 
-  private: void drawMark(Gdiplus::Graphics& g, Gdiplus::Color cr) const {
-    g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
-
-    Gdiplus::SolidBrush brush(cr);
+  private: void drawXMark(const Graphics& gfx, ColorF color) const {
+    Graphics::Brush brush(gfx, color);
 
     RECT rc = m_rc;
     rc.left += 4;
     rc.top  += 4;
 
+    // 01234567890123
+    // ----ooo---ooo--- 4
+    // -----ooo-ooo---- 5
+    // ------ooooo----- 6
+    // -------ooo------ 7
+    // -------ooo------ 8
+    // ------ooooo----- 9
+    // -----ooo-ooo---- 10
+    // ----ooo---ooo--- 11
     #define hline(x, y, cx, cy) \
-      g.FillRectangle( \
-        &brush, \
+      gfx.FillRectangle( \
+        brush, \
         m_rc.left + x, m_rc.top + y, \
-        cx, cy);
+        m_rc.left + x + cx, m_rc.top + y + cy);
 
     hline( 4, 4, 3, 1);
     hline(10, 4, 3, 1);
@@ -585,68 +558,12 @@ class CloseBox : public Element {
     #undef hline
   }
 
-  public: virtual void Draw(HDC hdc) const {
-    // 01234567890123
-    // ----ooo---ooo--- 4
-    // -----ooo-ooo---- 5
-    // ------ooooo----- 6
-    // -------ooo------ 7
-    // -------ooo------ 8
-    // ------ooooo----- 9
-    // -----ooo-ooo---- 10
-    // ----ooo---ooo--- 11
-    Gdiplus::Graphics g(hdc);
-    drawMark(g, Gdiplus::Color(0, 0, 0));
+  public: virtual void Draw(const Graphics& gfx) const override {
+    drawXMark(gfx, markColor());
   }
 
-  public: virtual void DrawTheme(Gdiplus::Graphics& g, HTHEME) const {
-    if (!IsHover()) {
-      drawMark(g, Gdiplus::Color(150, 150, 150));
-
-    } else {
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-
-      // Fill background
-      {
-        Gdiplus::SolidBrush brush(Gdiplus::Color(237, 237, 239));
-
-        RECT rc = m_rc;
-        rc.left   += 0;
-        rc.top  += 0;
-        rc.right  -= 1;
-        rc.bottom -= 1;
-
-        g.FillRectangle(
-          &brush,
-          rc.left,
-          rc.top,
-          rc.right  - rc.left,
-          rc.bottom - rc.top);
-      }
-
-      drawMark(g, Gdiplus::Color(184, 60, 61));
-
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-
-      // Draw edge
-      {
-        RECT rc = m_rc;
-        rc.right  -= 1;
-        rc.bottom -= 1;
-
-        Gdiplus::Pen pen(Gdiplus::Color(150, 150, 150));
-        Gdiplus::Point rgPoint[8];
-        rgPoint[0] = Gdiplus::Point(rc.left  + 1, rc.top  + 0);
-        rgPoint[1] = Gdiplus::Point(rc.right - 1, rc.top  + 0);
-        rgPoint[2] = Gdiplus::Point(rc.right + 0, rc.top  + 1);
-        rgPoint[3] = Gdiplus::Point(rc.right + 0, rc.bottom - 1);
-        rgPoint[4] = Gdiplus::Point(rc.right - 1, rc.bottom + 0);
-        rgPoint[5] = Gdiplus::Point(rc.left  + 1, rc.bottom + 0);
-        rgPoint[6] = Gdiplus::Point(rc.left  + 0, rc.bottom - 1);
-        rgPoint[7] = Gdiplus::Point(rc.left  + 0, rc.top  + 1);
-        g.DrawLines(&pen, rgPoint, lengthof(rgPoint));
-      }
-    }
+  private: ColorF markColor() const {
+    return IsHover() ? ColorF::DarkViolet : ColorF::DimGray;
   }
 }; // CloseBox
 
@@ -671,7 +588,7 @@ class Item : public Element {
   public: int m_iImage;
   public: LPARAM m_lParam;
   private: RECT m_rcLabel;
-  private: CloseBox m_oCloseBox;
+  private: CloseBox m_closeBox;
   public: uint m_rgfState;
 
   // ctor
@@ -680,7 +597,7 @@ class Item : public Element {
       m_iImage(-1),
       m_iItem(iItem),
       m_rgfState(0),
-      m_oCloseBox(this),
+      m_closeBox(this),
       m_pwsz(nullptr),
       Element(pParent) {
     SetItem(pTcItem);
@@ -694,18 +611,13 @@ class Item : public Element {
   public: void ComputeLayout() {
     m_rcLabel = m_rc;
 
-    auto const prc = m_oCloseBox.GetRect();
+    auto const prc = m_closeBox.GetRect();
     *prc = m_rc;
 
-    if (IsSelected()) {
-      prc->right  -= k_cxCloseBoxMargin;
-      prc->left = prc->right - CloseBox::Width;
-      prc->top  += k_cyCloseBoxMargin;
-      prc->bottom = prc->top + CloseBox::Height;
-      //m_rcLabel.top -= 2;
-    } else {
-      prc->left = prc->right;
-    }
+    prc->right  -= k_cxCloseBoxMargin;
+    prc->left = prc->right - CloseBox::Width;
+    prc->top  += k_cyCloseBoxMargin;
+    prc->bottom = prc->top + CloseBox::Height;
 
     m_rcLabel.right = prc->left;
 
@@ -721,18 +633,7 @@ class Item : public Element {
 
   // [D]
   // Draw
-  public: virtual void Draw(HDC hdc) const override {
-    if (IsSelected()) {
-      drawSelected(hdc);
-    } else {
-      drawNormal(hdc);
-    }
-  }
-
-  // Draw
-  public: virtual void DrawTheme(
-      Gdiplus::Graphics& g,
-      HTHEME hTheme) const override {
+  public: virtual void Draw(const Graphics& gfx) const override {
     #if DEBUG_HOVER
       DEBUG_PRINTF("%p sel=%d %ls\n",
         this,
@@ -740,339 +641,90 @@ class Item : public Element {
         m_pwsz);
     #endif
 
-    if (IsSelected()) {
-      drawThemeSelected(g, hTheme);
-    } else {
-      drawThemeNormal(g, hTheme);
+    {
+      RECT rc = m_rc;
+      Graphics::Brush fillBrush(gfx, backgroundColor());
+      gfx.FillRectangle(fillBrush, rc);
+      Graphics::Brush strokeBrush(gfx, Graphics::blackColor());
+      gfx.DrawRectangle(strokeBrush, rc, 0.2);
     }
+
+    drawContent(gfx);
+    if (HasCloseBox())
+        m_closeBox.Draw(gfx);
   }
 
-  private: void drawContent(HDC hdc) const {
-    // Label Icon
-    if (m_iImage >= 0) {
-      if (auto const hImageList = GetImageList()) {
-        ::ImageList_Draw(
-            hImageList,
-            m_iImage,
-            hdc,
-            m_rcLabel.left - 20,
-            m_rc.top + 8,
-            ILD_TRANSPARENT);
-      }
-    }
+  private: void drawContent(const Graphics& gfx) const {
+    drawIcon(gfx);
 
     // Label Text
     {
-      ::SetTextAlign(hdc, TA_TOP | TA_LEFT | TA_NOUPDATECP);
-      ::SetBkMode(hdc, TRANSPARENT);
-      ::SetTextColor(hdc, ::GetSysColor(COLOR_BTNTEXT));
-      ::SetTextColor(hdc, 0xFF);
-
       RECT rc = m_rc;
       rc.left += 4 + 16 + 4;
       rc.right -= 4;
       rc.top += 8;
       rc.bottom = rc.bottom - 2;
 
-      ::ExtTextOut(
-        hdc,
-        rc.left,
-        rc.top,
-        ETO_CLIPPED,
-        &rc,
-        m_pwsz,
-        m_cwch,
-        nullptr);
+      Graphics::Brush brush(gfx, Graphics::sysColor(COLOR_BTNTEXT));
+      gfx.DrawText(brush, rc, m_pwsz, m_cwch);
     }
   }
 
-  private: void drawNormal(HDC hdc) const {
-    {
-        RECT rc = m_rc;
-        rc.bottom -= 3;
-        ::FillRect(hdc, &rc, reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1));
-    }
-
-    drawContent(hdc);
-  }
-
-  private: void drawSelected(HDC hdc) const {
-    #if 0
-    {
-      TRIVERTEX rgvert[2];
-      GRADIENT_RECT grc;
-
-      RECT rc = m_rc;
-      rc.top += 4;
-      rc.bottom -= 2;
-
-      SetVertex(
-        &rgvert[0],
-        rc.left,
-        rc.top,
-        ::GetSysColor(COLOR_3DHIGHLIGHT));
-
-      SetVertex(
-        &rgvert[1],
-        rc.right,
-        rc.bottom,
-        ::GetSysColor(COLOR_3DFACE));
-
-      grc.UpperLeft = 0;
-      grc.LowerRight = 1;
-
-      ::GradientFill(
-        hdc,
-        rgvert,
-        2,
-        &grc,
-        1,
-        GRADIENT_FILL_RECT_V);
-
-      ::DrawEdge(hdc, &rc, EDGE_ETCHED, BF_TOP | BF_LEFT | BF_RIGHT);
-    }
-    #else
-    {
-        RECT rc = m_rc;
-        rc.bottom -= 2;
-        ::FillRect(hdc, &rc, reinterpret_cast<HBRUSH>(COLOR_3DLIGHT + 1));
-    }
-    #endif
-
-    {
-        RECT rc;
-        rc.left = GetParent()->GetRect()->left;
-        rc.right = m_rc.left;
-        rc.top = m_rc.bottom - 3;
-        rc.bottom = m_rc.bottom;
-        ::DrawEdge(hdc, &rc, EDGE_ETCHED, BF_TOP);
-    }
-
-    {
-        RECT rc;
-        rc.left = m_rc.right - 1;
-        rc.right = GetParent()->GetRect()->right;
-        rc.top = m_rc.bottom - 3;
-        rc.bottom = m_rc.bottom;
-        ::DrawEdge(hdc, &rc, EDGE_ETCHED, BF_TOP);
-    }
-
-    drawContent(hdc);
-    m_oCloseBox.Draw(hdc);
-  }
-
-  private: void drawThemeContents(Gdiplus::Graphics& g) const {
-    g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
-
-    // Draw label
-    {
-      Gdiplus::SolidBrush brush(Gdiplus::Color(0, 0, 0));
-      g.DrawString(
-        m_pwsz,
-        m_cwch,
-        GetFont(),
-        Gdiplus::PointF(
-          static_cast<Gdiplus::REAL>(m_rcLabel.left),
-          static_cast<Gdiplus::REAL>(m_rcLabel.top)),
-        &brush);
-    }
-
-    if (m_iImage >= 0) {
-      if (auto const hImageList = GetImageList()) {
-        auto const hdc = g.GetHDC();
-        ::ImageList_Draw(
-            hImageList,
-            m_iImage,
-            hdc,
-            m_rcLabel.left - 20,
-            m_rcLabel.top,
-            ILD_TRANSPARENT);
-        g.ReleaseHDC(hdc);
-      }
-    }
-  }
-
-  // drawThemeNormal
-  private: void drawThemeNormal(Gdiplus::Graphics& g, HTHEME) const {
-    g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-
-    RECT rc = m_rc;
-    rc.top += 4;
-    rc.bottom -= 2;
-
-    Gdiplus::Point rgPoint[9];
-
-    rgPoint[0] = Gdiplus::Point(rc.right, rc.bottom - 1);
-
-    Element* pNext = GetNextShow();
-    if (pNext && pNext->IsSelected()) {
-      rgPoint[1] = Gdiplus::Point(rc.right - 1, rc.bottom);
-    } else {
-      rgPoint[1] = Gdiplus::Point(rc.right, rc.bottom);
-    }
-
-    Element* pPrev = GetPrevShow();
-    if (pPrev && pPrev->IsSelected()) {
-      rgPoint[2] = Gdiplus::Point(rc.left + 1, rc.bottom);
-    } else {
-      rgPoint[2] = Gdiplus::Point(rc.left, rc.bottom);
-    }
-
-    rgPoint[3] = Gdiplus::Point(rc.left, rc.bottom - 1);
-    rgPoint[4] = Gdiplus::Point(rc.left, rc.top + 2);
-    rgPoint[5] = Gdiplus::Point(rc.left  + 2, rc.top);
-    rgPoint[6] = Gdiplus::Point(rc.right - 2, rc.top);
-    rgPoint[7] = Gdiplus::Point(rc.right, rc.top + 2);
-    rgPoint[8] = Gdiplus::Point(rc.right, rc.bottom - 1);
-
-    Gdiplus::GraphicsPath path;
-    path.AddLines(rgPoint, lengthof(rgPoint));
-
-    // Fill highlight
-    if (IsHover()) {
-      auto const opacity = 255;
-
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, rc.top + 0),
-        Gdiplus::Point(0, rc.top + 27),
-        Gdiplus::Color(opacity, 242, 245, 250),
-        Gdiplus::Color(opacity, 153, 198, 238));
-
-      fillBrush.SetBlendTriangularShape(0.5f, 1.0f);
-      g.FillRectangle(
-        &fillBrush,
-        rc.left,
-        rc.top,
-        rc.right  - rc.left,
-        27);
-
-    } else {
-      auto const opacity = 255 * 70 / 100;
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, 13),
-        Gdiplus::Point(0, 27 + 13 - 1),
-        Gdiplus::Color(opacity, 207, 215, 235),
-        Gdiplus::Color(opacity, 242, 245, 250));
-
-      g.FillRectangle(
-        &fillBrush,
-        rc.left,
-        rc.top,
-        rc.right  - rc.left,
-        27);
-    }
-
-    drawThemeContents(g);
-
-    // Draw edge
-    {
-      Gdiplus::Pen linePen(Gdiplus::Color(143, 149, 161));
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-      g.DrawPath(&linePen, &path);
-    }
-  }
-
-  // drawThemeSelected
-  private: void drawThemeSelected(Gdiplus::Graphics& g, HTHEME hTheme) const {
-    RECT rc = m_rc;
-    rc.top += 2;
-    rc.bottom -= 2;
-
-    Gdiplus::GraphicsPath path;
-    {
-      auto const kR = 3;
-      Gdiplus::Point rgPoint[10];
-      rgPoint[0] = Gdiplus::Point(GetParent()->GetRect()->left, rc.bottom + 0);
-      rgPoint[1] = Gdiplus::Point(rc.left  - 1, rc.bottom + 0);
-      rgPoint[2] = Gdiplus::Point(rc.left  + 0, rc.bottom - kR);
-      rgPoint[3] = Gdiplus::Point(rc.left  + 0, rc.top  + kR);
-      rgPoint[4] = Gdiplus::Point(rc.left  + kR, rc.top  + 0);
-      rgPoint[5] = Gdiplus::Point(rc.right - kR, rc.top  + 0);
-      rgPoint[6] = Gdiplus::Point(rc.right + 0, rc.top  + kR);
-      rgPoint[7] = Gdiplus::Point(rc.right + 0, rc.bottom - kR);
-      rgPoint[8] = Gdiplus::Point(rc.right + 1, rc.bottom + 0);
-      rgPoint[9] = Gdiplus::Point(GetParent()->GetRect()->right, rc.bottom + 0);
-
-      path.AddLines(rgPoint, lengthof(rgPoint));
-      //path.CloseAllFigures();
-    }
-
-    g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
-
-    {
-      RECT rc = m_rc;
-      rc.top += 3;
-      rc.bottom = rc.top + 10;
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, rc.top),
-        Gdiplus::Point(0, rc.bottom),
-        Gdiplus::Color(252, 253, 253),
-        Gdiplus::Color(231, 245, 251));
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-      g.FillRectangle(
-        &fillBrush,
-        m_rc.left,
-        rc.top,
-        m_rc.right - m_rc.left,
-        rc.bottom - rc.top);
-    }
-
-    {
-      //g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
-      RECT rc = m_rc;
-      rc.top += 3;
-
-      rc.top += 9;
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, rc.top),
-        Gdiplus::Point(0, rc.bottom),
-        Gdiplus::Color(207, 231, 250),
-        Gdiplus::Color(183, 200, 246));
-
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-      g.FillRectangle(
-        &fillBrush,
-        m_rc.left,
-        rc.top,
-        m_rc.right - m_rc.left,
-        rc.bottom - rc.top);
-    }
-
-    drawThemeContents(g);
-
-    m_oCloseBox.DrawTheme(g, hTheme);
-
-    // Draw edge
-    {
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-      Gdiplus::Pen linePen(Gdiplus::Color(143, 149, 161));
-      //Gdiplus::Pen linePen(Gdiplus::Color(255, 0, 0));
-      g.DrawPath(&linePen, &path);
-    }
+  private: void drawIcon(const Graphics& gfx) const {
+    if (m_iImage < 0)
+      return;
+    auto const hImageList = GetImageList();
+    if (!hImageList)
+      return;
+    // Note: ILD_TRANSPARENT doesn't effect.
+    // Note: ILD_DPISCALE makes background black.
+    auto const hIcon = ::ImageList_GetIcon(
+        hImageList,
+        m_iImage,
+        0);
+    if (!hIcon)
+      return;
+    ComPtr<IWICBitmap> icon;
+    COM_VERIFY(gfx.imageFactory()->CreateBitmapFromHICON(
+        hIcon, icon.location()));
+    ComPtr<IWICFormatConverter> converter;
+    COM_VERIFY(gfx.imageFactory()->CreateFormatConverter(&converter));
+    COM_VERIFY(converter->Initialize(
+        icon,
+        GUID_WICPixelFormat32bppPBGRA,
+        WICBitmapDitherTypeNone,
+        nullptr,
+        0,
+        WICBitmapPaletteTypeMedianCut));
+    ComPtr<ID2D1Bitmap> bitmap;
+    COM_VERIFY(gfx->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap));
+    int const iconWidth = 16;
+    int const iconHeight = 16;
+    RECT rc;
+    rc.left = m_rcLabel.left - 20;
+    rc.top = m_rc.top + 8;
+    rc.right = rc.left + iconWidth;
+    rc.bottom = rc.top + iconHeight;
+    gfx->DrawBitmap(bitmap, gfx.scaledRect(rc));
   }
 
   // [G]
-
-  // GetLabel
   public: const char16* GetLabel() const { return m_pwsz; }
 
   // [H]
-  // HasClose
-  public: bool HasClose() const {
-    return IsSelected();
+  public: bool HasCloseBox() const {
+    return IsSelected() || IsHover();
   }
 
-  // HitTest
   public: virtual Element* HitTest(POINT pt) const override {
-    if (auto const pHit = m_oCloseBox.HitTest(pt)) {
-      return pHit;
+    if (HasCloseBox()) {
+        if (auto const hit = m_closeBox.HitTest(pt))
+          return hit;
     }
     return Element::HitTest(pt);
-
   }
 
   // [S]
-  // SetItem
   public: void SetItem(const TCITEM* pTcItem) {
     if (pTcItem->mask & TCIF_IMAGE) {
       m_iImage = pTcItem->iImage;
@@ -1136,117 +788,32 @@ class ListButton : public Element {
     Element(pParent) {}
 
   // [D]
-  public: virtual void Draw(HDC hdc) const override {
+  public: virtual void Draw(const Graphics& gfx) const override {
     ASSERT(IsShow());
     ASSERT(m_rc.left != m_rc.right);
 
-    ::FillRect(hdc, &m_rc, reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1));
-
-    #if 0
-    {
-      RECT rc = m_rc;
-
-      rc.top += 2;
-      rc.bottom -= 2;
-
-      ::DrawEdge(hdc, &rc, EDGE_BUMP, BF_TOP | BF_LEFT | BF_RIGHT);
-    }
-    #endif
+    Graphics::Brush fillBrush(gfx, backgroundColor());
+    gfx.FillRectangle(fillBrush, m_rc);
+    Graphics::Brush strokeBrush(gfx, Graphics::blackColor());
+    gfx.DrawRectangle(strokeBrush, m_rc, 0.2);
 
     // Draw triangle
     {
         auto const x = (m_rc.right - m_rc.left - 4) / 2 + m_rc.left;
         auto const y = (m_rc.bottom - m_rc.top) / 2 + m_rc.top;
-        fillRect(hdc, x + 0, y + 0, 5, 1);
-        fillRect(hdc, x + 1, y + 1, 3, 1);
-        fillRect(hdc, x + 2, y + 2, 1, 1);
+        fillRect(gfx, x + 0, y + 0, 5, 1);
+        fillRect(gfx, x + 1, y + 1, 3, 1);
+        fillRect(gfx, x + 2, y + 2, 1, 1);
     }
   }
 
-  private: void drawDownArrow(Gdiplus::Graphics& g) const {
+  private: void drawDownArrow(const Graphics& gfx) const {
     auto const x = (m_rc.right - m_rc.left - 4) / 2 + m_rc.left;
     auto const y = (m_rc.bottom - m_rc.top) / 2 + m_rc.top;
-    auto const color = ::GetSysColor(COLOR_BTNTEXT);
-    Gdiplus::SolidBrush arrowBrush(
-      Gdiplus::Color(GetRValue(color), GetGValue(color), GetBValue(color)));
-    g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
-    g.FillRectangle(&arrowBrush, x + 0, y + 0, 5, 1);
-    g.FillRectangle(&arrowBrush, x + 1, y + 1, 3, 1);
-    g.FillRectangle(&arrowBrush, x + 2, y + 2, 1, 1);
-  }
-
-  public: virtual void DrawTheme(
-      Gdiplus::Graphics& g,
-      HTHEME) const override {
-    ASSERT(IsShow());
-    ASSERT(m_rc.left != m_rc.right);
-
-    RECT rc = m_rc;
-    rc.top += 4;
-    rc.bottom -= 2;
-
-    Gdiplus::GraphicsPath path;
-    {
-      Gdiplus::Point rgPoint[8];
-
-      rgPoint[0] = Gdiplus::Point(rc.right, rc.bottom - 1);
-
-      auto const pNext = GetNextShow();
-      if (pNext && pNext->IsSelected()) {
-        rgPoint[1] = Gdiplus::Point(rc.right - 1, rc.bottom);
-      } else {
-        rgPoint[1] = Gdiplus::Point(rc.right, rc.bottom);
-      }
-
-      rgPoint[2] = Gdiplus::Point(rc.left, rc.bottom);
-      rgPoint[3] = Gdiplus::Point(rc.left, rc.top + 2);
-      rgPoint[4] = Gdiplus::Point(rc.left  + 2, rc.top);
-      rgPoint[5] = Gdiplus::Point(rc.right - 2, rc.top);
-      rgPoint[6] = Gdiplus::Point(rc.right, rc.top + 2);
-      rgPoint[7] = Gdiplus::Point(rc.right, rc.bottom - 1);
-
-      path.AddLines(rgPoint, lengthof(rgPoint));
-      path.CloseAllFigures();
-    }
-
-    // Fill background
-    {
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, rc.top),
-        Gdiplus::Point(0, m_rc.bottom),
-        Gdiplus::Color(253, 253, 253),
-        Gdiplus::Color(207, 231, 250));
-      g.FillPath(&fillBrush, &path);
-    }
-
-    // Fill highlight
-    {
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, 13),
-        Gdiplus::Point(0, 27 + 13 - 1),
-        IsHover() ?
-          Gdiplus::Color(153, 198, 238) :
-          Gdiplus::Color(207, 215, 235),
-        IsHover() ?
-          Gdiplus::Color(242, 245, 250) :
-          Gdiplus::Color(242, 245, 250));
-
-      g.FillRectangle(
-        &fillBrush,
-        rc.left,
-        rc.top,
-        rc.right - rc.left,
-        27);
-    }
-
-    drawDownArrow(g);
-
-    // Draw edge
-    {
-      g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-      Gdiplus::Pen linePen(Gdiplus::Color(160, 160, 160));
-      g.DrawPath(&linePen, &path);
-    }
+    Graphics::Brush arrowBrush(gfx, Graphics::blackColor());
+    gfx.FillRectangle(arrowBrush, x + 0, y + 0, 5, 1);
+    gfx.FillRectangle(arrowBrush, x + 1, y + 1, 3, 1);
+    gfx.FillRectangle(arrowBrush, x + 2, y + 2, 1, 1);
   }
 }; // ListButton
 
@@ -1379,18 +946,18 @@ class TabBand : public Element {
 
   private: typedef DoubleLinkedList_<Element> Elements;
 
+  private: Graphics m_gfx;
   private: int m_cItems;
+  private: BOOL m_compositionEnabled;
   private: int m_cxTab;
   private: int m_cxMinTab;
   private: Drag m_eDrag;
   private: bool m_fMouseTracking;
   private: HMENU m_hTabListMenu;
-  private: HTHEME m_hTheme;
   private: HWND m_hwnd;
   private: HWND m_hwndToolTips;
   private: int m_iFocus;
   private: uint m_nStyle;
-  private: MyFont m_oFont;
   private: ListButton m_oListButton;
   private: Elements m_oElements;
   private: Item* m_pDragItem;
@@ -1403,12 +970,12 @@ class TabBand : public Element {
   // ctor
   private: TabBand(HWND hwnd) :
       m_cItems(0),
+      m_compositionEnabled(false),
       m_cxTab(0),
       m_cxMinTab(k_cxMinTab),
       m_eDrag(Drag_None),
       m_fMouseTracking(false),
       m_hTabListMenu(nullptr),
-      m_hTheme(nullptr),
       m_hwnd(hwnd),
       m_hwndToolTips(nullptr),
       m_iFocus(-1),
@@ -1420,10 +987,8 @@ class TabBand : public Element {
       m_pSelected(nullptr),
       m_xTab(0),
       Element(nullptr) {
-    if (::IsThemeActive()) {
-      m_hTheme = ::OpenThemeData(hwnd, L"Button");
-    }
     m_oElements.Append(&m_oListButton);
+    COM_VERIFY(::DwmIsCompositionEnabled(&m_compositionEnabled));
   }
 
   // dotr
@@ -1435,14 +1000,10 @@ class TabBand : public Element {
     if (m_hTabListMenu) {
       ::DestroyMenu(m_hTabListMenu);
     }
-
-    if (m_hTheme) {
-      ::CloseThemeData(m_hTheme);
-    }
   }
 
   // [C]
-  private: bool changeFont(HDC hdc) {
+  private: bool changeFont(const Graphics& gfx) {
     LOGFONT lf;
 
     if (!::SystemParametersInfo(
@@ -1454,15 +1015,11 @@ class TabBand : public Element {
 
     lf.lfHeight = -13;
 
-    if (!m_oFont.Init(hdc, &lf)) {
-      return false;
-    }
-
-    auto const pFont = new Gdiplus::Font(hdc, m_oFont);
-    return SetFont(pFont) != nullptr;
+    gfx.SetFont(lf);
+    return true;
   }
 
-  private: bool computeLayout() {
+  private: bool UpdateLayout() {
     if (m_cItems == 0) {
       m_cxTab = -1;
       m_xTab = -1;
@@ -1609,79 +1166,32 @@ class TabBand : public Element {
   }
 
   // [D]
-  private: virtual void Draw(HDC hdc) const override {
-    ::FillRect(hdc, &m_rc, reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1));
-
-    ScopedSelect oSelectFont(hdc, m_oFont);
+  private: virtual void Draw(const Graphics& gfx) const override {
+    gfx->BeginDraw();
+    gfx->SetTransform(D2D1::IdentityMatrix());
+    gfx->Clear(gfx.sysColor(COLOR_3DFACE, m_compositionEnabled ? 0 : 1));
 
     foreach (Elements::Enum, oEnum, &m_oElements) {
-      auto const pElement = oEnum.Get();
-      if (pElement->IsShow()) {
-        pElement->Draw(hdc);
+      auto const element = oEnum.Get();
+      if (element->IsShow()) {
+        element->Draw(gfx);
       }
     }
+
+    if (m_pInsertBefore)
+        drawInsertMarker(m_gfx, m_pInsertBefore->GetRect());
+
+    COM_VERIFY(gfx->EndDraw());
   }
 
-  // DrawTheme
-  private: virtual void DrawTheme(
-      Gdiplus::Graphics& g,
-      HTHEME hTheme) const override {
-
-    ASSERT(hTheme != nullptr);
-    g.Clear(Gdiplus::Color(0x00171717));
-#if 0
-    #if 1
-    {
-      g.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
-      DWORD argb;
-      BOOL opaque;
-      ::DwmGetColorizationColor(&argb, &opaque);
-      Gdiplus::Color color(argb & 0xFFFFFF);
-      Gdiplus::SolidBrush brush(color);
-      g.FillRectangle(
-        &brush,
-        m_rc.left,
-        m_rc.top,
-        m_rc.right - m_rc.left,
-        m_rc.bottom - m_rc.top);
-      ASSERT(g.GetCompositingMode() == Gdiplus::CompositingModeSourceCopy);
-      g.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
-    }
-    #else
-    {
-      Gdiplus::LinearGradientBrush fillBrush(
-        Gdiplus::Point(0, m_rc.top + 14),
-        Gdiplus::Point(0, m_rc.bottom - m_rc.top),
-        Gdiplus::Color(207, 215, 235),
-        Gdiplus::Color(242, 245, 250));
-
-      g.FillRectangle(
-        &fillBrush,
-        m_rc.left,
-        m_rc.top,
-        m_rc.right - m_rc.left,
-        m_rc.bottom - m_rc.top);
-    }
-    #endif
-#endif
-#if 1
-    foreach (Elements::Enum, oEnum, &m_oElements) {
-      auto const pElement = oEnum.Get();
-      if (pElement->IsShow()) {
-        pElement->DrawTheme(g, hTheme);
-      }
-    }
-#endif
-  }
-
-  private: static void drawInsertMarker(HDC hdc, RECT* prc) {
+  private: static void drawInsertMarker(const Graphics& gfx, RECT* prc) {
     auto rc = * prc;
     rc.top += 5;
     rc.bottom -= 7;
 
     for (int w = 1; w <= 7; w += 2) {
-      fillRect(hdc, rc.left, rc.top, w, 1);
-      fillRect(hdc, rc.left, rc.bottom, w, 1);
+      fillRect(gfx, rc.left, rc.top, w, 1);
+      fillRect(gfx, rc.left, rc.bottom, w, 1);
 
       rc.top  -= 1;
       rc.left   -= 1;
@@ -1834,14 +1344,8 @@ class TabBand : public Element {
 
   // [O]
   private: LRESULT onCreate(CREATESTRUCT* pcs) {
-    s_cInstances += 1;
-    if (s_cInstances == 1) {
-      Gdiplus::GdiplusStartupInput oInput;
-      Gdiplus::GdiplusStartup(&s_GdiplusToken, &oInput, nullptr);
-    }
-
-    ScopedGetDC dc(m_hwnd);
-    changeFont(dc);
+    m_gfx.Init(m_hwnd);
+    changeFont(m_gfx);
 
     if (pcs->style & TCS_TOOLTIPS) {
       m_hwndToolTips = ::CreateWindowEx(
@@ -1930,7 +1434,7 @@ class TabBand : public Element {
           reinterpret_cast<LPARAM>(&ti));
     }
 
-    UpdateLayout();
+    Redraw();
 
     if (fSelChanged) {
       if (m_pSelected) {
@@ -1993,7 +1497,7 @@ class TabBand : public Element {
           reinterpret_cast<LPARAM>(&ti));
     }
 
-    UpdateLayout();
+    Redraw();
 
     return iItem;
   }
@@ -2071,7 +1575,7 @@ class TabBand : public Element {
             iItem += 1;
           }
 
-          computeLayout();
+          UpdateLayout();
         }
 
         // Hide insertion position mark
@@ -2098,12 +1602,10 @@ class TabBand : public Element {
       case WM_CREATE:
         return onCreate(reinterpret_cast<CREATESTRUCT*>(lParam));
 
-      case WM_DESTROY:
-        s_cInstances -= 1;
-        if (s_cInstances == 0) {
-          Gdiplus::GdiplusShutdown(s_GdiplusToken);
-        }
-        return 0;
+      case WM_DWMCOMPOSITIONCHANGED:
+        if (FAILED(DwmIsCompositionEnabled(&m_compositionEnabled)))
+            m_compositionEnabled = false;
+        break;
 
       case WM_LBUTTONDOWN: {
         POINT pt;
@@ -2125,18 +1627,12 @@ class TabBand : public Element {
         #if DEBUG_HOVER
           DEBUG_PRINTF("WM_MOUSELEAVE %p hover=%ls.%p\n",
             this,
-            nullptr == m_pHover ? L"null" : m_pHover->GetClass(),
+            m_pHover ? m_pHover->GetClass() : L"null",
             m_pHover);
         #endif // DEBUG_HOVER
 
         m_fMouseTracking = false;
-
-        if (m_pHover) {
-          m_pHover->SetHover(false);
-          m_pHover->Invalidate(m_hwnd);
-          m_pHover = nullptr;
-        }
-
+        UpdateHover(nullptr);
         return 0;
       }
 
@@ -2183,34 +1679,10 @@ class TabBand : public Element {
             lParam);
       }
 
-      case WM_PAINT: {
-        PAINTSTRUCT ps;
-        ::BeginPaint(m_hwnd, &ps);
-
-        if (!m_hTheme) {
-          Draw(ps.hdc);
-        } else {
-          // To avoid flicker, we draw into bitmap then copy to window.
-          ScopedGetDC dc(m_hwnd);
-          Gdiplus::Graphics g0(dc);
-          Gdiplus::Bitmap bitmap(m_rc.right, m_rc.bottom, &g0);
-          {
-            Gdiplus::Graphics g(&bitmap);
-            DrawTheme(g, m_hTheme);
-          }
-          Gdiplus::Graphics psG(ps.hdc);
-          psG.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
-          //psG.Clear(Gdiplus::Color(0xFF000000));
-          psG.DrawImage(&bitmap, 0, 0);
-        }
-
-        if (!!m_pInsertBefore) {
-          drawInsertMarker(ps.hdc, m_pInsertBefore->GetRect());
-        }
-
-        ::EndPaint(m_hwnd, &ps);
+      case WM_PAINT:
+        Draw(m_gfx);
+        ValidateRect(m_hwnd, nullptr);
         return 0;
-      }
 
       case WM_SIZE: {
         // Handle WM_SIZE at window creation. We won't receive WM_SIZE
@@ -2222,11 +1694,8 @@ class TabBand : public Element {
 
         ::GetClientRect(hwndParent, &m_rc);
         auto const iFontHeight = 16;  // must be >= 16 (Small Icon Height)
-        if (!m_hTheme) {
-          m_rc.bottom = m_rc.top + 6 + iFontHeight + 10;
-        } else {
-          m_rc.bottom = m_rc.top + 2 + 7 + iFontHeight + 5 + 2;
-        }
+        //m_rc.bottom = m_rc.top + 6 + iFontHeight + 10;
+        m_rc.bottom = m_rc.top + 2 + 7 + iFontHeight + 5 + 2;
 
         ::SetWindowPos(
             m_hwnd,
@@ -2236,7 +1705,6 @@ class TabBand : public Element {
             m_rc.right - m_rc.left,
             m_rc.bottom - m_rc.top,
             SWP_NOZORDER);
-
         return 0;
       }
 
@@ -2244,30 +1712,14 @@ class TabBand : public Element {
         switch (wParam) {
           case SPI_SETICONTITLELOGFONT:
           case SPI_SETNONCLIENTMETRICS: {
-            ScopedGetDC dc(m_hwnd);
-            changeFont(dc);
+            changeFont(m_gfx);
             break;
           }
         }
         break;
 
-      case WM_THEMECHANGED:
-        if (::IsThemeActive()) {
-          if (!m_hTheme) {
-            m_hTheme = ::OpenThemeData(m_hwnd, L"Tab");
-          }
-        } else {
-          if (m_hTheme) {
-            ::CloseThemeData(m_hTheme);
-            m_hTheme = nullptr;
-          }
-        }
-        return 0;
-
       case WM_USER:
-        return m_hTheme == nullptr
-          ? ::GetSysColor(COLOR_3DFACE)
-          : RGB(183, 200, 246);
+        return ::GetSysColor(COLOR_3DFACE);
 
       case WM_WINDOWPOSCHANGED: {
         auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
@@ -2280,7 +1732,8 @@ class TabBand : public Element {
         m_rc.right = wp->x + wp->cx;
         m_rc.bottom = wp->y + wp->cy;
 
-        UpdateLayout();
+        m_gfx.Resize(m_rc);
+        Redraw();
         return 0;
       }
 
@@ -2356,7 +1809,7 @@ class TabBand : public Element {
       case TCM_SETIMAGELIST: {
         auto const hOldImageList = m_hImageList;
         SetImageList(reinterpret_cast<HIMAGELIST>(lParam));
-        UpdateLayout();
+        Redraw();
         return reinterpret_cast<LRESULT>(hOldImageList);
       }
 
@@ -2391,22 +1844,7 @@ class TabBand : public Element {
 
         m_fMouseTracking = true;
       }
-
-      if (m_pHover == pHover) {
-        return;
-      }
-
-      if (m_pHover) {
-        m_pHover->SetHover(false);
-        m_pHover->Invalidate(m_hwnd);
-      }
-
-      if (pHover) {
-        pHover->SetHover(true);
-        pHover->Invalidate(m_hwnd);
-      }
-
-      m_pHover = pHover;
+      UpdateHover(pHover);
     } else {
       if (::GetCapture() != m_hwnd) {
         // Someone takes capture. So, we stop dragging.
@@ -2448,6 +1886,30 @@ class TabBand : public Element {
     }
   }
 
+  // [R]
+  private: void UpdateHover(Element* pHover) {
+      if (m_pHover == pHover)
+        return;
+
+    if (m_pHover) {
+      if (!pHover || !pHover->Is<CloseBox>() ||
+          pHover->GetParent() != m_pHover) {
+        if (m_pHover->Is<CloseBox>()) {
+          m_pHover->SetHover(false);
+          m_pHover = m_pHover->GetParent();
+        }
+        m_pHover->SetHover(false);
+        m_pHover->Invalidate(m_hwnd);
+      }
+    }
+
+    m_pHover = pHover;
+    if (m_pHover) {
+      m_pHover->SetHover(true);
+      m_pHover->Invalidate(m_hwnd);
+    }
+  }
+
   // [S]
   // selectItem
   private: int SelectItem(int const iItem) {
@@ -2466,7 +1928,7 @@ class TabBand : public Element {
       if (pItem) {
         pItem->SetState(Element::State_Selected);
         if (!pItem->IsShow()) {
-          UpdateLayout();
+          Redraw();
         }
         pItem->Invalidate(m_hwnd);
       }
@@ -2507,8 +1969,8 @@ class TabBand : public Element {
   }
 
   // [U]
-  private: void UpdateLayout() {
-    computeLayout();
+  private: void Redraw() {
+    UpdateLayout();
     ::InvalidateRect(m_hwnd, nullptr, false);
   }
 
