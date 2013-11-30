@@ -92,10 +92,9 @@ void BufferCore::extend(Posn lPosn, long cwchExtent)
 
     // Extend character buffer
     // warning C6308: 'realloc' might return null pointer: assigning null pointer to 'm_pwch', which is passed as an argument to 'realloc', will cause the original memory block to be leaked
-    #pragma warning(disable: 6308)
+    #pragma warning(suppress: 6308)
     m_pwch = static_cast<char16*>(
         ::HeapReAlloc(m_hHeap, 0, m_pwch, sizeof(char16) * m_cwch) );
-    #pragma warning(default: 6308)
 
     ASSERT(NULL != m_pwch);
 
