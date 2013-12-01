@@ -84,10 +84,11 @@ int Application::Ask(uint nFlags, uint nFormatId, ...)
 //
 bool Application::CanExit() const
 {
-    foreach (Application::EnumBuffer, oEnum, this)
-    {
-        unless (oEnum.Get()->CanKill()) return false;
-    } // for each buffer
+    for (auto& buffer: m_oBuffers) {
+      // TODO: We should make Buffer::CanKill() const.
+      if (!const_cast<Buffer&>(buffer).CanKill())
+        return false;
+    }
 
     return true;
 } // Application::CanExit
@@ -144,15 +145,11 @@ void Application::Exit(bool fForce)
 //
 Buffer* Application::FindBuffer(const char16* pwszName) const
 {
-    foreach (EnumBuffer, oEnum, this)
-    {
-        Buffer* pBuffer = oEnum.Get();
-        if (::lstrcmpiW(pBuffer->GetName(), pwszName) == 0)
-        {
-            return pBuffer;
-        }
-    } // for each buffer
-    return NULL;
+    for (auto& buffer: m_oBuffers) {
+      if (!::lstrcmpiW(buffer.GetName(), pwszName))
+        return const_cast<Buffer*>(&buffer);
+    }
+    return nullptr;
 } // Application::FindBuffer
 
 //////////////////////////////////////////////////////////////////////
@@ -226,14 +223,10 @@ Buffer* Application::Load(
         wszFileName,
         &pwszFile );
 
-    foreach (EnumBuffer, oEnum, this)
-    {
-        Buffer* pBuffer = oEnum.Get();
-        if (::lstrcmpiW(pBuffer->GetFileName(), wszFileName) == 0)
-        {
-            return pBuffer;
-        }
-    } // for each buffer
+    for (auto& buffer: m_oBuffers) {
+      if (!::lstrcmpiW(buffer.GetFileName(), wszFileName))
+        return &buffer;
+    }
 
     Buffer* pBuffer = NewBuffer(pwszFile);
     pBuffer->Load(wszFileName);

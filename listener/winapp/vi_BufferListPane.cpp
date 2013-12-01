@@ -97,8 +97,8 @@ void BufferListPane::ActivateBuffers(bool is_new_frame) {
     auto const buffer = reinterpret_cast<Buffer*>(oItem.lParam);
 
     // Make sure buffer is alive.
-    foreach (Application::EnumBuffer, oEnum, Application::Get()) {
-      if (oEnum.Get() == buffer) {
+    for (auto& runner: Application::Get()->buffers()) {
+      if (runner == buffer) {
         if (is_new_frame) {
           auto const frame = Application::Get()->CreateFrame();
           frame->AddPane(new EditPane(buffer));
@@ -179,10 +179,8 @@ void BufferListPane::dragStart(int iItem)
     unless (ListView_GetItem(m_hwndListView, &oItem)) return;
 
     Buffer* pBuffer = reinterpret_cast<Buffer*>(oItem.lParam);
-    foreach (Application::EnumBuffer, oEnum, Application::Get())
-    {
-        if (oEnum.Get() == pBuffer)
-        {
+    for (auto& runner: Application::Get()->buffers()) {
+        if (runner == pBuffer) {
             m_pDragItem = pBuffer;
             ::SetCursor(loadCursor(&sm_hDragCursor, L"ole32.dll", 3));
             ::SetCapture(m_hwnd);
@@ -407,19 +405,16 @@ void BufferListPane::Refresh()
 {
     ListView_DeleteAllItems(m_hwndListView);
 
-    foreach (Application::EnumBuffer, oEnum, Application::Get())
-    {
-        Buffer* pBuffer = oEnum.Get();
-
+    for (auto& buffer: Application::Get()->buffers()) {
         LVITEM oItem;
         oItem.mask = LVIF_IMAGE | LVIF_PARAM | LVIF_TEXT;
 
         oItem.iItem = 0;
 
-        oItem.iImage   = pBuffer->GetMode()->GetIcon();
+        oItem.iImage   = buffer.GetMode()->GetIcon();
         oItem.iSubItem = 0;
-        oItem.lParam   = reinterpret_cast<LPARAM>(pBuffer);
-        oItem.pszText  = const_cast<char16*>(pBuffer->GetName());
+        oItem.lParam   = reinterpret_cast<LPARAM>(&buffer);
+        oItem.pszText  = const_cast<char16*>(buffer.GetName());
         ListView_InsertItem(m_hwndListView, &oItem);
 
         oItem.mask = LVIF_TEXT;
@@ -427,18 +422,18 @@ void BufferListPane::Refresh()
 
         // Size
         oItem.iSubItem = 1;
-        ::wsprintf(wsz, L"%d", pBuffer->GetEnd());
+        ::wsprintf(wsz, L"%d", buffer.GetEnd());
         oItem.pszText = wsz;
         ListView_SetItem(m_hwndListView, &oItem);
 
         // State
         {
-            Buffer::EnumWindow oEnum(pBuffer);
+            Buffer::EnumWindow oEnum(&buffer);
 
             char16* pwsz = wsz;
-            *pwsz++ = pBuffer->IsModified() ? '*' : '-';
-            *pwsz++ = pBuffer->IsReadOnly() ? '%' : '-';
-            *pwsz++ = pBuffer->IsNotReady() ? '!' : '-';
+            *pwsz++ = buffer.IsModified() ? '*' : '-';
+            *pwsz++ = buffer.IsReadOnly() ? '%' : '-';
+            *pwsz++ = buffer.IsNotReady() ? '!' : '-';
             *pwsz++ = oEnum.AtEnd()         ? '-' : 'w';
             *pwsz = 0;
 
@@ -449,7 +444,7 @@ void BufferListPane::Refresh()
 
         // Last Saved
         {
-            if (0 == *pBuffer->GetFileName())
+            if (0 == *buffer.GetFileName())
             {
                  wsz[0] = 0;
             }
@@ -457,7 +452,7 @@ void BufferListPane::Refresh()
             {
                 // FIXME 2007-08-05 We should use localized date time format.
                 FILETIME ft;
-                ::FileTimeToLocalFileTime(pBuffer->GetLastWriteTime(), &ft);
+                ::FileTimeToLocalFileTime(buffer.GetLastWriteTime(), &ft);
                 SYSTEMTIME st;
                 ::FileTimeToSystemTime(&ft, &st);
                 ::wsprintf(wsz, L"%d/%d/%d %02d:%02d:%02d",
@@ -477,7 +472,7 @@ void BufferListPane::Refresh()
         // File
         {
             oItem.iSubItem = 4;
-            oItem.pszText = const_cast<char16*>(pBuffer->GetFileName());
+            oItem.pszText = const_cast<char16*>(buffer.GetFileName());
             ListView_SetItem(m_hwndListView, &oItem);
         }
     } // for each bufer
