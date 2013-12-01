@@ -551,7 +551,18 @@ class OwnPtr {
   public: OwnPtr(OwnPtr&& other) : ptr_(&ptr) { other.ptr_ = nullptr; }
   public: ~OwnPtr() { delete ptr_; }
   public: operator T*() const { return ptr_; }
-  public: T* operator ->() const { return ptr_; }
+  public: T* operator ->() const { ASSERT(ptr_); return ptr_; }
+  public: T& operator&() const { ASSERT(ptr_); return *ptr_; }
+  public: bool operator==(const OwnPtr<T>& other) const {
+    return ptr_ == other.ptr_;
+  }
+  public: bool operator!=(const OwnPtr<T>& other) const {
+    return ptr_ == other.ptr_;
+  }
+  public: bool operator==(const T* other) const { return ptr_ == other; }
+  public: bool operator!=(const T* other) const { return ptr_ != other; }
+  public: bool operator==(const T& other) const { return ptr_ == &other; }
+  public: bool operator!=(const T& other) const { return ptr_ != &other; }
 };
 
 // RefCounted
