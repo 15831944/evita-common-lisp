@@ -271,6 +271,80 @@ class DoubleLinkedList_
     {
         return NULL == m_pFirst;
     } // IsEmpty
+
+    // Iterator
+    private: template<class IteratorT_, typename Return_>
+        class Iterator_ {
+      protected: Item_* item_;
+      protected: List_* list_;
+
+      protected: Iterator_(List_& list, Item_* item)
+          : item_(item), list_(&list) {
+      }
+
+      public: bool operator==(const IteratorT_& other) const {
+        ASSERT(list_ == other.list_);
+        return item_ == other.item_;
+      }
+
+      public: bool operator!=(const IteratorT_& other) const {
+        return !operator==(other);
+      }
+
+      public: Return_& operator*() const {
+        ASSERT(item_);
+        return *item_;
+      }
+
+      public: Return_* operator->() const {
+        ASSERT(item_);
+        return item_;
+      }
+
+      protected: void decrement() {
+        ASSERT(item_);
+        item_ = static_cast<Cons_*>(item_)->m_pPrev;
+      }
+
+      protected: void increment() {
+        ASSERT(item_);
+        item_ = static_cast<Cons_*>(item_)->m_pNext;
+      }
+    };
+
+    public: class Iterator : public Iterator_<Iterator, Item_> {
+      public: Iterator(List_& list, Item_* item)
+          : Iterator_(list, item) {
+      }
+      public: Iterator& operator--() {
+        decrement();
+        return *this;
+      }
+      public: Iterator& operator++() {
+        increment();
+        return *this;
+      }
+    };
+
+    public: class ConstIterator
+        : public Iterator_<ConstIterator, const Item_> {
+      public: ConstIterator(const List_& list, Item_* item)
+          : Iterator_(const_cast<List_&>(list), item) {
+      }
+      public: ConstIterator& operator--() {
+        decrement();
+        return *this;
+      }
+      public: ConstIterator& operator++() {
+        increment();
+        return *this;
+      }
+    };
+
+    Iterator begin() { return Iterator(*this, m_pFirst); }
+    Iterator end() { return Iterator(*this, nullptr); }
+    ConstIterator begin() const { return ConstIterator(*this, m_pFirst); }
+    ConstIterator end() const { return ConstIterator(*this, nullptr); }
 }; // DoubleLinkedList_
 
 
