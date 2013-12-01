@@ -63,6 +63,9 @@ class Frame :
     public:     Frame();
     protected: ~Frame();
 
+    public: const Panes& panes() const { return m_oPanes; }
+    public: Panes& panes() { return m_oPanes; }
+
     // [A]
     public: bool  Activate();
     public: Pane* AddPane(Pane*);
@@ -73,13 +76,6 @@ class Frame :
 
     // [D]
     private: void detachPane(Pane*);
-
-    // [E]
-    public: class EnumPane : public Panes::Enum
-    {
-        public: EnumPane(const Frame* p) :
-            Panes::Enum(&p->m_oPanes) {}
-    }; // EnumPane
 
     // [G]
     public:  Pane* GetActivePane();

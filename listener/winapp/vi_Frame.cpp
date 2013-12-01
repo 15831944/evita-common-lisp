@@ -211,11 +211,9 @@ Pane* Frame::GetActivePane() {
   }
 
   auto pActive = m_oPanes.GetFirst();
-  foreach (EnumPane, oEnum, this) {
-    auto const pPane = oEnum.Get();
-    if (pActive->GetActiveTick() < pPane->GetActiveTick()) {
-      pActive = pPane;
-    }
+  for (auto& pane: m_oPanes) {
+    if (pActive->GetActiveTick() < pane.GetActiveTick())
+      pActive = &pane;
   }
 
   return pActive;
@@ -232,42 +230,35 @@ int Frame::GetCxStatusBar() const {
     return cx;
 }
 
-Pane* Frame::getPaneFromTab(int const iItem) const {
-  Pane* pPane;
-  {
-    TCITEM oItem;
-    oItem.mask = TCIF_PARAM;
-    if (!TabCtrl_GetItem(m_hwndTabBand, iItem, &oItem)) {
+static Pane* getPaneAt(HWND hwnd, int const index) {
+  TCITEM tab_item;
+  tab_item.mask = TCIF_PARAM;
+  if (!TabCtrl_GetItem(hwnd, index, &tab_item))
       return nullptr;
-    }
+  return reinterpret_cast<Pane*>(tab_item.lParam);
+}
 
-    pPane = reinterpret_cast<Pane*>(oItem.lParam);
-  }
+Pane* Frame::getPaneFromTab(int const index) const {
+  auto const present = getPaneAt(m_hwndTabBand, index);
+  if (!present)
+    return nullptr;
 
-  foreach (EnumPane, oEnum, this) {
-    if (pPane == oEnum.Get()) {
-      return pPane;
-    }
+  for (auto& pane: m_oPanes) {
+    if (pane == present)
+      return present;
   }
 
   return nullptr;
 }
 
-int Frame::getTabFromPane(Pane* const pPane) const {
-  TCITEM oItem;
-  oItem.mask = TCIF_PARAM;
-  int iItem = 0;
-  for (;;) {
-    if (!TabCtrl_GetItem(m_hwndTabBand, iItem, &oItem)) {
-      CAN_NOT_HAPPEN();
-    }
-
-    if (reinterpret_cast<Pane*>(oItem.lParam) == pPane) {
-      return iItem;
-    }
-
-    iItem += 1;
+int Frame::getTabFromPane(Pane* const pane) const {
+  auto index = 0;
+  while (auto const present = getPaneAt(m_hwndTabBand, index)) {
+    if (present == pane)
+      return index;
+    ++index;
   }
+  CAN_NOT_HAPPEN();
 }
 
 /// <summary>
@@ -355,8 +346,8 @@ void Frame::onDropFiles(HDROP const hDrop) {
 
     auto const pBuffer = Application::Get()->Load(wsz);
     Pane* pPane = nullptr;
-    foreach (EnumPane, oEnum, this) {
-      auto const pEditPane = oEnum.Get()->DynamicCast<EditPane>();
+    for (auto& pane: m_oPanes) {
+      auto const pEditPane = pane.DynamicCast<EditPane>();
       if (!pEditPane) {
         continue;
       }
@@ -478,11 +469,9 @@ bool Frame::OnIdle(uint const nCount) {
   }
 
   auto fMore = false;
-  foreach (EnumPane, oEnum, this) {
-    auto const pPane = oEnum.Get();
-    if (pPane->OnIdle(nCount)) {
+  for (auto& pane: m_oPanes) {
+    if (pane.OnIdle(nCount))
       fMore = true;
-    }
   }
   return fMore;
 }
@@ -555,10 +544,9 @@ LRESULT Frame::onMessage(
 
       ::GetClientRect(m_hwnd, &m_rc);
 
-      foreach (EnumPane, oEnum, this) {
-        auto const pPane = oEnum.Get();
-        pPane->Realize();
-        addTab(pPane);
+      for (auto& pane: m_oPanes) {
+        pane.Realize();
+        addTab(&pane);
       }
 
       if (m_oPanes.GetFirst()) {
@@ -664,12 +652,10 @@ LRESULT Frame::onMessage(
       switch (wParam) {
         case WM_DESTROY: {
           auto const hwnd = reinterpret_cast<HWND>(lParam);
-          foreach (EnumPane, oEnum, this) {
-            if (auto const pPane = oEnum.Get()) {
-              if (*pPane == hwnd) {
-                detachPane(pPane);
-                break;
-              }
+          for (auto& pane: m_oPanes) {
+            if (pane == hwnd) {
+              detachPane(&pane);
+              break;
             }
           }
           break;
@@ -787,11 +773,9 @@ LRESULT Frame::onMessage(
       RECT rc;
       GetPaneRect(&rc);
 
-      foreach (EnumPane, oEnum, this) {
-        auto const pPane = oEnum.Get();
-
+      for (const auto& pane: m_oPanes) {
         ::SetWindowPos(
-            *pPane,
+            pane,
             HWND_TOP,
             rc.left,
             rc.top,
@@ -985,10 +969,10 @@ void Frame::SetStatusBarParts(int const* const prgiPart, int const cParts) {
 ///   window is activated.
 /// </returns>
 bool Frame::ShowBuffer(Buffer* const pBuffer) {
-  foreach (EnumPane, oEnum, this) {
-    if (EditPane* pPane = oEnum.Get()->DynamicCast<EditPane>()) {
-      if (pPane->GetBuffer() == pBuffer) {
-        pPane->Activate();
+  for (auto& pane: m_oPanes) {
+    if (auto const edit_pane = pane.DynamicCast<EditPane>()) {
+      if (edit_pane->GetBuffer() == pBuffer) {
+        edit_pane->Activate();
         return false;
       }
     }

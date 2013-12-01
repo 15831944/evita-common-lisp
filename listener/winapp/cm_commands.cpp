@@ -963,9 +963,8 @@ static void openFile(const Context* pCtx, bool fNewFrame)
     {
         Pane* pPane = NULL;
         Frame* pFrame = Application::Get()->GetActiveFrame();
-        foreach (Frame::EnumPane, oEnum, pFrame)
-        {
-            EditPane* pPresent = oEnum.Get()->DynamicCast<EditPane>();
+        for (auto& pane: pFrame->panes()) {
+            auto const pPresent = pane.DynamicCast<EditPane>();
             if (NULL == pPresent)
             {
                 continue;

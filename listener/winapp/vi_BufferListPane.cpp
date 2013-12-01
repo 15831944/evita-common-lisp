@@ -528,10 +528,8 @@ DEFCOMMAND(ListBuffer)
     foreach (Application::EnumFrame, oEnum, Application::Get())
     {
         Frame* pFrame = oEnum.Get();
-        foreach (Frame::EnumPane, oEnum, pFrame)
-        {
-            BufferListPane* pPane = oEnum.Get()->
-                DynamicCast<BufferListPane>();
+        for (auto& pane: pFrame->panes()) {
+            BufferListPane* pPane = pane.DynamicCast<BufferListPane>();
 
             if (NULL != pPane)
             {
