@@ -78,6 +78,9 @@
 // parameters only differed by const/volatile qualifiers
 #pragma warning(disable:4373)
 
+// warning C4800: 'BOOL' : forcing value to bool 'true' or 'false' (performance warning)
+#pragma warning(disable:4800)
+
 typedef char int8;
 typedef unsigned char uint8;
 typedef unsigned int uint;

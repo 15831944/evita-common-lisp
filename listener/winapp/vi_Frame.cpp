@@ -48,7 +48,7 @@ class DllWrapper {
   }
 
   public: bool IsAviable() const {
-    return m_hDll != nullptr;
+    return !!m_hDll;
   }
 
   protected: void* Get(const char* name) const {
@@ -93,7 +93,7 @@ extern uint g_TabBand__TabDragMsg;
 Frame::Frame()
     : m_pActivePane(nullptr) {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
-} // Frame::Frame
+}
 
 /// <summary>
 ///   Destruct this frame.
@@ -103,79 +103,78 @@ Frame::~Frame() {
 
   for (auto i = 0; i < MessageLevel_Limit; i++) {
     delete[] m_rgpwszMessage[i];
-  } // for i
-} // Frame::~Frame
+  }
+}
 
 /// <summary>
 ///   Activate this frame.
 /// </summary>
 bool Frame::Activate() {
-  return ::SetForegroundWindow(*this) != 0;
-} // Frame::Activate
+  return ::SetForegroundWindow(*this);
+}
 
 /// <summary>
 ///   Add specified pane to this frame.
 /// </summary>
 /// <param name="pPane">A pane to be added.</param>
 /// <returns>A pane parameter.</returns>
-Pane* Frame::AddPane(Pane* const pPane) {
-  ASSERT(pPane != nullptr);
+Pane* Frame::AddPane(Pane* const pane) {
+  ASSERT(!!pane);
 
-  if (pPane->GetFrame() == this) {
-    return pPane;
+  if (pane->GetFrame() == this) {
+    return pane;
   }
 
-  if (pPane->GetFrame()) {
-    auto const pFrame = pPane->GetFrame();
-    if (pPane->IsRealized()) {
-      ::SetParent(*pPane, m_hwnd);
-      pFrame->detachPane(pPane);
+  if (pane->GetFrame()) {
+    auto const pFrame = pane->GetFrame();
+    if (pane->IsRealized()) {
+      ::SetParent(*pane, m_hwnd);
+      pFrame->detachPane(pane);
     } else {
-      pFrame->m_oPanes.Delete(pPane);
+      pFrame->m_oPanes.Delete(pane);
     }
   }
 
-  m_oPanes.Append(this, pPane);
+  m_oPanes.Append(this, pane);
 
   if (IsRealized()) {
-    if (! pPane->IsRealized()) {
-      pPane->Realize();
+    if (!pane->IsRealized()) {
+      pane->Realize();
     } else {
       RECT rc;
       GetPaneRect(&rc);
       ::SetWindowPos(
-          *pPane,
+          *pane,
           nullptr,
           rc.left,
           rc.top,
           rc.right - rc.left,
           rc.bottom - rc.top,
           SWP_NOZORDER);
-    } // if
-
-    addTab(pPane);
-  } // if
-
-  return pPane;
-} // Frame::AddPane
-
-void Frame::addTab(Pane* const pPane) {
-  TCITEM oItem;
-  oItem.mask = TCIF_TEXT | TCIF_PARAM;
-  oItem.pszText = const_cast<char16*>(pPane->GetName());
-  oItem.lParam = reinterpret_cast<LPARAM>(pPane);
-
-  if (auto const pEdit = pPane->DynamicCast<EditPane>()) {
-    oItem.iImage = pEdit->GetBuffer()->GetMode()->GetIcon();
-    if (oItem.iImage != -1) {
-      oItem.mask |= TCIF_IMAGE;
     }
-  } // if
 
-  auto const new_item_index = TabCtrl_GetItemCount(m_hwndTabBand);
-  TabCtrl_InsertItem(m_hwndTabBand, new_item_index, &oItem);
-  TabCtrl_SetCurSel(m_hwndTabBand, new_item_index);
-} // Frame::addTab
+    addTab(pane);
+  }
+
+  return pane;
+}
+
+void Frame::addTab(Pane* const pane) {
+  TCITEM tab_item;
+  tab_item.mask = TCIF_TEXT | TCIF_PARAM;
+  tab_item.pszText = const_cast<char16*>(pane->GetName());
+  tab_item.lParam = reinterpret_cast<LPARAM>(pane);
+
+  if (auto const edit_pane = pane->DynamicCast<EditPane>()) {
+    tab_item.iImage = edit_pane->GetBuffer()->GetMode()->GetIcon();
+    if (tab_item.iImage != -1)
+      tab_item.mask |= TCIF_IMAGE;
+  }
+
+  auto const new_tab_item_index = TabCtrl_GetItemCount(m_hwndTabBand);
+  TabCtrl_InsertItem(m_hwndTabBand, new_tab_item_index, &tab_item);
+  TabCtrl_SetCurSel(m_hwndTabBand, new_tab_item_index);
+}
 
 bool Frame::canClose() {
   if (Application::Get()->HasMultipleFrames()) {
@@ -185,7 +184,7 @@ bool Frame::canClose() {
 
   // Can we exist applicaiton safety?
   return Application::Get()->CanExit();
-} // Frame::canClose
+}
 
 // Description:
 //  Detach pPane from this frame and
@@ -201,13 +200,13 @@ void Frame::detachPane(Pane* const pPane) {
   }
 
   ASSERT(m_pActivePane != pPane);
-} // Frame::detachPane
+}
 
 /// <summary>
 ///   Get active pane of this frame.
 /// </summary>
 Pane* Frame::GetActivePane() {
-  if (m_pActivePane && m_pActivePane->GetActiveTick() != 0) {
+  if (m_pActivePane && m_pActivePane->GetActiveTick()) {
     return m_pActivePane;
   }
 
@@ -217,10 +216,10 @@ Pane* Frame::GetActivePane() {
     if (pActive->GetActiveTick() < pPane->GetActiveTick()) {
       pActive = pPane;
     }
-  } // for pane
+  }
 
   return pActive;
-} // Frame::GetActivePane
+}
 
 /// <summary>
 ///   Get width of status bar.
@@ -231,7 +230,7 @@ int Frame::GetCxStatusBar() const {
         - m_rc.left
         - ::GetSystemMetrics(SM_CXVSCROLL);  // remove size grip
     return cx;
-} // Frame::GetCxStatusBar
+}
 
 Pane* Frame::getPaneFromTab(int const iItem) const {
   Pane* pPane;
@@ -249,10 +248,10 @@ Pane* Frame::getPaneFromTab(int const iItem) const {
     if (pPane == oEnum.Get()) {
       return pPane;
     }
-  } // for pane
+  }
 
   return nullptr;
-} // Frame::getPaneFromTab
+}
 
 int Frame::getTabFromPane(Pane* const pPane) const {
   TCITEM oItem;
@@ -268,8 +267,8 @@ int Frame::getTabFromPane(Pane* const pPane) const {
     }
 
     iItem += 1;
-  } // for
-} // FrameWIndow::getTabFromPane
+  }
+}
 
 /// <summary>
 ///   Get pane rectangle.
@@ -284,16 +283,16 @@ void Frame::GetPaneRect(RECT* const out_rc) {
   #endif
   out_rc->right -= 2;
   out_rc->bottom -= m_oStatusBar.GetCy() + 2;
-} // Frame::GetPaneRect
+}
 
 const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
   auto const pPane = getPaneFromTab(static_cast<int>(pDisp->hdr.idFrom));
-  if (pPane == nullptr) {
+  if (!pPane) {
     return L"";
   }
 
   auto const pEdit = pPane->DynamicCast<EditPane>();
-  if (pEdit == nullptr) {
+  if (!pEdit) {
     return pPane->GetName();
   }
 
@@ -301,7 +300,7 @@ const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
 
   const char16* pwszSave;
   char16 wszSave[100];
-  if (*pBuffer->GetFileName() == 0) {
+  if (!*pBuffer->GetFileName()) {
     pwszSave = L"Not saved";
   } else {
     // FIXME 2007-08-05 We should use localized date time format.
@@ -333,33 +332,32 @@ const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
       L"Save: %s\r\n"
       L"%s\r\n",
       pBuffer->GetName(),
-      *pBuffer->GetFileName() == 0
+      !*pBuffer->GetFileName()
           ? L"No file"
           : pBuffer->GetFileName(),
       pwszSave,
       pwszModified);
 
     return m_wszToolTip;
-} // Frame::getToolTip
+}
 
 bool Frame::hasFocus() const {
   return m_pActivePane && m_pActivePane->HasFocus();
-} // Frame::hasFocus
+}
 
 void Frame::onDropFiles(HDROP const hDrop) {
   uint nIndex = 0;
   for (;;) {
     char16 wsz[MAX_PATH + 1];
     auto const cwch = ::DragQueryFile(hDrop, nIndex, wsz, lengthof(wsz));
-    if (cwch == 0) {
+    if (!cwch)
       break;
-    }
 
     auto const pBuffer = Application::Get()->Load(wsz);
     Pane* pPane = nullptr;
     foreach (EnumPane, oEnum, this) {
       auto const pEditPane = oEnum.Get()->DynamicCast<EditPane>();
-      if (pEditPane == nullptr) {
+      if (!pEditPane) {
         continue;
       }
 
@@ -367,9 +365,9 @@ void Frame::onDropFiles(HDROP const hDrop) {
         pPane = pEditPane;
         break;
       }
-    } // for pane
+    }
 
-    if (pPane == nullptr) {
+    if (!pPane) {
       pPane = new EditPane(pBuffer);
       AddPane(pPane);
     }
@@ -377,11 +375,11 @@ void Frame::onDropFiles(HDROP const hDrop) {
     pPane->Activate();
 
     nIndex += 1;
-  } // for
+  }
 
   ::DragFinish(hDrop);
   Activate();
-} // Frame::onDropFiles
+}
 
 void Frame::onDraw(HDC) {
 #if USE_TABBAND_EDGE
@@ -418,7 +416,7 @@ void Frame::onDraw(HDC) {
     ::DrawEdge(hdc, &rc, EDGE_SUNKEN, BF_RECT);
   }
 #endif //USE_TABBAND_EDGE
-} // Frame::onDraw
+}
 
 /// <summary>
 ///   Idle processing
@@ -441,17 +439,17 @@ bool Frame::OnIdle(uint const nCount) {
         case IDYES:
           foreach (Buffer::EnumWindow, oEnum, pBuffer) {
             oEnum.Get()->GetSelection()->PrepareForReload();
-          } // for window
+          }
           pBuffer->Load(pBuffer->GetFileName());
           break;
 
         default:
          CAN_NOT_HAPPEN();
-      } // swtich iAnser
-    } // HandleObsoleteBuffer
+      }
+    }
   }; // Local
 
-  if (nCount == 0) {
+  if (!nCount) {
     if (hasFocus()) {
       updateTitleBar();
 
@@ -474,10 +472,10 @@ bool Frame::OnIdle(uint const nCount) {
 
           default:
              CAN_NOT_HAPPEN();
-        } // switch obsolete
-      } // if
-    } // if
-  } // if
+        }
+      }
+    }
+  }
 
   auto fMore = false;
   foreach (EnumPane, oEnum, this) {
@@ -485,9 +483,9 @@ bool Frame::OnIdle(uint const nCount) {
     if (pPane->OnIdle(nCount)) {
       fMore = true;
     }
-  } // for Pane
+  }
   return fMore;
-} // Frame::OnIdle
+}
 
 #define DefineDllProc(mp_dll, mp_name) \
     g_pfn ## mp_name = reinterpret_cast<mp_name ## T>( \
@@ -561,13 +559,13 @@ LRESULT Frame::onMessage(
         auto const pPane = oEnum.Get();
         pPane->Realize();
         addTab(pPane);
-      } // for Pane
+      }
 
       if (m_oPanes.GetFirst()) {
         m_oPanes.GetFirst()->Activate();
       }
       break;
-    } // WM_CREATE
+    }
 
     case WM_DROPFILES:
       onDropFiles(reinterpret_cast<HDROP>(wParam));
@@ -579,7 +577,7 @@ LRESULT Frame::onMessage(
       pMinMax->ptMinTrackSize.x = 200;
       pMinMax->ptMinTrackSize.y = 200;
       return 0;
-    } // WM_GETMIMMAXINFO
+    }
 
     case WM_NCDESTROY:
       delete this;
@@ -629,7 +627,7 @@ LRESULT Frame::onMessage(
                     pPane->Destroy();
                 }
                 break;
-            } // TABBAND_NOTIFY_CLOSE
+            }
 
             case TABBAND_NOTIFY_QUERY_CLOSE:
               return HasMultiplePanes() || canClose();
@@ -647,12 +645,12 @@ LRESULT Frame::onMessage(
                 updateTitleBar();
               }
               break;
-            } // TCN_SELCHANGE
+            }
             break;
-          } // switch code
-        } // switch idFrom
+          }
+        }
         return 0;
-    } // WM_NOTIFY
+    }
 
     case WM_PAINT: {
       PAINTSTRUCT ps;
@@ -660,7 +658,7 @@ LRESULT Frame::onMessage(
       onDraw(hdc);
       ::EndPaint(m_hwnd, &ps);
       return 0;
-    } // WM_PAINT
+    }
 
     case WM_PARENTNOTIFY:
       switch (wParam) {
@@ -673,10 +671,10 @@ LRESULT Frame::onMessage(
                 break;
               }
             }
-          } // for pane
+          }
           break;
-        } // WM_DESTROY
-      } // switch wParam
+        }
+      }
       return 0;
 
     case WM_SETFOCUS:
@@ -686,7 +684,7 @@ LRESULT Frame::onMessage(
         #endif
         Application::Get()->SetActiveFrame(this);
         pPane->Activate();
-      } // if
+      }
       return 0;
 
     case WM_WINDOWPOSCHANGED: {
@@ -736,18 +734,15 @@ LRESULT Frame::onMessage(
       if (wp->flags & SWP_HIDEWINDOW) {
         // We don't take care hidden window.
         return 0;
-      } // if
+      }
 
-      if ((wp->flags & 0x10000000) == 0) {
-        if (wp->flags & SWP_NOSIZE) {
-          return 0;
-        } // if
-      } // if
+      if (!(wp->flags & 0x10000000) && (wp->flags & SWP_NOSIZE))
+        return 0;
 
       if (::IsIconic(m_hwnd)) {
         // We don't take care miminize window.
         return 0;
-      } // if
+      }
 
       ::GetClientRect(m_hwnd, &m_rc);
 
@@ -787,7 +782,7 @@ LRESULT Frame::onMessage(
               SB_SETTEXT,
               SB_SIMPLEID | SBT_NOBORDERS,
               reinterpret_cast<LPARAM>(wsz));
-      } // status bar
+      }
 
       RECT rc;
       GetPaneRect(&rc);
@@ -803,7 +798,7 @@ LRESULT Frame::onMessage(
             rc.right  - rc.left,
             rc.bottom - rc.top,
             SWP_NOZORDER);
-      } // for Pane
+      }
 
       //::InvalidateRect(m_hwnd, nullptr, false);
       {
@@ -812,7 +807,7 @@ LRESULT Frame::onMessage(
       }
 
       return 0;
-    } // WM_WINDOWPOSCHANGED
+    }
 
     default:
       if (uMsg == g_TabBand__TabDragMsg) {
@@ -821,23 +816,23 @@ LRESULT Frame::onMessage(
             reinterpret_cast<HWND>(lParam));
       }
       break;
-  } // switch uMsg
+  }
 
   return BaseWindow::onMessage(uMsg, wParam, lParam);
-} // Frame::onMessage
+}
 
 bool Frame::onTabDrag(
     TabBandDragAndDrop const eAction,
     HWND const hwndTabBand) {
   auto const pFrom = Application::Get()->FindFrame(::GetParent(hwndTabBand));
 
-  if (pFrom == nullptr) {
+  if (!pFrom) {
     // We should not be here.
     return false;
   }
 
   auto const pPane = pFrom->GetActivePane();
-  if (pPane == nullptr) {
+  if (!pPane) {
     // Why is pPane nullptr?
     return false;
   }
@@ -864,7 +859,7 @@ bool Frame::onTabDrag(
   }
 
   return true;
-} // Frame::onTabDrag
+}
 
 /// <summary>
 ///   Realize this frame.
@@ -914,14 +909,14 @@ void Frame::Realize() {
       cy);
 
   SetStatusBar(0, L"Ready");
-} // Frame::Realize
+}
 
 /// <summary>
 ///   Remove all messages in status bar.
 /// </summary>
 void Frame::ResetMessages() {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
-} // Frame::ResetMessages
+}
 
 void Frame::SetActivePane(Pane* const pPane) {
   #if DEBUG_FOCUS
@@ -941,9 +936,9 @@ void Frame::SetActivePane(Pane* const pPane) {
         }
         break;
       }
-    } // if
+    }
     iItem += 1;
-  } // for pane
+  }
 }// Frame::SetActivePane
 
 /// <summary>
@@ -957,7 +952,7 @@ void Frame::SetStatusBar(int const ePart, const char16* const pwszMsg) {
       SB_SETTEXT,
       ePart | SBT_NOBORDERS,
       reinterpret_cast<LPARAM>(pwszMsg));
-} // Frame::SetStatusBar
+}
 
 /// <summary>
 ///   Set status bar formatted message on specified part.
@@ -972,14 +967,14 @@ void Frame::SetStatusBarf(
   ::wvsprintf(wsz, pwszFormat, args);
   va_end(args);
   SetStatusBar(ePart, wsz);
-} // Frame::SetStatusBar
+}
 
 /// <summary>
 ///   Set parts width of status bar.
 /// </summary>
 void Frame::SetStatusBarParts(int const* const prgiPart, int const cParts) {
   m_oStatusBar.SetParts(prgiPart, cParts);
-} // Frame::SetStatusBar
+}
 
 /// <summary>
 ///   Show or activate specified buffer on this frame.
@@ -997,13 +992,13 @@ bool Frame::ShowBuffer(Buffer* const pBuffer) {
         return false;
       }
     }
-  } // for pane
+  }
 
   auto const pPane = new EditPane(pBuffer);
   AddPane(pPane);
   pPane->Activate();
   return true;
-} // Frame::ShowBuffer
+}
 
 /// <summary>
 ///   Display specified message on status bar.
@@ -1013,7 +1008,7 @@ void Frame::ShowMessage(
     uint const nFormatId, ...) {
   delete[] m_rgpwszMessage[iLevel];
   m_rgpwszMessage[iLevel] = nullptr;
-  if (nFormatId != 0) {
+  if (nFormatId) {
     char16 wszFormat[1024];
     ::LoadString(g_hResource, nFormatId, wszFormat, lengthof(wszFormat));
 
@@ -1028,7 +1023,7 @@ void Frame::ShowMessage(
     auto const pwsz = new char16[cwch + 1];
     myCopyMemory(pwsz, wsz, sizeof(char16) * (cwch + 1));
     m_rgpwszMessage[iLevel] = pwsz;
-  } // if
+  }
 
   int i = MessageLevel_Limit;
   do {
@@ -1038,7 +1033,7 @@ void Frame::ShowMessage(
       return;
     }
   } while (i > 0);
-} // Frame::ShowMessage
+}
 
 // [U]
 /// <summary>
@@ -1056,4 +1051,4 @@ void Frame::updateTitleBar() {
   m_oTitleBar.SetText(wszTitle, ::lstrlenW(wszTitle));
 
   m_pActivePane->UpdateStatusBar();
-} // Frame::updateTitleBar
+}
