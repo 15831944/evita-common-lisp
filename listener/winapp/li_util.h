@@ -543,6 +543,17 @@ class HashTable_
 }; // HashTable_
 
 
+template<class T>
+class OwnPtr {
+  private: T* ptr_;
+  public: OwnPtr(T* ptr) : ptr_(ptr) {}
+  public: OwnPtr(T& ptr) : ptr_(&ptr) {}
+  public: OwnPtr(OwnPtr&& other) : ptr_(&ptr) { other.ptr_ = nullptr; }
+  public: ~OwnPtr() { delete ptr_; }
+  public: operator T*() const { return ptr_; }
+  public: T* operator ->() const { return ptr_; }
+};
+
 // RefCounted
 template<class T>
 class RefCounted_ {
