@@ -37,6 +37,14 @@ class BaseWindow
 
     public: operator HWND() const { return m_hwnd; }
 
+    public: bool operator==(const BaseWindow* other) const {
+      return this == other;
+    }
+
+    public: bool operator==(HWND hwnd) const {
+      return m_hwnd == hwnd;
+    }
+
     // [C]
     public: bool CreateWindowEx(
         DWORD   dwExStyle,
