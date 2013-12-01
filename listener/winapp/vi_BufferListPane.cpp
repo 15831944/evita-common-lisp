@@ -520,10 +520,8 @@ DEFCOMMAND(KillBuffers)
 //
 DEFCOMMAND(ListBuffer)
 {
-    foreach (Application::EnumFrame, oEnum, Application::Get())
-    {
-        Frame* pFrame = oEnum.Get();
-        for (auto& pane: pFrame->panes()) {
+    for (auto& frame: Application::Get()->frames()) {
+        for (auto& pane: frame.panes()) {
             BufferListPane* pPane = pane.DynamicCast<BufferListPane>();
 
             if (NULL != pPane)

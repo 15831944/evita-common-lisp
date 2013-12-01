@@ -138,24 +138,17 @@ DEFCOMMAND(CapitalizeSelection)
 //  Evita   Ctrl+Shift+9
 //  Emacs   Ctrl+X 1
 //
-DEFCOMMAND(CloseOtherFrames)
-{
-    Frame* pActiveFrame = pCtx->GetFrame();
-
-    Application::EnumFrame oEnumFrame(Application::Get());
-
-    while (! oEnumFrame.AtEnd())
-    {
-        Frame* pFrame = oEnumFrame.Get();
-        oEnumFrame.Next();
-
-        if (pFrame != pActiveFrame)
-        {
-            pFrame->Destroy();
-        }
-    } // for each frame
-} // CloseOtherFrames
-
+DEFCOMMAND(CloseOtherFrames) {
+    auto const active_frame = pCtx->GetFrame();
+    auto it = Application::Get()->frames().begin();
+    const auto end = Application::Get()->frames().end();
+    while (it != end) {
+      auto& frame = *it;
+      ++it;
+      if (frame != active_frame)
+        frame.Destroy();
+    }
+}
 
 //////////////////////////////////////////////////////////////////////
 //

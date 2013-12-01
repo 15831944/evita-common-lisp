@@ -43,6 +43,8 @@ class Application : public Command::Processor
 
     public: const Buffers& buffers() const { return m_oBuffers; }
     public: Buffers& buffers() { return m_oBuffers; }
+    public: const Frames& frames() const { return m_oFrames; }
+    public: Frames& frames() { return m_oFrames; }
 
     // FIXME 2007-08-19 yosi@msn.com We should NOT use InternalAddBufer,
     // this method is just for listener.
@@ -60,12 +62,6 @@ class Application : public Command::Processor
     public: Frame* DeleteFrame(Frame*);
 
     // [E]
-    public: class EnumFrame : public Frames::Enum
-    {
-        public: EnumFrame(const Application* p) :
-            Frames::Enum(&p->m_oFrames) {}
-    }; // EnumFrame
-
     public: void Exit(bool);
 
     // [F]

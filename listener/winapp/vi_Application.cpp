@@ -158,14 +158,10 @@ Buffer* Application::FindBuffer(const char16* pwszName) const
 //
 Frame* Application::FindFrame(HWND hwnd) const
 {
-    foreach (EnumFrame, oEnum, this)
-    {
-        Frame* pFrame = oEnum.Get();
-        if (*pFrame == hwnd)
-        {
-            return pFrame;
-        }
-    } // for each Frame
+    for (auto& frame: m_oFrames) {
+        if (frame == hwnd)
+            return const_cast<Frame*>(&frame);
+    }
     return NULL;
 } // Application::FindFrame
 
@@ -280,10 +276,9 @@ Buffer* Application::NewBuffer(const char16* pwszName)
 bool Application::OnIdle(uint nCount)
 {
     bool fMore = false;
-    foreach (EnumFrame, oEnum, this)
-    {
-        Frame* pFrame = oEnum.Get();
-        if (pFrame->OnIdle(nCount)) fMore = true;
+    for (auto& frame: m_oFrames) {
+        if (frame.OnIdle(nCount))
+            fMore = true;
     } // for each Frame
     return fMore;
 } // Application::OnIdle
