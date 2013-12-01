@@ -25,11 +25,12 @@ using D2D1::ColorF;
 #include <wincodec.h>
 #pragma comment(lib, "windowscodecs.lib")
 
-
 // C4355: 'this' : used in base member initializer list
 #pragma warning(disable:4355) 
 // C4244: 'argument' : conversion from 'int' to 'FLOAT', possible loss of data
 #pragma warning(disable:4244)
+
+namespace {
 
 #define WC_TABBANDCLASS  L"TabBandClass"
 
@@ -1995,6 +1996,8 @@ class TabBand : public Element {
     return tabBand->OnMessage(uMsg, wParam, lParam);
   }
 };
+
+}
 
 void TabBand__Init(HINSTANCE const hInstance) {
   TabBand::Init(hInstance);
