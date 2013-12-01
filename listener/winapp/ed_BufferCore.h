@@ -33,6 +33,14 @@ class BufferCore
     protected: BufferCore();
     public:    ~BufferCore();
 
+    public: bool operator==(const BufferCore* other) const {
+        return this == other;
+    }
+
+    public: bool operator!=(const BufferCore* other) const {
+        return this != other;
+    }
+
     // [D]
     protected: Count deleteChars(Posn, Posn);
 
