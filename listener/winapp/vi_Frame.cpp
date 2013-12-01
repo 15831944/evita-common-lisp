@@ -172,8 +172,9 @@ void Frame::addTab(Pane* const pPane) {
     }
   } // if
 
-  TabCtrl_InsertItem(m_hwndTabBand, 0, &oItem);
-  TabCtrl_SetCurSel(m_hwndTabBand, 0);
+  auto const new_item_index = TabCtrl_GetItemCount(m_hwndTabBand);
+  TabCtrl_InsertItem(m_hwndTabBand, new_item_index, &oItem);
+  TabCtrl_SetCurSel(m_hwndTabBand, new_item_index);
 } // Frame::addTab
 
 bool Frame::canClose() {
