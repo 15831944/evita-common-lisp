@@ -26,19 +26,15 @@ class Buffer :
     public: Buffer(const char16* pwsz, Edit::Mode* pMode = NULL) :
         Edit::Buffer(pwsz, pMode) {}
 
+    public: const WindowList& windows() const { return m_oWindows; }
+    public: WindowList& windows() { return m_oWindows; }
+
     // [A]
     public: void AddWindow(Window* pWindow)
         { m_oWindows.Append(pWindow); }
 
     // [C]
     public: bool CanKill();
-
-    // [E]
-    public: class EnumWindow : public WindowList::Enum
-    {
-        public: EnumWindow(const Buffer* p) :
-            WindowList::Enum(&p->m_oWindows) {}
-    }; // EnumWindow
 
     // [F]
     public: void FinishIo(uint);

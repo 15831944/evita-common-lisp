@@ -428,13 +428,14 @@ void BufferListPane::Refresh()
 
         // State
         {
-            Buffer::EnumWindow oEnum(&buffer);
+            auto it = buffer.windows().begin();
+            ++it;
 
             char16* pwsz = wsz;
             *pwsz++ = buffer.IsModified() ? '*' : '-';
             *pwsz++ = buffer.IsReadOnly() ? '%' : '-';
             *pwsz++ = buffer.IsNotReady() ? '!' : '-';
-            *pwsz++ = oEnum.AtEnd()         ? '-' : 'w';
+            *pwsz++ = it == buffer.windows().end() ? '-' : 'w';
             *pwsz = 0;
 
             oItem.iSubItem = 2;

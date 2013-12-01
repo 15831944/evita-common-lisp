@@ -79,10 +79,8 @@ LRESULT Gateway::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         Posn lBufEnd = pBuffer->GetEnd();
 
-        foreach (Buffer::EnumWindow, oEnum, pBuffer)
-        {
-            Buffer::Window* pWindow = oEnum.Get();
-            Selection* pSelection = pWindow->GetSelection();
+        for (auto& window: pBuffer->windows()) {
+            Selection* pSelection = window.GetSelection();
             if (pSelection->GetStart() == lLast &&
                 pSelection->GetEnd()   == lLast )
             {

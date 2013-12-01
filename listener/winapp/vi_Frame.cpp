@@ -428,9 +428,8 @@ bool Frame::OnIdle(uint const nCount) {
           break;
 
         case IDYES:
-          foreach (Buffer::EnumWindow, oEnum, pBuffer) {
-            oEnum.Get()->GetSelection()->PrepareForReload();
-          }
+          for (auto& window: pBuffer->windows())
+            window.GetSelection()->PrepareForReload();
           pBuffer->Load(pBuffer->GetFileName());
           break;
 

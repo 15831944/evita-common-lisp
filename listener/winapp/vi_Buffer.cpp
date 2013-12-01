@@ -59,18 +59,13 @@ bool Buffer::CanKill()
 //  Returns MRU window
 Buffer::Window* Buffer::GetWindow() const
 {
-    Window* pMru = m_oWindows.GetFirst();
-    foreach (EnumWindow, oEnum, this)
-    {
-        Window* pWindow = oEnum.Get();
-        if (pMru->GetActiveTick() < pWindow->GetActiveTick())
-        {
-            pMru = pWindow;
-        }
+    const auto* mru = m_oWindows.GetFirst();
+    for (auto& window: m_oWindows) {
+        if (mru->GetActiveTick() < window.GetActiveTick())
+            mru = &window;
     } // for each window
-    return pMru;
-} // Buffer::GetWindow
-
+    return const_cast<Window*>(mru);
+}
 
 //////////////////////////////////////////////////////////////////////
 //

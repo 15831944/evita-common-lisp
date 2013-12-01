@@ -72,11 +72,9 @@ struct FinishLoadParam
                 m_pBuffer->SetMode(pModeFactory->Create(m_pBuffer));
             }
 
-            foreach (Buffer::EnumWindow, oEnum, m_pBuffer)
-            {
-                oEnum.Get()->GetSelection()->RestoreForReload();
-            } // for each window
-            
+            for (auto& window: m_pBuffer->windows())
+                window.GetSelection()->RestoreForReload();
+
             m_pBuffer->GetMode()->DoColor(m_pBuffer->GetEnd());
         } // if
 

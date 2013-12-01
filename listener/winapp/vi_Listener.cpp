@@ -54,10 +54,8 @@ void Listener::OnReceiveText(const char16* pwch, int cwch)
 
     Posn lBufEnd = pBuffer->GetEnd();
 
-    foreach (Buffer::EnumWindow, oEnum, pBuffer)
-    {
-        Buffer::Window* pWindow = oEnum.Get();
-        Selection* pSelection = pWindow->GetSelection();
+    for (auto& window: pBuffer->windows()) {
+        Selection* pSelection = window.GetSelection();
         if (pSelection->GetStart() == lLast &&
             pSelection->GetEnd()   == lLast )
         {
