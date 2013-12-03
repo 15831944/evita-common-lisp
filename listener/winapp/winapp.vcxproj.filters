@@ -25,6 +25,9 @@
     <Filter Include="Charset">
       <UniqueIdentifier>{a1443834-b863-4c30-9d59-8ac2827559da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{d1749aaa-2980-425e-8e0a-039655e65171}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ap_input_history.cpp">
@@ -179,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="mode_Python.cpp">
       <Filter>Modes</Filter>
+    </ClCompile>
+    <ClCompile Include="gfx_base.cpp">
+      <Filter>Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -355,6 +361,9 @@
     </ClInclude>
     <ClInclude Include="mode_Python.h">
       <Filter>Modes</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx_base.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

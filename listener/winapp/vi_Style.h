@@ -14,43 +14,35 @@
 #include "./vi_defs.h"
 
 #include "./ed_Style.h"
+#include "./li_util.h"
+
+namespace gfx {
+class Font;
+class Graphics;
+class TextFormat;
+class TextLayout;
+};
 
 //////////////////////////////////////////////////////////////////////
 //
 // Font class
 //
-class Font
-{
-    public: enum Flag
-    {
-        Flag_Bold       = 1 << 0,
-        Flag_Italic     = 1 << 1,
-        Flag_StrikeOut  = 1 << 2,
-        Flag_Underline  = 1 << 3,
-    }; // Flag
-
+class Font {
     public: typedef LOGFONT Key;
 
-    private: bool       m_fFixedPitch;
-    private: HFONT      m_hFont;
-    private: int        m_iDescent;
-    private: int        m_iHeight;
-    private: int        m_iWidth;
-    private: LOGFONT    m_oLogFont;
-    private: char16     m_wchDefault;
+    private: LOGFONT m_oLogFont;
+    private: const OwnPtr<gfx::Font> font_;
+    private: float ascent_;
+    private: float descent_;
+    private: float height_;
 
-    Font(HGDIOBJ, const TEXTMETRIC*, const LOGFONT*);
+    private: Font(const LOGFONT&);
+    public: ~Font();
 
-    public: ~Font()
-    {
-        if (NULL != m_hFont) ::DeleteObject(m_hFont);
-    } // ~Font
-
-    public: operator HFONT() const { return m_hFont; }
+    public: const gfx::Font& font() const { return *font_; }
 
     // [C]
-    public: static Font* Create(const char16*, int, int, uint = 0);
-    public: static Font* Create(const LOGFONT*);
+    public: static OwnPtr<Font> Create(const LOGFONT*);
 
     // [E]
     public: bool EqualKey(const Key* pKey) const
@@ -59,23 +51,23 @@ class Font
     } // EqualKey
 
     // [G]
-    public: int GetAscent()  const { return m_iHeight - m_iDescent; }
-    public: int GetCharWidth(HDC, char16);
-    public: int GetDescent() const { return m_iDescent; }
-    public: int GetHeight()  const { return m_iHeight; }
+    public: float GetAscent()  const { return ascent_; }
+    public: float GetCharWidth(char16) const;
+    public: float GetDescent() const { return descent_; }
+    public: float GetHeight()  const { return height_; }
     public: const Key* GetKey() const { return &m_oLogFont; }
-    public: const LOGFONT* GetLogFont() const { return &m_oLogFont; }
-    public: int GetTextWidth(HDC, const char16*, uint);
-    public: int GetWidth()  const  { return m_iWidth; }
+    public: float GetTextWidth(const char16* pwch, uint cwch) const;
 
     // [H]
-    public: bool HasGlyph(char16, HDC = NULL) const;
+    public: bool HasCharacter(char16) const;
 
     // [H]
     public: uint Hash() const
         { return static_cast<uint>(reinterpret_cast<UINT_PTR>(this)); }
 
     public: static int HashKey(const Key*);
+
+    DISALLOW_COPY_AND_ASSIGN(Font);
 }; // Font
 
 
@@ -113,11 +105,17 @@ class FontSet : public Fonts
     } // EqualKey
 
     // [F]
+    public: Font* FindFont(const gfx::Graphics&, char16 wch) const {
+      return FindFont(wch);
+    }
+
     public: Font* FindFont(char16) const;
-    public: Font* FindFont(HDC, char16) const;
 
     // [G]
-    public: static FontSet* Get(HDC, const StyleValues*);
+    public: static FontSet* Get(const gfx::Graphics&, const StyleValues* p) {
+      return Get(p);
+    }
+    public: static FontSet* Get(const StyleValues*);
     public: const Key* GetKey() const { return this; }
 
     // [H]

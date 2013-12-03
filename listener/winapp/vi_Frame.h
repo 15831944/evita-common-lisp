@@ -99,11 +99,13 @@ class Frame :
         { return GetFirstPane() != GetLastPane(); }
 
     // [O]
-    private:         void    onDraw(HDC);
     private:         void    onDropFiles(HDROP);
     public:  virtual bool    OnIdle(uint);
     private: virtual LRESULT onMessage(uint, WPARAM, LPARAM);
     private: virtual bool    onTabDrag(TabBandDragAndDrop, HWND);
+
+    // [P]
+    private: void Paint();
 
     // [R]
     public: virtual void Realize();
@@ -120,6 +122,8 @@ class Frame :
 
     // [U]
     public: void updateTitleBar();
+
+    DISALLOW_COPY_AND_ASSIGN(Frame);
 }; // Frame
 
 #endif //!defined(INCLUDE_visual_Frame_h)

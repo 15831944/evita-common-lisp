@@ -15,6 +15,10 @@
 #include "./vi_CommandWindow.h"
 #include "./vi_Page.h"
 
+namespace gfx {
+class Graphics;
+};
+
 class Buffer;
 class Page;
 class Selection;
@@ -102,6 +106,7 @@ class TextEditWindow :
     protected: DragMode     m_eDragMode;
     protected: bool         m_fBlink;
     protected: bool         m_fHasFocus;
+    private: const OwnPtr<gfx::Graphics> m_gfx;
     protected: Posn         m_lCaretPosn;
     protected: uint         m_nActiveTick;
     protected: uint         m_nBlinkTimerId;
@@ -132,10 +137,10 @@ class TextEditWindow :
 
     // [E]
     public:    Posn EndOfLine(Posn);
-    protected: Posn endOfLineAux(HDC, Posn);
+    protected: Posn endOfLineAux(const gfx::Graphics&, Posn);
 
     // [F]
-    protected: void format(HDC, Posn);
+    protected: void format(const gfx::Graphics&, Posn);
 
     // [G]
     public: uint       GetActiveTick() const { return m_nActiveTick; }
@@ -181,18 +186,18 @@ class TextEditWindow :
     // [R]
     protected: void redraw();
     protected: void redraw(bool);
-    protected: void render(HDC);
+    protected: void render(const gfx::Graphics&);
 
     // [S]
     protected: void selectWord(Posn);
     public:    void SetScrollBar(HWND, int);
     public:    int  SmallScroll(int, int);
     public:    Posn StartOfLine(Posn);
-    protected: Posn startOfLineAux(HDC, Posn);
+    protected: Posn startOfLineAux(const gfx::Graphics&, Posn);
     private:   void stopDrag();
 
     // [U]
-    protected: void updateScreen(HDC);
+    protected: void updateScreen(const gfx::Graphics&);
     protected: void updateScrollBar();
 
     #if SUPPORT_IME

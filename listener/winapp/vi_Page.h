@@ -14,6 +14,11 @@
 #include "./vi_defs.h"
 #include "./vi_style.h"
 
+namespace gfx {
+class Graphics;
+class RectF;
+};
+
 class Buffer;
 class Font;
 class Selection;
@@ -32,7 +37,7 @@ namespace PageInternal
 //
 // Page
 //
-class Page
+class Page 
 {
     friend class PageInternal::Formatter;
 
@@ -77,8 +82,8 @@ class Page
         private: uint           m_cwch;
         private: mutable uint   m_nHash;
         private: HANDLE         m_hObjHeap;
-        private: int            m_iHeight;
-        private: int            m_iWidth;
+        private: float          m_iHeight;
+        private: float          m_iWidth;
         private: Posn           m_lStart;
         private: Posn           m_lEnd;
         private: Cell*          m_pCell;
@@ -100,17 +105,17 @@ class Page
         public: void  Discard();
         public: Line* Copy(HANDLE hHeap) const;
         public: bool  Equal(const Line*) const;
-        public: void  Fix(int);
+        public: void  Fix(float dscent);
         public: Cell* GetCell()   const { return m_pCell; }
         public: Posn  GetEnd()    const { return m_lEnd; }
-        public: int   GetHeight() const { return m_iHeight; }
+        public: float GetHeight() const { return m_iHeight; }
         public: Line* GetNext()   const { return m_pNext; }
         public: Line* GetPrev()   const { return m_pPrev; }
         public: Posn  GetStart()  const { return m_lStart; }
-        public: int   GetWidth()  const { return m_iWidth; }
+        public: float GetWidth()  const { return m_iWidth; }
         public: uint  Hash() const;
-        public: Posn  MapXToPosn(HDC, int) const;
-        public: void  Render(HDC, int, int) const;
+        public: Posn  MapXToPosn(const gfx::Graphics&, float) const;
+        public: void  Render(const gfx::Graphics&, float x, float y) const;
         public: void  Reset();
     }; // Line
 
@@ -165,8 +170,8 @@ class Page
 
     // [F]
     public: Line* FindLine(Posn) const;
-    public: void  Format(HDC, RECT, const Selection*, Posn);
-    public: Line* FormatLine(HDC, const Selection*, Posn);
+    public: void  Format(const gfx::Graphics&, RECT, const Selection*, Posn);
+    public: Line* FormatLine(const gfx::Graphics&, const Selection*, Posn);
 
     // [G]
     public: Edit::Buffer* GetBuffer()    const { return m_pBuffer; }
@@ -180,17 +185,18 @@ class Page
 
     // [M]
     public: void  MakePosnVisible(Posn);
-    public: Posn  MapPointToPosn(HDC, POINT) const;
-    public: int   MapPosnToPoint(HDC, Posn, POINT* = NULL) const;
+    public: Posn  MapPointToPosn(const gfx::Graphics&, POINT) const;
+    public: int   MapPosnToPoint(const gfx::Graphics&,
+                                 Posn, POINT* = nullptr) const;
 
     // [R]
-    public: void Render(HDC, RECT) const;
-    public: bool Render(HDC, HWND);
+    public: void Render(const gfx::Graphics&, gfx::RectF) const;
+    public: bool Render(const gfx::Graphics&, HWND);
 
     // [S]
-    public: bool ScrollDown(HDC);
-    public: bool ScrollToPosn(HDC, Posn);
-    public: bool ScrollUp(HDC);
+    public: bool ScrollDown(const gfx::Graphics&);
+    public: bool ScrollToPosn(const gfx::Graphics&, Posn);
+    public: bool ScrollUp(const gfx::Graphics&);
 
     ////////////////////////////////////////////////////////////
     //
@@ -201,15 +207,15 @@ class Page
     private: void allocHeap();
 
     // [F]
-    private: void fillBottom(HDC, int) const;
-    private: void fillRight(HDC, const Line*, int) const;
-    private: void formatAux(HDC, Posn);
+    private: void fillBottom(const gfx::Graphics&, float) const;
+    private: void fillRight(const gfx::Graphics&, const Line*, float) const;
+    private: void formatAux(const gfx::Graphics&, Posn);
 
     // [I]
     private: bool isPosnVisible(Posn) const;
 
     // [P]
-    private: int  pageLines(HDC) const;
+    private: int  pageLines(const gfx::Graphics&) const;
     private: void prepare(const Selection*);
 
     // [R]

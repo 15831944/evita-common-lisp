@@ -10,12 +10,13 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Frame.cpp#5 $
 //
 #define DEBUG_DROPFILES 0
-#define DEBUG_FOCUS     1
+#define DEBUG_FOCUS     0
 #define DEBUG_REDRAW    1
 #define DEBUG_WINDOWPOS 0
 #include "./vi_Frame.h"
 
 #include "./ed_Mode.h"
+#include "./gfx_base.h"
 
 #include "./vi_defs.h"
 
@@ -30,6 +31,13 @@
 #include "./ctrl_TabBand.h"
 
 #include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
+
+static int const kPaddingBottom = 0;
+static int const kPaddingLeft = 0;
+static int const kPaddingRight = 0;
+static int const kPaddingTop = 0;
+static int const k_edge_size = 0;
 
 #define DEFPROC(mp_name, mp_rety, mp_params, mp_args) \
   typedef mp_rety (WINAPI *FnType ## mp_name) mp_params; \
@@ -42,47 +50,48 @@
 #define INSTALL_PROC(mp_name) \
     Install ## mp_name ()
 
-class DllWrapper {
-  public: ~DllWrapper() {
-    ::FreeLibrary(m_hDll);
+class CompositionState {
+  private: BOOL enabled_;
+  private: CompositionState() : enabled_(false) {}
+
+  private: static CompositionState* instance() {
+    static CompositionState* instance;
+    if (!instance)
+      instance = new CompositionState();
+    return instance;
   }
 
-  public: bool IsAviable() const {
-    return !!m_hDll;
+  public: static bool IsEnabled() { return instance()->enabled_; }
+
+  public: static void Update() {
+    HRESULT hr = ::DwmIsCompositionEnabled(&instance()->enabled_);
+    if (FAILED(hr))
+          instance()->enabled_ = false;
   }
 
-  protected: void* Get(const char* name) const {
-    return m_hDll ? ::GetProcAddress(m_hDll, name) : nullptr;
+  public: static void Update(HWND hwnd) {
+    ASSERT(hwnd);
+    Update();
+// When USE_LAYERED is true, background of tab band doesn't have glass effect.
+#define USE_LAYERED 0
+#if USE_LAYERED
+    if (IsEnabled()) {
+      ::SetWindowLong(hwnd, GWL_EXSTYLE,
+          ::GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+      //::SetLayeredWindowAttributes(hwnd, 0, (255 * 70) / 100, LWA_ALPHA);
+      ::SetLayeredWindowAttributes(
+          hwnd,
+          RGB(255, 0, 0), (255 * 10) / 100, LWA_COLORKEY);
+    } else {
+      ::SetWindowLong(hwnd, GWL_EXSTYLE,
+          ::GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+      ::RedrawWindow(hwnd, nullptr, nullptr,
+          RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
+    }
+#endif
   }
-
-  protected: DllWrapper(const char16* const pwszName)
-    : m_hDll(::LoadLibraryW(pwszName)) {
-  }
-
-  private: HINSTANCE const m_hDll;
-
-  DISALLOW_COPY_AND_ASSIGN(DllWrapper);
 };
-
-// DWM(Desktop Window Manager) API
-class DwmApi : public DllWrapper {
-  DEFPROC(DwmExtendFrameIntoClientArea, \
-    HRESULT, \
-    (HWND hwnd, const MARGINS* pm), \
-    (hwnd, pm))
-
-  DEFPROC(DwmDefWindowProc, \
-    BOOL, \
-    (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT* lp), \
-    (hwnd, uMsg, wParam, lParam, lp))
-
-  public: DwmApi::DwmApi() : DllWrapper(L"dwmapi.dll") {
-    INSTALL_PROC(DwmDefWindowProc);
-    INSTALL_PROC(DwmExtendFrameIntoClientArea);
-  }
-};
-
-static DwmApi* s_pDwmApi;
+static BOOL g_composition_enabled;
 
 #define USE_TABBAND_EDGE 0
 extern uint g_TabBand__TabDragMsg;
@@ -146,10 +155,10 @@ Pane* Frame::AddPane(Pane* const pane) {
       ::SetWindowPos(
           *pane,
           nullptr,
-          rc.left,
-          rc.top,
-          rc.right - rc.left,
-          rc.bottom - rc.top,
+          rc.left + kPaddingLeft,
+          rc.top + kPaddingTop,
+          rc.right - rc.left - kPaddingRight,
+          rc.bottom - rc.top - kPaddingBottom,
           SWP_NOZORDER);
     }
 
@@ -266,14 +275,14 @@ int Frame::getTabFromPane(Pane* const pane) const {
 /// </summary>
 void Frame::GetPaneRect(RECT* const out_rc) {
   *out_rc = m_rc;
-  out_rc->left += 2;
+  out_rc->left += k_edge_size + kPaddingLeft;
   #if USE_TABBAND_EDGE
-    out_rc->top += m_cyTabBand + 2 + 2;
+    out_rc->top += m_cyTabBand + k_edge_size + k_edge_size + kPaddingLeft;
   #else
-    out_rc->top += m_cyTabBand;
+    out_rc->top += m_cyTabBand + kPaddingTop;
   #endif
-  out_rc->right -= 2;
-  out_rc->bottom -= m_oStatusBar.GetCy() + 2;
+  out_rc->right -= k_edge_size + kPaddingRight;
+  out_rc->bottom -= m_oStatusBar.GetCy() + k_edge_size + kPaddingBottom;
 }
 
 const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
@@ -372,19 +381,19 @@ void Frame::onDropFiles(HDROP const hDrop) {
   Activate();
 }
 
-void Frame::onDraw(HDC) {
+void Frame::Paint() {
 #if USE_TABBAND_EDGE
   {
     RECT rc = m_rc;
 
     #if DEBUG_REDRAW
-      DEBUG_PRINTF("WM_PAINT %p %dx%d+%d+%d\n",
+      DEBUG_PRINTF("frame=%p %dx%d+%d+%d\n",
           this,
           rc.right - rc.left, rc.bottom - rc.top, rc.left, rc.top);
      #endif
 
      rc.top += m_cyTabBand;
-     rc.bottom = rc.top + 2;
+     rc.bottom = rc.top + k_edge_size;
 
      {
        auto const color = static_cast<COLORREF>(
@@ -400,10 +409,10 @@ void Frame::onDraw(HDC) {
   {
     RECT rc;
     GetPaneRect(&rc);
-    rc.top -= 2;
-    rc.left -= 2;
-    rc.right += 2;
-    rc.bottom +=  2;
+    rc.top -= k_edge_size;
+    rc.left -= k_edge_size;
+    rc.right += k_edge_size;
+    rc.bottom +=  k_edge_size;
     ::DrawEdge(hdc, &rc, EDGE_SUNKEN, BF_RECT);
   }
 #endif //USE_TABBAND_EDGE
@@ -475,27 +484,21 @@ bool Frame::OnIdle(uint const nCount) {
   return fMore;
 }
 
-#define DefineDllProc(mp_dll, mp_name) \
-    g_pfn ## mp_name = reinterpret_cast<mp_name ## T>( \
-        ::GetProcAddress(mp_dll, #mp_name));
-
 LRESULT Frame::onMessage(
     uint const uMsg,
     WPARAM const wParam,
     LPARAM const lParam) {
   switch (uMsg) {
-    case WM_ACTIVATE:
     case WM_DWMCOMPOSITIONCHANGED:
-      if (s_pDwmApi->IsAviable()) {
+      CompositionState::Update(m_hwnd);
+    case WM_ACTIVATE:
+      if (CompositionState::IsEnabled()) {
         MARGINS margins;
         margins.cxLeftWidth = 0;
         margins.cxRightWidth = 0;
         margins.cyBottomHeight = 0;
         margins.cyTopHeight = m_cyTabBand;
-
-        auto const hr = s_pDwmApi->DwmExtendFrameIntoClientArea(
-            m_hwnd, &margins);
-        ASSERT(SUCCEEDED(hr));
+        COM_VERIFY(::DwmExtendFrameIntoClientArea(m_hwnd, &margins));
       }
       break;
 
@@ -507,12 +510,6 @@ LRESULT Frame::onMessage(
 
     case WM_CREATE: {
       ::DragAcceptFiles(m_hwnd, TRUE);
-
-      s_pDwmApi = new DwmApi();
-      if (s_pDwmApi->IsAviable()) {
-        MARGINS oMargins = { -1 };
-        s_pDwmApi->DwmExtendFrameIntoClientArea(m_hwnd, &oMargins);
-      }
 
       {
         m_hwndTabBand = ::CreateWindowEx(
@@ -551,6 +548,8 @@ LRESULT Frame::onMessage(
       if (m_oPanes.GetFirst()) {
         m_oPanes.GetFirst()->Activate();
       }
+
+      CompositionState::Update(m_hwnd);
       break;
     }
 
@@ -558,6 +557,9 @@ LRESULT Frame::onMessage(
       onDropFiles(reinterpret_cast<HDROP>(wParam));
       DEBUG_PRINTF("WM_DROPFILES\n");
       break;
+
+    case WM_ERASEBKGND:
+      return TRUE;
 
     case WM_GETMINMAXINFO: {
       auto pMinMax = reinterpret_cast<MINMAXINFO*>(lParam);
@@ -571,12 +573,10 @@ LRESULT Frame::onMessage(
       break;
 
     case WM_NCHITTEST:
-      if (s_pDwmApi->IsAviable()) {
+      if (CompositionState::IsEnabled()) {
         LRESULT lResult;
-        if (s_pDwmApi->DwmDefWindowProc(
-              m_hwnd, uMsg, wParam, lParam, &lResult)) {
+        if (::DwmDefWindowProc(m_hwnd, uMsg, wParam, lParam, &lResult))
             return lResult;
-        }
 
         POINT const ptMouse = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
         RECT rcWindow;
@@ -639,13 +639,20 @@ LRESULT Frame::onMessage(
         return 0;
     }
 
+#if 0
     case WM_PAINT: {
       PAINTSTRUCT ps;
       auto const hdc = ::BeginPaint(m_hwnd, &ps);
-      onDraw(hdc);
+      ASSERT(hdc);
+      //::ValidateRect(m_hwnd, nullptr);
       ::EndPaint(m_hwnd, &ps);
       return 0;
     }
+#else
+    case WM_PAINT:
+      ::ValidateRect(m_hwnd, nullptr);
+      break;
+#endif
 
     case WM_PARENTNOTIFY:
       switch (wParam) {
@@ -776,19 +783,14 @@ LRESULT Frame::onMessage(
         ::SetWindowPos(
             pane,
             HWND_TOP,
-            rc.left,
-            rc.top,
-            rc.right  - rc.left,
-            rc.bottom - rc.top,
+            rc.left + kPaddingLeft,
+            rc.top + kPaddingTop,
+            rc.right  - rc.left - kPaddingRight,
+            rc.bottom - rc.top - kPaddingBottom,
             SWP_NOZORDER);
       }
 
-      //::InvalidateRect(m_hwnd, nullptr, false);
-      {
-        Dc hdc(m_hwnd, ::GetDC(m_hwnd));
-        onDraw(hdc);
-      }
-
+      Paint();
       return 0;
     }
 
@@ -859,18 +861,17 @@ void Frame::Realize() {
     WS_OVERLAPPEDWINDOW
     | WS_VISIBLE;
 
-  Font* pFont;
-  {
-    Dc dc(m_hwnd, ::GetDC(m_hwnd));
-    pFont = FontSet::Get(dc, &g_DefaultStyle)->FindFont(dc, 'x');
+  CompositionState::Update();
+  if (CompositionState::IsEnabled()) {
+    dwStyle |= WS_EX_COMPOSITED | WS_EX_LAYERED;
   }
 
-  RECT rc;
-  rc.left   = 0;
-  rc.top    = 0;
-  rc.right  = pFont->GetWidth() * cColumns;
-  rc.bottom = pFont->GetHeight() * cRows;
-
+  auto& font = *FontSet::Get(&g_DefaultStyle)->FindFont('x');
+  gfx::RectF rect(0.0f, 0.0f,
+    font.GetCharWidth('M') * cColumns,
+    font.GetHeight() * cRows);
+  rect *= gfx::FactorySet::dpi_scale();
+  RECT rc = rect;
   ::AdjustWindowRectEx(&rc, dwStyle, TRUE, dwExStyle);
   rc.right += ::GetSystemMetrics(SM_CXVSCROLL) + 10;
 

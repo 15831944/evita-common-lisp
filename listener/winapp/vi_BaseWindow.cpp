@@ -52,6 +52,10 @@ bool BaseWindow::CreateWindowEx(
     return NULL != hwnd;
 } // BaseWindow::CreateWindowEx
 
+BaseWindow* BaseWindow::MapHwndToWindow(HWND const hwnd) {
+  return reinterpret_cast<BaseWindow*>(
+    static_cast<LONG_PTR>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA)));
+}
 
 // BaseWindow::windowProc
 LRESULT CALLBACK BaseWindow::windowProc(
@@ -60,8 +64,7 @@ LRESULT CALLBACK BaseWindow::windowProc(
     WPARAM  wParam,
     LPARAM  lParam )
 {
-    BaseWindow* pWnd = reinterpret_cast<BaseWindow*>(
-        static_cast<LONG_PTR>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA)) );
+    BaseWindow* pWnd = MapHwndToWindow(hwnd);
 
     if (NULL == pWnd)
     {

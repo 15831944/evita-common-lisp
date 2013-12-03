@@ -75,6 +75,9 @@ class BaseWindow
     public: static int Init();
     public: bool IsRealized() const { return NULL != m_hwnd; }
 
+    // [M]
+    protected: static BaseWindow* MapHwndToWindow(HWND);
+
     // [O]
     public: virtual bool OnIdle(uint) { return false; }
 
@@ -101,6 +104,8 @@ class BaseWindow
         UINT    uMsg,
         WPARAM  wParam,
         LPARAM  lParam );
+
+    DISALLOW_COPY_AND_ASSIGN(BaseWindow);
 }; // BaseWindow
 
 #endif //!defined(INCLUDE_visual_basewnd_h)

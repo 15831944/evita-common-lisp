@@ -78,11 +78,24 @@
 // parameters only differed by const/volatile qualifiers
 #pragma warning(disable:4373)
 
-// warning C4800: 'BOOL' : forcing value to bool 'true' or 'false' (performance warning)
+// warning C4530: C++ exception handler used, but unwind semantics are not
+// enabled. Specify /EHsc
+#pragma warning(disable: 4530)
+
+// warning C4800: 'BOOL' : forcing value to bool 'true' or 'false'
+// (performance warning)
 #pragma warning(disable:4800)
 
+// C4355: 'this': used in base member initializer list:
+// http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
+#define ALLOW_THIS_IN_INITIALIZER_LIST(expr) \
+    __pragma(warning(suppress:4355)) \
+    expr
+
 typedef char int8;
+typedef short int16;
 typedef unsigned char uint8;
+typedef unsigned short uint16;
 typedef unsigned int uint;
 typedef unsigned int uint32;
 typedef wchar_t char16;
@@ -100,8 +113,8 @@ typedef wchar_t char16;
 #define lengthof(a) ( sizeof(a) / sizeof(*(a)) )
 
 #define DISALLOW_COPY_AND_ASSIGN(mp_type) \
-  private: mp_type(const mp_type&); \
-  private: void operator=(const mp_type&)
+  public: mp_type(const mp_type&) = delete; \
+  public: void operator=(const mp_type&) = delete
 
 // warning C6400: Using 'lstrcmpiW' to perform a case-insensitive compare to constant string 
 #pragma warning(disable: 6246)

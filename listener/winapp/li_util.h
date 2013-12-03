@@ -542,17 +542,18 @@ class HashTable_
     } // rehash
 }; // HashTable_
 
-
 template<class T>
 class OwnPtr {
   private: T* ptr_;
-  public: OwnPtr(T* ptr) : ptr_(ptr) {}
-  public: OwnPtr(T& ptr) : ptr_(&ptr) {}
-  public: OwnPtr(OwnPtr&& other) : ptr_(&ptr) { other.ptr_ = nullptr; }
+  public: explicit OwnPtr(T* ptr) : ptr_(ptr) {}
+  public: explicit OwnPtr(T& ptr) : ptr_(&ptr) {}
+  public: explicit OwnPtr(OwnPtr&& other) : ptr_(&ptr) {
+    other.ptr_ = nullptr;
+  }
   public: ~OwnPtr() { delete ptr_; }
   public: operator T*() const { return ptr_; }
   public: T* operator ->() const { ASSERT(ptr_); return ptr_; }
-  public: T& operator&() const { ASSERT(ptr_); return *ptr_; }
+  public: T& operator*() const { ASSERT(ptr_); return *ptr_; }
   public: bool operator==(const OwnPtr<T>& other) const {
     return ptr_ == other.ptr_;
   }

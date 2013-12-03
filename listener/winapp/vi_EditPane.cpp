@@ -14,7 +14,7 @@
 #include "./vi_EditPane.h"
 
 #include "./ed_Mode.h"
-
+#include "./gfx_base.h"
 #include "./vi_Application.h"
 #include "./vi_Buffer.h"
 #include "./vi_Selection.h"
@@ -32,10 +32,12 @@ k_rgwszNewline[4] = {
 static HCURSOR s_hHSplitCursor;
 static HCURSOR s_hVSplitCursor;
 
-static void DrawSplitter(HDC hdc, RECT* prc, uint grfFlag) {
+static void DrawSplitter(const gfx::Graphics& gfx, RECT* prc,
+                         uint /*grfFlag*/) {
   auto rc = *prc;
-  ::FillRect(hdc, &rc, reinterpret_cast<HBRUSH>(COLOR_3DFACE + 1));
-  ::DrawEdge(hdc, &rc, EDGE_RAISED, grfFlag);
+  gfx::Brush fillBrush(gfx, gfx::sysColor(COLOR_3DFACE));
+  gfx.FillRectangle(fillBrush, rc);
+  //::DrawEdge(gfx, &rc, EDGE_RAISED, grfFlag);
 }
 
 EditPane::HitTestResult::HitTestResult()
@@ -97,7 +99,7 @@ void EditPane::HorizontalLayoutBox::DidRemoveBox(
   }
 }
 
-void EditPane::HorizontalLayoutBox::DrawSplitters(HDC hdc) {
+void EditPane::HorizontalLayoutBox::DrawSplitters(const gfx::Graphics& gfx) {
   if (boxes_.GetFirst() == boxes_.GetLast()) {
     return;
   }
@@ -105,11 +107,11 @@ void EditPane::HorizontalLayoutBox::DrawSplitters(HDC hdc) {
   auto rc = rect();
   foreach (BoxList::Enum, it, boxes_) {
     auto const box = it.Get();
-    box->DrawSplitters(hdc);
+    box->DrawSplitters(gfx);
     if (auto const right_box = box->GetPrev()) {
       rc.left = right_box->rect().right;
       rc.right = box->rect().left;
-      DrawSplitter(hdc, &rc, BF_LEFT | BF_RIGHT);
+      DrawSplitter(gfx, &rc, BF_LEFT | BF_RIGHT);
     }
   }
 }
@@ -487,8 +489,13 @@ void EditPane::LayoutBox::UpdateSplitters() {
   if (is_removed()) {
     return;
   }
-  Dc dc(hwndParent_, ::GetDC(hwndParent_));
-  DrawSplitters(dc);
+
+  auto const pane = EditPane::FromHwnd(hwndParent_);
+  auto& gfx = pane->gfx();
+  gfx->BeginDraw();
+  gfx->Clear(gfx::sysColor(COLOR_3DFACE, 1));
+  DrawSplitters(gfx);
+  COM_VERIFY(gfx->EndDraw());
 }
 
 // LeafBox
@@ -663,25 +670,25 @@ void EditPane::VerticalLayoutBox::DidRemoveBox(
   }
 }
 
-void EditPane::VerticalLayoutBox::DrawSplitters(HDC hdc) {
+void EditPane::VerticalLayoutBox::DrawSplitters(const gfx::Graphics& gfx) {
   auto rc = rect();
 
   if (boxes_.GetFirst() == boxes_.GetLast()) {
     auto const cxVScroll = ::GetSystemMetrics(SM_CXVSCROLL);
     rc.left = rc.right - cxVScroll;
     rc.bottom = rc.top + k_cySplitterBig;
-    DrawSplitter(hdc, &rc, BF_RECT);
-    boxes_.GetFirst()->DrawSplitters(hdc);
+    DrawSplitter(gfx, &rc, BF_RECT);
+    boxes_.GetFirst()->DrawSplitters(gfx);
     return;
   }
 
   foreach (BoxList::Enum, it, boxes_) {
     auto const box = it.Get();
-    box->DrawSplitters(hdc);
+    box->DrawSplitters(gfx);
     if (auto const above_box = box->GetPrev()) {
       rc.top = above_box->rect().bottom;
       rc.bottom = box->rect().top;
-      DrawSplitter(hdc, &rc, BF_TOP | BF_BOTTOM);
+      DrawSplitter(gfx, &rc, BF_TOP | BF_BOTTOM);
     }
   }
 }
@@ -962,6 +969,7 @@ void EditPane::SplitterDrag::Stop() {
 
 EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
+      gfx_(new gfx::Graphics()),
       root_box_(*new VerticalLayoutBox(nullptr)) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(root_box_, pWindow));
@@ -1051,6 +1059,7 @@ LRESULT EditPane::onMessage(
       m_rc.right = pCreate->cx;
       m_rc.bottom = pCreate->cy;
       root_box_->Realize(*this, m_rc);
+      gfx_->Init(m_hwnd);
       break;
     }
 
@@ -1090,19 +1099,12 @@ LRESULT EditPane::onMessage(
       m_oSplitterDrag.Move(MAKEPOINTS(lParam));
       return 0;
 
-    case WM_PAINT: {
-      PAINTSTRUCT ps;
-      auto const hdc = ::BeginPaint(m_hwnd, &ps);
-      #if DEBUG_REDRAW
-        DEBUG_PRINTF("WM_PAINT %p (%d,%d)-(%d,%d)\n",
-            this,
-            ps.rcPaint.left, ps.rcPaint.top,
-            ps.rcPaint.right, ps.rcPaint.bottom);
-      #endif
-      root_box_->DrawSplitters(hdc);
-      ::EndPaint(m_hwnd, &ps);
+    case WM_PAINT:
+      (*gfx_)->BeginDraw();
+      root_box_->DrawSplitters(*gfx_);
+      COM_VERIFY((*gfx_)->EndDraw());
+      ::ValidateRect(m_hwnd, nullptr);
       return 0;
-    }
 
     case WM_PARENTNOTIFY:
       switch (LOWORD(wParam)) {
@@ -1238,6 +1240,7 @@ LRESULT EditPane::onMessage(
 
 void EditPane::Resize() {
   ::GetClientRect(*this, &m_rc);
+  gfx_->Resize(m_rc);
   root_box_->SetRect(m_rc);
 }
 

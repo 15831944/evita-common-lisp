@@ -266,6 +266,7 @@
     <ClCompile Include="ap_main.cpp" />
     <ClCompile Include="cm_CmdProc.cpp" />
     <ClCompile Include="cm_Commands.cpp" />
+    <ClCompile Include="gfx_base.cpp" />
     <ClCompile Include="li_util.cpp" />
     <ClCompile Include="mode_Python.cpp" />
     <ClCompile Include="vi_Application.cpp" />
@@ -324,6 +325,7 @@
     <ClInclude Include="ap_listener_buffer.h" />
     <ClInclude Include="cm_CmdProc.h" />
     <ClInclude Include="ctrl_TabBand.h" />
+    <ClInclude Include="gfx_base.h" />
     <ClInclude Include="li_util.h" />
     <ClInclude Include="listener.h" />
     <ClInclude Include="mode_Python.h" />

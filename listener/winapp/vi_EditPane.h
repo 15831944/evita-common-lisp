@@ -14,6 +14,10 @@
 #include "./vi_defs.h"
 #include "./vi_Pane.h"
 
+namespace gfx {
+class Graphics;
+}
+
 class Buffer;
 class TextEditWindow;
 
@@ -84,7 +88,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     public: virtual void CloseAllBut(Window*) = 0;
     public: virtual uint CountLeafBox() const = 0;
     public: virtual void Destroy() = 0;
-    public: virtual void DrawSplitters(HDC) { }
+    public: virtual void DrawSplitters(const gfx::Graphics&) { }
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
     public: virtual LeafBox* GetFirstLeafBox() const = 0;
     public: virtual LeafBox* GetLeafBox(HWND) const = 0;
@@ -175,7 +179,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     protected: virtual void DidRemoveBox(
         Box*, Box*, const Rect&) override final;
     public: virtual HitTestResult HitTest(Point) const override final;
-    public: virtual void DrawSplitters(HDC) override final;
+    public: virtual void DrawSplitters(const gfx::Graphics&) override final;
     public: virtual bool IsVerticalLayoutBox() const override final;
     public: virtual void MoveSplitter(const Point&, Box&) override final;
     public: virtual void Realize(HWND, const Rect&) override final;
@@ -190,7 +194,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
     protected: virtual void DidRemoveBox(
         Box*, Box*, const Rect&) override final;
     public: virtual HitTestResult HitTest(Point) const override final;
-    public: virtual void DrawSplitters(HDC) override final;
+    public: virtual void DrawSplitters(const gfx::Graphics&) override final;
     public: virtual bool IsVerticalLayoutBox() const override final;
     public: virtual void MoveSplitter(const Point&, Box&) override final;
     public: virtual void Realize(HWND, const Rect&) override final;
@@ -224,6 +228,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
+  private: const OwnPtr<gfx::Graphics> gfx_;
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;
@@ -232,6 +237,8 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   // ctro/dtor
   public: EditPane(Buffer*, Posn = 0);
   public: virtual ~EditPane();
+
+  public: const gfx::Graphics& gfx() const { return *gfx_; }
 
   // [C]
   public: void CloseAllBut(Window*);

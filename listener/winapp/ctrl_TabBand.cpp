@@ -15,20 +15,12 @@
 #define DEBUG_TOOLTIP 0
 #include "./ctrl_tabBand.h"
 
-#include <d2d1.h>
-#pragma comment(lib, "d2d1.lib")
-using D2D1::ColorF;
+#include "./gfx_base.h"
+
 #include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
-#include <dwrite.h>
-#pragma comment(lib, "dwrite.lib")
-#include <wincodec.h>
-#pragma comment(lib, "windowscodecs.lib")
 
 // C4355: 'this' : used in base member initializer list
 #pragma warning(disable:4355) 
-// C4244: 'argument' : conversion from 'int' to 'FLOAT', possible loss of data
-#pragma warning(disable:4244)
 
 namespace {
 
@@ -152,169 +144,6 @@ class DoubleLinkedList_ {
   }
 }; // DoubleLinkedList_
 
-template<class T> class ComPtr {
-  private: T* ptr_;
-  public: ComPtr() : ptr_(nullptr) {}
-  public: ~ComPtr() {
-    if (ptr_) ptr_->Release();
-  }
-  public: operator T*() const { return ptr_; }
-  public: T* operator->() const { return ptr_; }
-  public: T** operator&() { return &ptr_; }
-  public: T** location() { return &ptr_; }
-  public: IUnknown** locationUnknown() {
-    return reinterpret_cast<IUnknown**>(&ptr_);
-  }
-};
-
-class ComInit {
-  public: ComInit() { COM_VERIFY(::CoInitialize(nullptr)); }
-  public: ~ComInit() { ::CoUninitialize(); }
-};
-
-class Graphics : private ComInit {
-  public: class Brush {
-    private: ComPtr<ID2D1SolidColorBrush> brush_;
-    public: Brush(const Graphics& gfx, ColorF color) {
-      COM_VERIFY(gfx->CreateSolidColorBrush(color, brush_.location()));
-    }
-    public: operator ID2D1SolidColorBrush*() const { return brush_; }
-  };
-
-  private: ComPtr<IWICImagingFactory> image_factory_;
-  private: ComPtr<ID2D1Factory> d2d1Factory_;
-  private: ComPtr<ID2D1HwndRenderTarget> render_target_;
-  private: ComPtr<IDWriteFactory> dwrite_factory_;
-  private: mutable ComPtr<IDWriteTextFormat> text_format_;
-  private: int dpiScaleX_;
-  private: int dpiScaleY_;
-
-  public: Graphics() {
-    COM_VERIFY(::D2D1CreateFactory(
-        D2D1_FACTORY_TYPE_SINGLE_THREADED,
-        d2d1Factory_.location()));
-    COM_VERIFY(::DWriteCreateFactory(
-        DWRITE_FACTORY_TYPE_SHARED,
-        __uuidof(IDWriteFactory),
-        dwrite_factory_.locationUnknown()));
-    COM_VERIFY(::CoCreateInstance(
-        CLSID_WICImagingFactory,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        IID_PPV_ARGS(image_factory_.location())));
-
-    HDC screen = ::GetDC(nullptr);
-    dpiScaleX_ = ::GetDeviceCaps(screen, LOGPIXELSX) / 96.0;
-    dpiScaleY_ = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
-    ReleaseDC(nullptr, screen);
-  }
-
-  public: ~Graphics() {
-  }
-
-  public: ID2D1HwndRenderTarget* operator->() const { return render_target_; }
-
-  public: static ColorF blackColor() {
-    return ColorF(ColorF::Black);
-  }
-
-  public: static ColorF grayColor() {
-    return ColorF(ColorF::LightGray);
-  }
-
-  public: IWICImagingFactory* imageFactory() const { return image_factory_; }
-
-  D2D1_RECT_F scaledRect(int left, int top, int right, int bottom) const {
-    RECT rc;
-    rc.left = left;
-    rc.top = top;
-    rc.right = right;
-    rc.bottom = bottom;
-    return scaledRect(rc);
-  }
-
-  D2D1_RECT_F scaledRect(const RECT& rc) const {
-        return D2D1::RectF(
-            static_cast<float>(rc.left) / dpiScaleX_,
-            static_cast<float>(rc.top) / dpiScaleY_,
-            static_cast<float>(rc.right) / dpiScaleX_,
-            static_cast<float>(rc.bottom) / dpiScaleY_);
-  }
-
-  public: static ColorF sysColor(int name, float alpha = 1) {
-    COLORREF colorRef = ::GetSysColor(name);
-    return ColorF(GetRValue(colorRef) / 255.0, GetGValue(colorRef) / 255.0,
-                  GetBValue(colorRef) / 255.0, alpha);
-  }
-
-  public: static ColorF whiteColor() {
-    return ColorF(ColorF::White);
-  }
-
-  // [D]
-  public: void DrawRectangle(const Brush& brush, const RECT& rc,
-                             float strokeWidth = 1) const {
-    render_target_->DrawRectangle(scaledRect(rc), brush, strokeWidth);
-  }
-
-  public: void DrawText(const Brush& brush, const RECT& rc,
-                        const char16* pwch, size_t cwch) const {
-    RECT rc2 = rc;
-    //rc2.right -= rc.left;
-    //rc2.bottom = rc.top;
-    render_target_->DrawText(pwch, cwch, text_format_, scaledRect(rc2), brush);
-  }
-
-  // [F]
-  public: void FillRectangle(const Brush& brush, int left, int top,
-                             int right, int bottom) const {
-    RECT rc;
-    rc.left = left;
-    rc.top = top;
-    rc.right = right;
-    rc.bottom = bottom;
-    render_target_->FillRectangle(scaledRect(rc), brush);
-  }
-
-  public: void FillRectangle(const Brush& brush, const RECT& rc) const {
-    render_target_->FillRectangle(scaledRect(rc), brush);
-  }
-
-  // [I]
-  public: void Init(HWND hwnd) {
-    RECT rc;
-    ::GetClientRect(hwnd, &rc);
-    auto const pixel_format = D2D1::PixelFormat(
-        DXGI_FORMAT_B8G8R8A8_UNORM,
-        D2D1_ALPHA_MODE_PREMULTIPLIED);
-    auto const size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
-    COM_VERIFY(d2d1Factory_->CreateHwndRenderTarget(
-        D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
-                                     pixel_format),
-        D2D1::HwndRenderTargetProperties(hwnd, size),
-        render_target_.location()));
-  }
-
-  // [R]
-  public: void Resize(const RECT rc) const {
-    auto size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
-    render_target_->Resize(size);
-  }
-
-  // [S]
-  public: void SetFont(const LOGFONT& logFont) const {
-    COM_VERIFY(dwrite_factory_->CreateTextFormat(
-        logFont.lfFaceName,
-        nullptr,
-        DWRITE_FONT_WEIGHT_REGULAR,
-        DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL,
-        13,
-        L"en-us",
-        text_format_.location()));
-  }
-};
-
 //////////////////////////////////////////////////////////////////////
 //
 // Element
@@ -345,25 +174,25 @@ class Element : public DoubleLinkedNode_<Element> {
   public: virtual ~Element() {
   }
 
-  protected: ColorF backgroundColor() const {
+  protected: gfx::ColorF backgroundColor() const {
     if (IsSelected())
-        return Graphics::whiteColor();
+        return gfx::whiteColor();
     if (IsHover())
-        return Graphics::sysColor(COLOR_3DHILIGHT, 0.8);
-    return Graphics::sysColor(COLOR_3DFACE, 0.5);
+        return gfx::sysColor(COLOR_3DHILIGHT, 0.8);
+    return gfx::sysColor(COLOR_3DFACE, 0.5);
   }
 
   // [D]
-  public: virtual void Draw(const Graphics&) const = 0;
+  public: virtual void Draw(const gfx::Graphics&) const = 0;
 
-  protected: static void fillRect(const Graphics& gfx, int x, int y,
+  protected: static void fillRect(const gfx::Graphics& gfx, int x, int y,
                                   int cx, int cy) {
     RECT rc;
     rc.left = x;
     rc.right = x + cx;
     rc.top = y;
     rc.bottom = y + cy;
-    Graphics::Brush brush(gfx, Graphics::blackColor());
+    gfx::Brush brush(gfx, gfx::blackColor());
     gfx.FillRectangle(brush, rc);
   }
 
@@ -516,8 +345,8 @@ class CloseBox : public Element {
 
   // [D]
 
-  private: void drawXMark(const Graphics& gfx, ColorF color) const {
-    Graphics::Brush brush(gfx, color);
+  private: void drawXMark(const gfx::Graphics& gfx, gfx::ColorF color) const {
+    gfx::Brush brush(gfx, color);
 
     RECT rc = m_rc;
     rc.left += 4;
@@ -559,12 +388,12 @@ class CloseBox : public Element {
     #undef hline
   }
 
-  public: virtual void Draw(const Graphics& gfx) const override {
+  public: virtual void Draw(const gfx::Graphics& gfx) const override {
     drawXMark(gfx, markColor());
   }
 
-  private: ColorF markColor() const {
-    return IsHover() ? ColorF::DarkViolet : ColorF::DimGray;
+  private: gfx::ColorF markColor() const {
+    return IsHover() ? gfx::ColorF::DarkViolet : gfx::ColorF::DimGray;
   }
 }; // CloseBox
 
@@ -634,7 +463,7 @@ class Item : public Element {
 
   // [D]
   // Draw
-  public: virtual void Draw(const Graphics& gfx) const override {
+  public: virtual void Draw(const gfx::Graphics& gfx) const override {
     #if DEBUG_HOVER
       DEBUG_PRINTF("%p sel=%d %ls\n",
         this,
@@ -644,9 +473,9 @@ class Item : public Element {
 
     {
       RECT rc = m_rc;
-      Graphics::Brush fillBrush(gfx, backgroundColor());
+      gfx::Brush fillBrush(gfx, backgroundColor());
       gfx.FillRectangle(fillBrush, rc);
-      Graphics::Brush strokeBrush(gfx, Graphics::blackColor());
+      gfx::Brush strokeBrush(gfx, gfx::blackColor());
       gfx.DrawRectangle(strokeBrush, rc, 0.2);
     }
 
@@ -655,7 +484,7 @@ class Item : public Element {
         m_closeBox.Draw(gfx);
   }
 
-  private: void drawContent(const Graphics& gfx) const {
+  private: void drawContent(const gfx::Graphics& gfx) const {
     drawIcon(gfx);
 
     // Label Text
@@ -666,12 +495,12 @@ class Item : public Element {
       rc.top += 8;
       rc.bottom = rc.bottom - 2;
 
-      Graphics::Brush brush(gfx, Graphics::sysColor(COLOR_BTNTEXT));
-      gfx.DrawText(brush, rc, m_pwsz, m_cwch);
+      gfx::Brush brush(gfx, gfx::sysColor(COLOR_BTNTEXT));
+      gfx.DrawText(*gfx.work<gfx::TextFormat>(), brush, rc, m_pwsz, m_cwch);
     }
   }
 
-  private: void drawIcon(const Graphics& gfx) const {
+  private: void drawIcon(const gfx::Graphics& gfx) const {
     if (m_iImage < 0)
       return;
     auto const hImageList = GetImageList();
@@ -685,20 +514,7 @@ class Item : public Element {
         0);
     if (!hIcon)
       return;
-    ComPtr<IWICBitmap> icon;
-    COM_VERIFY(gfx.imageFactory()->CreateBitmapFromHICON(
-        hIcon, icon.location()));
-    ComPtr<IWICFormatConverter> converter;
-    COM_VERIFY(gfx.imageFactory()->CreateFormatConverter(&converter));
-    COM_VERIFY(converter->Initialize(
-        icon,
-        GUID_WICPixelFormat32bppPBGRA,
-        WICBitmapDitherTypeNone,
-        nullptr,
-        0,
-        WICBitmapPaletteTypeMedianCut));
-    ComPtr<ID2D1Bitmap> bitmap;
-    COM_VERIFY(gfx->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap));
+    gfx::Bitmap bitmap(gfx, hIcon);
     int const iconWidth = 16;
     int const iconHeight = 16;
     RECT rc;
@@ -789,13 +605,13 @@ class ListButton : public Element {
     Element(pParent) {}
 
   // [D]
-  public: virtual void Draw(const Graphics& gfx) const override {
+  public: virtual void Draw(const gfx::Graphics& gfx) const override {
     ASSERT(IsShow());
     ASSERT(m_rc.left != m_rc.right);
 
-    Graphics::Brush fillBrush(gfx, backgroundColor());
+    gfx::Brush fillBrush(gfx, backgroundColor());
     gfx.FillRectangle(fillBrush, m_rc);
-    Graphics::Brush strokeBrush(gfx, Graphics::blackColor());
+    gfx::Brush strokeBrush(gfx, gfx::blackColor());
     gfx.DrawRectangle(strokeBrush, m_rc, 0.2);
 
     // Draw triangle
@@ -808,10 +624,10 @@ class ListButton : public Element {
     }
   }
 
-  private: void drawDownArrow(const Graphics& gfx) const {
+  private: void drawDownArrow(const gfx::Graphics& gfx) const {
     auto const x = (m_rc.right - m_rc.left - 4) / 2 + m_rc.left;
     auto const y = (m_rc.bottom - m_rc.top) / 2 + m_rc.top;
-    Graphics::Brush arrowBrush(gfx, Graphics::blackColor());
+    gfx::Brush arrowBrush(gfx, gfx::blackColor());
     gfx.FillRectangle(arrowBrush, x + 0, y + 0, 5, 1);
     gfx.FillRectangle(arrowBrush, x + 1, y + 1, 3, 1);
     gfx.FillRectangle(arrowBrush, x + 2, y + 2, 1, 1);
@@ -947,7 +763,7 @@ class TabBand : public Element {
 
   private: typedef DoubleLinkedList_<Element> Elements;
 
-  private: Graphics m_gfx;
+  private: gfx::Graphics m_gfx;
   private: int m_cItems;
   private: BOOL m_compositionEnabled;
   private: int m_cxTab;
@@ -994,6 +810,9 @@ class TabBand : public Element {
 
   // dotr
   private: ~TabBand() {
+    if (auto const text_format = m_gfx.work<gfx::TextFormat>())
+        delete text_format;
+
     if (m_hwndToolTips && (m_nStyle & TCS_TOOLTIPS) != 0) {
       ::DestroyWindow(m_hwndToolTips);
     }
@@ -1004,7 +823,7 @@ class TabBand : public Element {
   }
 
   // [C]
-  private: bool changeFont(const Graphics& gfx) {
+  private: bool changeFont(const gfx::Graphics& gfx) {
     LOGFONT lf;
 
     if (!::SystemParametersInfo(
@@ -1016,7 +835,9 @@ class TabBand : public Element {
 
     lf.lfHeight = -13;
 
-    gfx.SetFont(lf);
+    if (auto const old_format = gfx.work<gfx::TextFormat*>())
+        delete old_format;
+    gfx.set_work(new gfx::TextFormat(lf));
     return true;
   }
 
@@ -1167,10 +988,10 @@ class TabBand : public Element {
   }
 
   // [D]
-  private: virtual void Draw(const Graphics& gfx) const override {
+  private: virtual void Draw(const gfx::Graphics& gfx) const override {
     gfx->BeginDraw();
     gfx->SetTransform(D2D1::IdentityMatrix());
-    gfx->Clear(gfx.sysColor(COLOR_3DFACE, m_compositionEnabled ? 0 : 1));
+    gfx->Clear(gfx::sysColor(COLOR_3DFACE, m_compositionEnabled ? 0.0f : 1.0f));
 
     foreach (Elements::Enum, oEnum, &m_oElements) {
       auto const element = oEnum.Get();
@@ -1185,7 +1006,7 @@ class TabBand : public Element {
     COM_VERIFY(gfx->EndDraw());
   }
 
-  private: static void drawInsertMarker(const Graphics& gfx, RECT* prc) {
+  private: static void drawInsertMarker(const gfx::Graphics& gfx, RECT* prc) {
     auto rc = * prc;
     rc.top += 5;
     rc.bottom -= 7;
