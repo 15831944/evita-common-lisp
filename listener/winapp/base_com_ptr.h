@@ -25,10 +25,8 @@ template<class T> class ComPtr {
     other.ptr_ = nullptr;
   }
   public: ~ComPtr() {
-    if (ptr_) {
-      if (!ptr_->Release())
-        DEBUG_PRINTF("%p destructed\r\n", ptr_)
-    }
+    if (ptr_)
+      ptr_->Release();
   }
   public: operator T*() const { return ptr_; }
   public: operator bool() const { return ptr_; }

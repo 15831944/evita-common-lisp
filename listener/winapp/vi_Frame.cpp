@@ -12,7 +12,7 @@
 #define DEBUG_DROPFILES 0
 #define DEBUG_FOCUS     0
 #define DEBUG_REDRAW    1
-#define DEBUG_WINDOWPOS 0
+#define DEBUG_WINDOWPOS 1
 #include "./vi_Frame.h"
 
 #include "./ed_Mode.h"
@@ -39,17 +39,7 @@ static int const kPaddingRight = 0;
 static int const kPaddingTop = 0;
 static int const k_edge_size = 0;
 
-#define DEFPROC(mp_name, mp_rety, mp_params, mp_args) \
-  typedef mp_rety (WINAPI *FnType ## mp_name) mp_params; \
-  private: FnType ## mp_name m_pfn ## mp_name; \
-  public: mp_rety mp_name mp_params { return m_pfn ## mp_name mp_args; } \
-  private: void Install ## mp_name() { \
-    m_pfn ## mp_name = reinterpret_cast<FnType ## mp_name>(Get(#mp_name)); \
-  }
-
-#define INSTALL_PROC(mp_name) \
-    Install ## mp_name ()
-
+namespace {
 class CompositionState {
   private: BOOL enabled_;
   private: CompositionState() : enabled_(false) {}
@@ -91,7 +81,7 @@ class CompositionState {
 #endif
   }
 };
-static BOOL g_composition_enabled;
+} // namespace
 
 #define USE_TABBAND_EDGE 0
 extern uint g_TabBand__TabDragMsg;
@@ -491,21 +481,19 @@ LRESULT Frame::onMessage(
   switch (uMsg) {
     case WM_DWMCOMPOSITIONCHANGED:
       CompositionState::Update(m_hwnd);
-    case WM_ACTIVATE:
-      if (CompositionState::IsEnabled()) {
+    case WM_ACTIVATE: {
         MARGINS margins;
         margins.cxLeftWidth = 0;
         margins.cxRightWidth = 0;
         margins.cyBottomHeight = 0;
-        margins.cyTopHeight = m_cyTabBand;
+        margins.cyTopHeight = CompositionState::IsEnabled() ? m_cyTabBand : 0;
         COM_VERIFY(::DwmExtendFrameIntoClientArea(m_hwnd, &margins));
       }
       break;
 
     case WM_CLOSE:
-      if (canClose()) {
+      if (canClose())
         break;
-      }
       return 0;
 
     case WM_CREATE: {
@@ -557,9 +545,6 @@ LRESULT Frame::onMessage(
       onDropFiles(reinterpret_cast<HDROP>(wParam));
       DEBUG_PRINTF("WM_DROPFILES\n");
       break;
-
-    case WM_ERASEBKGND:
-      return TRUE;
 
     case WM_GETMINMAXINFO: {
       auto pMinMax = reinterpret_cast<MINMAXINFO*>(lParam);
@@ -648,10 +633,16 @@ LRESULT Frame::onMessage(
       ::EndPaint(m_hwnd, &ps);
       return 0;
     }
-#elif 0
+#else
+    case WM_ERASEBKGND:
+      DEBUG_PRINTF("WM_ERASEBKGND\n");
+      return 0;
+
     case WM_PAINT:
+      DEBUG_PRINTF("WM_PAINT Start\n");
       ::ValidateRect(m_hwnd, nullptr);
-      break;
+      DEBUG_PRINTF("WM_PAINT End\n");
+      return 0;
 #endif
 
     case WM_PARENTNOTIFY:
@@ -718,9 +709,9 @@ LRESULT Frame::onMessage(
       auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
 
       #if DEBUG_WINDOWPOS
-        DEBUG_PRINTF("WM_WINDOWPOSCHANGED:"
-            L" flags=0x%0x\r\n",
-            wp->flags);
+        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
+                     this, wp->flags,
+                     wp->cx, wp->cy, wp->x, wp->y );
       #endif // DEBUG_WINDOWPOS
 
       if (wp->flags & SWP_HIDEWINDOW) {
@@ -862,9 +853,8 @@ void Frame::Realize() {
     | WS_VISIBLE;
 
   CompositionState::Update();
-  if (CompositionState::IsEnabled()) {
+  if (CompositionState::IsEnabled())
     dwStyle |= WS_EX_COMPOSITED | WS_EX_LAYERED;
-  }
 
   auto& font = *FontSet::Get(&g_DefaultStyle)->FindFont('x');
   gfx::SizeF size(font.GetCharWidth('M') * cColumns,
@@ -881,16 +871,12 @@ void Frame::Realize() {
   auto const cy = (rcWork.bottom - rcWork.top) * 4 / 5;
 
   // See WM_GETMINMAXINFO
-  CreateWindowEx(
-      dwExStyle,
-      L"This is Window Text.",
-      dwStyle,
-      nullptr,
-      CW_USEDEFAULT,
-      CW_USEDEFAULT,
-      cx,
-      cy);
-
+  CreateWindowEx(dwExStyle,
+                 L"This is Window Text.",
+                 dwStyle,
+                 nullptr,
+                 CW_USEDEFAULT, CW_USEDEFAULT,
+                 cx, cy);
   SetStatusBar(0, L"Ready");
 }
 

@@ -80,10 +80,10 @@ class EnumArg
         { return 0 == *m_pwszRunner && 0 == *m_wsz; }
 
     public: LPCWSTR Get() const
-        { ASSERT(! AtEnd()); return m_wsz; }
+        { ASSERT(!AtEnd()); return m_wsz; }
 
     public: void Next()
-        { ASSERT(! AtEnd()); next(); }
+        { ASSERT(!AtEnd()); next(); }
 
     static bool isspace(char16 wch)
         { return ' ' == wch || '\t' == wch; }
@@ -155,8 +155,7 @@ static int callRunningApp(EnumArg* pEnumArg)
         fatalExit(L"MapViewOfFile");
     }
 
-    while (! pEnumArg->AtEnd())
-    {
+    while (!pEnumArg->AtEnd()) {
         const char16* pwszArg = pEnumArg->Get();
 
         char16 wsz[MAX_PATH];
@@ -201,157 +200,122 @@ static void NoReturn fatalExit(const char16* pwsz)
     ::FatalAppExit(0, wsz);
 } // fatalExit
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// mainLoop
-//
-static int mainLoop(EnumArg* pEnumArg)
-{
-    // Initialize Default Style
-    // This initialize must be before creating edit buffers.
-    {
-        g_DefaultStyle.m_rgfMask =
-            StyleValues::Mask_Background |
-            StyleValues::Mask_Color |
-            StyleValues::Mask_Decoration |
-            StyleValues::Mask_FontFamily |
-            StyleValues::Mask_FontStyle |
-            StyleValues::Mask_FontWeight |
-            StyleValues::Mask_Marker |
-            StyleValues::Mask_Syntax;
+static int MainLoop(EnumArg* pEnumArg) {
+  // Initialize Default Style
+  // This initialize must be before creating edit buffers.
+  {
+      g_DefaultStyle.m_rgfMask =
+          StyleValues::Mask_Background |
+          StyleValues::Mask_Color |
+          StyleValues::Mask_Decoration |
+          StyleValues::Mask_FontFamily |
+          StyleValues::Mask_FontStyle |
+          StyleValues::Mask_FontWeight |
+          StyleValues::Mask_Marker |
+          StyleValues::Mask_Syntax;
 
         #if 0
-            //g_DefaultStyle->SetBackground(Color(0xF0, 0xF0, 0xF0));
-            g_DefaultStyle->SetBackground(Color(247, 247, 239));
-            g_DefaultStyle->SetColor(Color(0x00, 0x00, 0x00));
-            g_DefaultStyle->SetMarker(Color(0x00, 0x66, 0x00));
-        #else
-            g_DefaultStyle.m_crBackground = Color(255, 255, 255);
-            g_DefaultStyle.m_crColor      = Color(0x00, 0x00, 0x00);
-            g_DefaultStyle.m_crMarker     = Color(0x00, 0x99, 0x00);
-        #endif
+          //g_DefaultStyle->SetBackground(Color(0xF0, 0xF0, 0xF0));
+          g_DefaultStyle->SetBackground(Color(247, 247, 239));
+          g_DefaultStyle->SetColor(Color(0x00, 0x00, 0x00));
+          g_DefaultStyle->SetMarker(Color(0x00, 0x66, 0x00));
+      #else
+          g_DefaultStyle.m_crBackground = Color(255, 255, 255);
+          g_DefaultStyle.m_crColor      = Color(0x00, 0x00, 0x00);
+          g_DefaultStyle.m_crMarker     = Color(0x00, 0x99, 0x00);
+      #endif
 
         //#define BaseFont L"Lucida Console"
-        //#define BaseFont L"Courier New"
-        #define BaseFont L"Consolas, MS Gothic"
+      //#define BaseFont L"Courier New"
+      #define BaseFont L"Consolas, MS Gothic"
 
         {
-            //FontSet* pFontSet = new FontSet;
-            //pFontSet->Add(Font::Create(BaseFont, nFontSize, ANSI_CHARSET));
-            //pFontSet->Add(Font::Create(L"Courier New", nFontSize, ANSI_CHARSET));
-            //pFontSet->Add(Font::Create(L"MS Gothic", nFontSize, SHIFTJIS_CHARSET));
-            g_DefaultStyle.m_pwszFontFamily = BaseFont;
-            g_DefaultStyle.m_nFontSize      = 10;
-        }
-    }
+          //FontSet* pFontSet = new FontSet;
+          //pFontSet->Add(Font::Create(BaseFont, nFontSize, ANSI_CHARSET));
+          //pFontSet->Add(Font::Create(L"Courier New", nFontSize, ANSI_CHARSET));
+          //pFontSet->Add(Font::Create(L"MS Gothic", nFontSize, SHIFTJIS_CHARSET));
+          g_DefaultStyle.m_pwszFontFamily = BaseFont;
+          g_DefaultStyle.m_nFontSize      = 10;
+      }
+  }
 
     Application::Init();
 
     Frame* pFrame = Application::Get()->CreateFrame();
 
-    while (! pEnumArg->AtEnd())
-    {
-        const char16* pwszArg = pEnumArg->Get();
-        Buffer* pBuffer = Application::Get()->Load(pwszArg);
-        EditPane* pPane = new EditPane(pBuffer);
-        pFrame->AddPane(pPane);
+    while (!pEnumArg->AtEnd())
+  {
+      const char16* pwszArg = pEnumArg->Get();
+      Buffer* pBuffer = Application::Get()->Load(pwszArg);
+      EditPane* pPane = new EditPane(pBuffer);
+      pFrame->AddPane(pPane);
 
         pEnumArg->Next();
-    } // for each arg
+  } // for each arg
 
     // When there is no filename argument, we start lisp.
-    if (NULL == pFrame->GetFirstPane())
-    {
-        #if USE_LISTENER
-            ListenerBuffer* pBuffer = new ListenerBuffer;
-            pBuffer->Start();
+  if (!pFrame->GetFirstPane()) {
+      #if USE_LISTENER
+          ListenerBuffer* pBuffer = new ListenerBuffer;
+          pBuffer->Start();
 
         #else // USE_LISTENER
-            Buffer* pBuffer = new Buffer(L"*scratch*");
-        #endif // USE_LISTENER
+          Buffer* pBuffer = new Buffer(L"*scratch*");
+      #endif // USE_LISTENER
 
         Application::Get()->InternalAddBuffer(pBuffer);
-        EditPane* pPane = new EditPane(pBuffer);
-        pFrame->AddPane(pPane);
-    } // if
+      EditPane* pPane = new EditPane(pBuffer);
+      pFrame->AddPane(pPane);
+  } // if
 
     pFrame->Realize();
 
-    int iIdle = 1;
+  int iIdle = 1;
+  MSG oMsg;
+  for (;;) {
+    if (!::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE)) {
+      bool fGotMessage = false;
+      if (iIdle) {
+          #if DEBUG_IDLE
+            DEBUG_PRINTF("idle %d msg=0x%04X qs=0x%0x\n", 
+                         iIdle, oMsg.message,
+                         ::GetQueueStatus(QS_ALLEVENTS) );
+          #endif // DEBUG_IDLE
 
-    for (;;)
-    {
-        MSG oMsg;
-        if (! ::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE))
-        {
-            bool fGotMessage = false;
-
-            if (0 != iIdle)
-            {
-                #if DEBUG_IDLE
-                {
-                    DEBUG_PRINTF(L"idle %d msg=0x%x qs=0x%0x\n", 
-                        iIdle, oMsg.message, ::GetQueueStatus(QS_ALLEVENTS) );
-                }
-                #endif // DEBUG_IDLE
-
-                uint nCount = 0;
-                for (;;)
-                {
-                    if (! Application::Get()->OnIdle(nCount))
-                    {
-                        break;
-                    }
-
-                    if (::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE))
-                    {
-                        fGotMessage = true;
-                        break;
-                    }
-
-                    nCount += 1;
-                } // for
+          uint nCount = 0;
+          while (Application::Get()->OnIdle(nCount)) {
+            if (::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE)) {
+              fGotMessage = true;
+              break;
             }
+            nCount += 1;
+         }
+      }
 
-            iIdle = 0;
+      iIdle = 0;
+      if (!fGotMessage)
+        ::GetMessage(&oMsg, NULL, 0, 0);
+    } // if
 
-            if (! fGotMessage)
-            {
-                ::GetMessage(&oMsg, NULL, 0, 0);
-            }
-        } // if
+    if (WM_QUIT == oMsg.message)
+      return static_cast<int>(oMsg.wParam);
 
-        if (WM_QUIT == oMsg.message)
-        {
-            return static_cast<int>(oMsg.wParam);
-        }
+    if (g_hwndActiveDialog) {
+      if (::IsDialogMessage(g_hwndActiveDialog, &oMsg))
+        continue;
+    }
 
-        if (NULL != g_hwndActiveDialog)
-        {
-            if (::IsDialogMessage(g_hwndActiveDialog, &oMsg))
-            {
-                continue;
-            }
-        }
+    ::TranslateMessage(&oMsg);
+    ::DispatchMessage(&oMsg);
 
-        ::TranslateMessage(&oMsg);
-        ::DispatchMessage(&oMsg);
-
-        switch (oMsg.message)
-        {
-        case WM_PAINT:
-        case 0x118: // WM_SYSTIME for bliking caret
-            break;
-
-        default:
-            iIdle = 1;
-            break;
-        } // switch messgae
-
-    } // for
-} // mainLoop
-
+    if (oMsg.message != WM_PAINT && oMsg.message != WM_SYSTIMER) {
+      #if DEBUG_IDLE
+        DEBUG_PRINTF("Enable idle by messgage=0x%04X\n", oMsg.message);
+      #endif
+      iIdle = 1;
+    }
+  }
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -367,7 +331,7 @@ int WINAPI WinMain(
     g_hResource = hInstance;
 
     EnumArg oEnumArg(::GetCommandLine());
-    while (! oEnumArg.AtEnd())
+    while (!oEnumArg.AtEnd())
     {
         const char16* pwszArg = oEnumArg.Get();
 
@@ -393,7 +357,7 @@ int WINAPI WinMain(
         oEnumArg.Next();
     } // for each arg
 
-    if (! g_fMultiple)
+    if (!g_fMultiple)
     {
         g_hEvent = ::CreateEventW(
             NULL,   // lpEventAttrs
@@ -422,14 +386,14 @@ int WINAPI WinMain(
                     MB_APPLMODAL | MB_ICONERROR );
             } // switch
         }
-    } // if ! g_fSingle
+    } // if !g_fSingle
 
     // Common Control
     {
         INITCOMMONCONTROLSEX oInit;
         oInit.dwSize = sizeof(oInit);
         oInit.dwICC  = ICC_BAR_CLASSES;
-        if (! ::InitCommonControlsEx(&oInit))
+        if (!::InitCommonControlsEx(&oInit))
         {
             ::MessageBox(
                 NULL,
@@ -446,7 +410,7 @@ int WINAPI WinMain(
 
     int iExit = BaseWindow::Init();
     if (0 != iExit) return iExit;
-    int iRet = mainLoop(&oEnumArg);
+    int iRet = MainLoop(&oEnumArg);
 
     return iRet;
 } // WinMain

@@ -26,12 +26,6 @@ namespace {
 
 #define WC_TABBANDCLASS  L"TabBandClass"
 
-#define COM_VERIFY(expr) { \
-  auto const macro_hr = (expr); \
-  if (FAILED(macro_hr)) \
-    Debugger::Fail("hr=%08X\r\n%s\r\n", macro_hr, #expr); \
-}
-
 static HINSTANCE g_hInstance;
 
 template<class Item_>
@@ -981,7 +975,7 @@ class TabBand : public Element {
 
   // [D]
   private: virtual void Draw(const gfx::Graphics& gfx) const override {
-    gfx->BeginDraw();
+    gfx::Graphics::DrawingScope scope(gfx);
     gfx->SetTransform(D2D1::IdentityMatrix());
     gfx->Clear(gfx::sysColor(COLOR_3DFACE, m_compositionEnabled ? 0.0f : 1.0f));
 
@@ -994,8 +988,6 @@ class TabBand : public Element {
 
     if (m_pInsertBefore)
         drawInsertMarker(m_gfx, m_pInsertBefore->GetRect());
-
-    COM_VERIFY(gfx->EndDraw());
   }
 
   private: static void drawInsertMarker(const gfx::Graphics& gfx, RECT* prc) {

@@ -292,6 +292,23 @@ class Graphics : public Object {
   private: ScopedRefCount_<FactorySet> factory_set_;
   private: base::ComPtr<ID2D1HwndRenderTarget> render_target_;
   private: mutable void* work_;
+  private: mutable bool drawing_;
+
+  public: class DrawingScope {
+    private: const Graphics& gfx_;
+    public: DrawingScope(const Graphics& gfx) : gfx_(gfx) {
+      ASSERT(!gfx.drawing_);
+      gfx_.drawing_ = true;
+      gfx_->BeginDraw();
+    }
+    public: ~DrawingScope() {
+      ASSERT(gfx_.drawing_);
+      COM_VERIFY(gfx_->EndDraw());
+      gfx_.drawing_ = false;
+    }
+    DISALLOW_COPY_AND_ASSIGN(DrawingScope);
+  };
+  friend class DrawingScope;
 
   public: Graphics();
   public: ~Graphics();
@@ -300,6 +317,8 @@ class Graphics : public Object {
     return &render_target();
   }
 
+  // |drawing()| is for debugging.
+  public: bool drawing() const { return drawing_; }
   public: const FactorySet& factory_set() const { return *factory_set_; }
 
   public: ID2D1HwndRenderTarget& render_target() const {
@@ -319,6 +338,7 @@ class Graphics : public Object {
   // [D]
   public: void DrawLine(const Brush& brush, int sx, int sy, int ex, int ey,
                         float strokeWidth = 1) const {
+    ASSERT(drawing_);
     render_target().DrawLine(PointF(sx, sy), PointF(ex, ey), brush,
                              strokeWidth);
   }
@@ -327,17 +347,20 @@ class Graphics : public Object {
                         float sx, float sy,
                         float ex, float ey,
                         float strokeWidth = 1) const {
+    ASSERT(drawing_);
     render_target().DrawLine(PointF(sx, sy), PointF(ex, ey), brush,
                              strokeWidth);
   }
 
   public: void DrawRectangle(const Brush& brush, const RECT& rc,
                              float strokeWidth = 1) const {
+    ASSERT(drawing_);
     render_target().DrawRectangle(RectF(rc), brush, strokeWidth);
   }
 
   public: void DrawRectangle(const Brush& brush, const RectF& rect,
                              float strokeWidth = 1) const {
+    ASSERT(drawing_);
     render_target().DrawRectangle(rect, brush, strokeWidth);
   }
 
@@ -345,27 +368,34 @@ class Graphics : public Object {
                         const Brush& brush,
                         const RECT& rc,
                         const char16* pwch, size_t cwch) const {
+    ASSERT(drawing_);
     render_target().DrawText(pwch, cwch, text_format, RectF(rc), brush);
   }
 
   // [F]
   public: void FillRectangle(const Brush& brush, int left, int top,
                              int right, int bottom) const {
+    ASSERT(drawing_);
     render_target().FillRectangle(RectF(left, top, right, bottom), brush);
   }
 
   public: void FillRectangle(const Brush& brush, float left, float top,
                              float right, float bottom) const {
+    ASSERT(drawing_);
     render_target().FillRectangle(RectF(left, top, right, bottom), brush);
   }
 
   public: void FillRectangle(const Brush& brush, const RECT& rc) const {
+    ASSERT(drawing_);
     render_target().FillRectangle(RectF(rc), brush);
   }
 
   public: void FillRectangle(const Brush& brush, const RectF& rect) const {
+    ASSERT(drawing_);
     render_target().FillRectangle(rect, brush);
   }
+
+  public: void Flush() const;
 
   // [I]
   public: void Init(HWND hwn);

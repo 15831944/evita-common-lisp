@@ -207,11 +207,14 @@ class Page {
   private: int  pageLines(const gfx::Graphics&) const;
   private: void Prepare(const Selection&);
 
-    // [R]
-  private: Line* renderAux(HWND,
+  // [R]
+  public: void Reset();
+
+    // [T]
+  private: Line* TryScroll(HWND,
                            Line* new_start, Line* new_end, float new_top,
                            Line* cur_start, Line* cur_end, float cur_top,
                            Line** out_scroll_end);
-}; // Page
+};
 
 #endif //!defined(INCLUDE_listener_winapp_visual_formatter_h)

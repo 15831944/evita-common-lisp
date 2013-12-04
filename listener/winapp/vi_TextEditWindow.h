@@ -201,7 +201,7 @@ class TextEditWindow :
     private:   void stopDrag();
 
     // [U]
-    protected: void updateScreen(const gfx::Graphics&);
+    protected: void updateScreen();
     protected: void updateScrollBar();
 
     #if SUPPORT_IME

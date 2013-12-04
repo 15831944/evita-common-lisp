@@ -10,6 +10,7 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_EditPane.cpp#3 $
 //
 #define DEBUG_REDRAW 0
+#define DEBUG_RESIZE 1
 #define DEBUG_SPLIT 0
 #include "./vi_EditPane.h"
 
@@ -492,10 +493,9 @@ void EditPane::LayoutBox::UpdateSplitters() {
 
   auto const pane = EditPane::FromHwnd(hwndParent_);
   auto& gfx = pane->gfx();
-  gfx->BeginDraw();
+  gfx::Graphics::DrawingScope scope(gfx);
   gfx->Clear(gfx::sysColor(COLOR_3DFACE, 1));
   DrawSplitters(gfx);
-  COM_VERIFY(gfx->EndDraw());
 }
 
 // LeafBox
@@ -602,7 +602,8 @@ void EditPane::LeafBox::Realize(HWND hwndParent, const Rect& rect) {
       GWLP_USERDATA,
       reinterpret_cast<LONG_PTR>(this));
 
-   m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, hwndParent);
+   m_pWindow->CreateWindowEx(0,
+                             nullptr, WS_CHILD | WS_VISIBLE, hwndParent);
    m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
    SetRect(rect);
 }
@@ -1099,12 +1100,20 @@ LRESULT EditPane::onMessage(
       m_oSplitterDrag.Move(MAKEPOINTS(lParam));
       return 0;
 
-    case WM_PAINT:
-      (*gfx_)->BeginDraw();
-      root_box_->DrawSplitters(*gfx_);
-      COM_VERIFY((*gfx_)->EndDraw());
-      ::ValidateRect(m_hwnd, nullptr);
+    case WM_ERASEBKGND:
+      DEBUG_PRINTF("WM_ERASEBKGND\n");
       return 0;
+
+    case WM_PAINT: {
+      DEBUG_PRINTF("WM_PAINT Start\n");
+      {
+        gfx::Graphics::DrawingScope scope(*gfx_);
+        root_box_->DrawSplitters(*gfx_);
+      }
+      ::ValidateRect(m_hwnd, nullptr);
+      DEBUG_PRINTF("WM_PAINT End\n");
+      return 0;
+    }
 
     case WM_PARENTNOTIFY:
       switch (LOWORD(wParam)) {
@@ -1212,9 +1221,14 @@ LRESULT EditPane::onMessage(
 
     case WM_WINDOWPOSCHANGED: {
       auto const wp = reinterpret_cast<const WINDOWPOS*>(lParam);
-      if (wp->flags & SWP_NOSIZE) {
+      if (wp->flags & SWP_NOSIZE)
         return 0;
-      }
+
+      #if DEBUG_REDRAW || DEBUG_RESIZE
+        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
+                     this, wp->flags,
+                     wp->cx, wp->cy, wp->x, wp->y );
+      #endif
 
       Resize();
       return 0;
@@ -1241,6 +1255,10 @@ LRESULT EditPane::onMessage(
 void EditPane::Resize() {
   ::GetClientRect(*this, &m_rc);
   gfx_->Resize(m_rc);
+  {
+    gfx::Graphics::DrawingScope scope(*gfx_);
+    (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Blue));
+  }
   root_box_->SetRect(m_rc);
 }
 

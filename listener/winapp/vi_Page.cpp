@@ -62,11 +62,11 @@ inline void drawVLine(const gfx::Graphics& gfx, const gfx::Brush& brush,
 
 inline void fillRect(const gfx::Graphics& gfx, const gfx::RectF& rect,
                      gfx::ColorF color) {
-  gfx::Brush fillBrush(gfx, color);
-  gfx.FillRectangle(fillBrush, rect);
+  gfx::Brush fill_brush(gfx, color);
+  gfx.FillRectangle(fill_brush, rect);
 }
 
-void DrawText(const gfx::Graphics& gfx, const Font& font,
+static void DrawText(const gfx::Graphics& gfx, const Font& font,
               const gfx::Brush& text_brush, const gfx::RectF& rect,
               const char16* chars, uint num_chars) {
   ASSERT(num_chars);
@@ -90,7 +90,9 @@ void DrawText(const gfx::Graphics& gfx, const Font& font,
   glyph_run.bidiLevel = 0;
 
   auto left_top = rect.left_top() + gfx::SizeF(0.0f, font.ascent());
+  ASSERT(gfx.drawing());
   gfx->DrawGlyphRun(left_top, &glyph_run, text_brush);
+  gfx.Flush();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -104,7 +106,6 @@ enum CellKind
     CellKind_Text,
     CellKind_Unicode,
 }; // CellKind
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -302,7 +303,7 @@ class MarkerCell final : public Cell
         float xLeft   = rect.left;
         float xRight  = rect.right;
 
-        gfx::Brush strokeBrush(gfx, ColorToColorF(m_crColor));
+        gfx::Brush stroke_brush(gfx, ColorToColorF(m_crColor));
 
         switch (m_eKind)
         {
@@ -314,9 +315,9 @@ class MarkerCell final : public Cell
             float iInternalLeading = 3;
             float w = max(m_iAscent / 6, 2);
             float y = yBottom - (m_iAscent - iInternalLeading) / 2;
-            drawHLine(gfx, strokeBrush, xLeft, xRight, y);
-            drawLine(gfx, strokeBrush, xLeft + w, y - w, xLeft, y);
-            drawLine(gfx, strokeBrush, xLeft + w, y + w, xLeft, y);
+            drawHLine(gfx, stroke_brush, xLeft, xRight, y);
+            drawLine(gfx, stroke_brush, xLeft + w, y - w, xLeft, y);
+            drawLine(gfx, stroke_brush, xLeft + w, y + w, xLeft, y);
             break;
         } // Kind_Eob
 
@@ -326,9 +327,9 @@ class MarkerCell final : public Cell
             yTop = yBottom - m_iAscent * 3 / 5;
             float w = max(m_cx / 6, 2);
             float x = xLeft + m_cx / 2;
-            drawVLine(gfx, strokeBrush, x, yTop, yBottom);
-            drawLine(gfx, strokeBrush, x - w, yBottom - w, x, yBottom);
-            drawLine(gfx, strokeBrush, x + w, yBottom - w, x, yBottom);
+            drawVLine(gfx, stroke_brush, x, yTop, yBottom);
+            drawLine(gfx, stroke_brush, x - w, yBottom - w, x, yBottom);
+            drawLine(gfx, stroke_brush, x + w, yBottom - w, x, yBottom);
             break;
         } // Kind_Eol
 
@@ -336,9 +337,9 @@ class MarkerCell final : public Cell
         {
             // Draw |_|
             float w = max(m_iAscent / 6, 2);
-            drawHLine(gfx, strokeBrush, xLeft + 2, xRight - 3, yBottom);
-            drawVLine(gfx, strokeBrush, xLeft + 2, yBottom, yBottom - w * 2);
-            drawVLine(gfx, strokeBrush, xRight - 3, yBottom, yBottom - w * 2);
+            drawHLine(gfx, stroke_brush, xLeft + 2, xRight - 3, yBottom);
+            drawVLine(gfx, stroke_brush, xLeft + 2, yBottom, yBottom - w * 2);
+            drawVLine(gfx, stroke_brush, xRight - 3, yBottom, yBottom - w * 2);
             break;
         } // Kind_Tab
 
@@ -348,9 +349,9 @@ class MarkerCell final : public Cell
             xRight -= 1;
             float w = max(m_iAscent / 6, 2);
             float y = yTop + m_iAscent / 2;
-            drawHLine(gfx, strokeBrush, xLeft, xRight, y);
-            drawLine(gfx, strokeBrush, xRight - w, y - w, xRight, y);
-            drawLine(gfx, strokeBrush, xRight - w, y + w, xRight, y);
+            drawHLine(gfx, stroke_brush, xLeft, xRight, y);
+            drawLine(gfx, stroke_brush, xRight - w, y - w, xRight, y);
+            drawLine(gfx, stroke_brush, xRight - w, y + w, xRight, y);
             break;
         } // Kind_Wrap
 
@@ -495,36 +496,35 @@ class TextCell : public Cell {
       auto const y = rect.bottom - m_iDescent -
                      (m_eDecoration != TextDecoration_None ? 1 : 0);
 
-      gfx::Brush fillBrush(gfx, ColorToColorF(m_crBackground));
-      gfx.FillRectangle(fillBrush, rect);
+      gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
+      gfx.FillRectangle(fill_brush, rect);
 
-      gfx::Brush textBrush(gfx, ColorToColorF(m_crColor));
-      DrawText(gfx, *m_pFont, textBrush, rect, m_pwch, m_cwch);
+      gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
+      DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
       #if SUPPORT_IME
       switch (m_eDecoration) {
         case TextDecoration_ImeInput:
           // TODO: We should use dotted line. It was PS_DOT.
-          drawHLine(gfx, textBrush, rect.left, rect.right - 4, y + 3);
+          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
           break;
 
         case TextDecoration_ImeInactiveA:
-          drawHLine(gfx, textBrush, rect.left, rect.right - 4, y + 3);
+          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
           break;
 
         case TextDecoration_ImeInactiveB:
-          drawHLine(gfx, textBrush, rect.left, rect.right - 4, y + 3);
+          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
           break;
 
         case TextDecoration_ImeActive:
-          drawHLine(gfx, textBrush, rect.left, rect.right - 4, y + 3);
-          drawHLine(gfx, textBrush, rect.left, rect.right - 4, y + 2);
+          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
+          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 2);
           break;
       }
       #endif
     }
-}; // TextCell
-
+};
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -553,29 +553,29 @@ class UnicodeCell final : public TextCell {
         m_cy += 4;
     } // UnicodeCell
 
-    public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const
-    {
-        UnicodeCell* pCell = new(hHeap) UnicodeCell(*this);
-        pCell->m_pwch = pwch + m_ofs;
-        return pCell;
-    } // Copy
+    public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
+      auto const pCell = new(hHeap) UnicodeCell(*this);
+      pCell->m_pwch = pwch + m_ofs;
+      return pCell;
+    }
 
-    public: virtual CellKind GetKind() const
-        { return CellKind_Unicode; }
+    public: virtual CellKind GetKind() const {
+      return CellKind_Unicode;
+    }
 
     public: virtual void Render(const gfx::Graphics& gfx,
                                 const gfx::RectF& rect) const override {
-      gfx::Brush fillBrush(gfx, ColorToColorF(m_crBackground));
-      gfx.FillRectangle(fillBrush, rect);
+      gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
+      gfx.FillRectangle(fill_brush, rect);
 
-      gfx::Brush textBrush(gfx, ColorToColorF(m_crColor));
-      //gfx.DrawText(*m_pFont, textBrush, rect, m_pwch, m_cwch);
+      gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
+      DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
-      gfx.DrawRectangle(textBrush, gfx::RectF(rect.left, rect.top,
-                                         rect.right - 1, rect.bottom - 1));
+      gfx.DrawRectangle(text_brush,
+                        gfx::RectF(rect.left, rect.top,
+                                   rect.right - 1, rect.bottom - 1));
     }
-}; // UnicodeCell
-
+};
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -600,11 +600,11 @@ class EnumCI
         fill();
     } // EmitCI
 
-    public: bool AtEnd() const 
-        { return m_lBufStart == m_lBufEnd; }
+    public: bool AtEnd() const {
+      return m_lBufStart == m_lBufEnd;
+    }
 
-    private: void fill()
-    {
+    private: void fill() {
         Count cwch = m_pBuffer->GetText(
             m_rgwch,
             m_lPosn,
@@ -1325,9 +1325,7 @@ Posn Page::MapPointToPosn(const gfx::Graphics& gfx, gfx::PointF pt) const
 //  A Page object must be formatted with the latest buffer.
 //
 gfx::RectF Page::MapPosnToPoint(const gfx::Graphics& gfx, Posn lPosn) const {
-  if (lPosn <  m_lStart)
-    return gfx::RectF();
-  if (lPosn > m_lEnd)
+  if (lPosn <  m_lStart || lPosn > m_lEnd)
     return gfx::RectF();
 
   auto y = m_rc.top;
@@ -1343,12 +1341,11 @@ gfx::RectF Page::MapPosnToPoint(const gfx::Graphics& gfx, Posn lPosn) const {
                               gfx::SizeF(pCell->m_cx, pCell->m_cy));
           }
           x += pCell->m_cx;
-        } // for each Cell
-        CAN_NOT_HAPPEN();
-    } // if
+        }
+    }
     y += pLine->GetHeight();
   }
-  CAN_NOT_HAPPEN();
+  return gfx::RectF();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1468,7 +1465,7 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
 // Page::Render
 //
 // Note:
-//  We need hwnd for ScrollWindowEx in renderAux.
+//  We need hwnd for ScrollWindowEx in TryScroll.
 //
 bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
     ASSERT(hwnd);
@@ -1497,63 +1494,51 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
         }
     }
 
-    auto yCur = yNew;
-
     // Compute common End -- pNewEnd is start of common End.
     Line* pCurEnd = m_oScreenBuf.GetLast();
     Line* pNewEnd = m_oFormatBuf.GetLast();
 
-    if (m_oFormatBuf.GetHeight() == m_oScreenBuf.GetHeight())
-    {
-        for (;;)
-        {
-            if (!pNewEnd->Equal(pCurEnd)) break;
-            pNewEnd = pNewEnd->GetPrev();
-            pCurEnd = pCurEnd->GetPrev();
-        } // while
-    } // if
+    if (m_oFormatBuf.GetHeight() == m_oScreenBuf.GetHeight()) {
+      while (pNewEnd->Equal(pCurEnd)) {
+        pNewEnd = pNewEnd->GetPrev();
+        pCurEnd = pCurEnd->GetPrev();
+      }
+    }
 
-    if (nullptr != pCurEnd) pCurEnd = pCurEnd->GetNext();
+    if (pCurEnd)
+        pCurEnd = pCurEnd->GetNext();
     pNewEnd = pNewEnd->GetNext();
 
     // We need to redraw pNewStart (inclusive) to pNewEnd (exclsuive).
     //::SetTextAlign(gfx, TA_BASELINE);
 
     Line* pScrollEnd;
-    Line* pScrollStart = renderAux(
+    Line* pScrollStart = TryScroll(
         hwnd,
         pNewStart, pNewEnd, yNew,
-        pCurStart, pCurEnd, yCur,
-        &pScrollEnd );
+        pCurStart, pCurEnd, yNew,
+        &pScrollEnd);
     if (pScrollStart) {
-        bool fRedraw = true;
-        for (
-            Line* pNewLine = pNewStart;
-            pNewLine != pNewEnd;
-            pNewLine = pNewLine->GetNext() )
-        {
-            ASSERT(nullptr != pNewLine);
+        for (Line* pNewLine = pNewStart; pNewLine != pNewEnd;
+             pNewLine = pNewLine->GetNext()) {
+          ASSERT(pNewLine);
 
-            if (pNewLine == pScrollStart)
-            {
-                fRedraw = false;
-            }
-            else if (pNewLine == pScrollEnd)
-            {
-                fRedraw = true;
-            }
+          bool fRedraw = true;
+          if (pNewLine == pScrollStart) {
+            fRedraw = false;
+          } else if (pNewLine == pScrollEnd) {
+            fRedraw = true;
+          }
 
-            if (fRedraw) {
-                cRedraws += 1;
-                pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
-                fillRight(gfx, pNewLine, yNew);
-            } // if
+          if (fRedraw) {
+            cRedraws += 1;
+            pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
+            fillRight(gfx, pNewLine, yNew);
+          }
 
-            yNew += pNewLine->GetHeight();
-        } // for
-    }
-    else
-    {
+          yNew += pNewLine->GetHeight();
+        }
+    } else {
         auto yCur = m_rc.top;
         auto pCurLine = pCurStart;
 
@@ -1625,12 +1610,12 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
     return cRedraws > 0;
 }
 
+void Page::Reset() {
+  m_oScreenBuf.Reset();
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::renderAux
-//
-Page::Line* Page::renderAux(
+#if 0
+Page::Line* Page::TryScroll(
     HWND    hwnd,
     Line*   pNewStart,
     Line*   pNewEnd,
@@ -1639,7 +1624,7 @@ Page::Line* Page::renderAux(
     Line*   pCurEnd,
     float   yCurStart,
     Line**  out_pScrollEnd) {
-    auto yCurScroll   = 0.0f;
+  auto yCurScroll   = 0.0f;
   auto yNewScroll   = 0.0f;
   auto cyScroll     = k_cyMinScroll;
   Line* pScrollStart = nullptr;
@@ -1708,6 +1693,19 @@ Page::Line* Page::renderAux(
   *out_pScrollEnd = pScrollEnd;
   return pScrollStart;
 }
+#else
+Page::Line* Page::TryScroll(
+    HWND    /* hwnd */,
+    Line*   /* pNewStart */,
+    Line*   /* pNewEnd */,
+    float   /* yNewStart */,
+    Line*   /* pCurStart */,
+    Line*   /* pCurEnd */,
+    float   /*yCurStart */,
+    Line**  /*out_pScrollEnd*/) {
+  return nullptr;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1916,8 +1914,7 @@ HANDLE Page::DisplayBuffer::Reset()
 
 
 // Page::DisplayBuffer::ScrollDown
-Page::Line* Page::DisplayBuffer::ScrollDown()
-{
+Page::Line* Page::DisplayBuffer::ScrollDown() {
     if (m_pLast == m_pFirst) return nullptr;
 
     Line* pLine = m_pLast;
@@ -1929,8 +1926,7 @@ Page::Line* Page::DisplayBuffer::ScrollDown()
 
 
 // Page::DisplayBuffer::ScrollUp
-Page::Line* Page::DisplayBuffer::ScrollUp()
-{
+Page::Line* Page::DisplayBuffer::ScrollUp() {
     if (m_pLast == m_pFirst) return nullptr;
 
     Line* pLine = m_pFirst;
@@ -2061,6 +2057,7 @@ void Page::Line::Render(const gfx::Graphics& gfx,
     pCell->Render(gfx, rect);
     x = rect.right;
   }
+  gfx.Flush();
 }
 
 // Page::Line::Reset

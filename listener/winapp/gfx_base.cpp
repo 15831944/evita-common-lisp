@@ -207,10 +207,18 @@ FactorySet& FactorySet::instance() {
 
 Graphics::Graphics()
     : factory_set_(FactorySet::instance()),
-      work_(nullptr) {
+      work_(nullptr),
+      drawing_(false) {
 }
 
 Graphics::~Graphics() {
+}
+
+void Graphics::Flush() const {
+  ASSERT(drawing());
+  D2D1_TAG tag1, tag2;
+  COM_VERIFY(render_target_->Flush(&tag1, &tag2));
+  ASSERT(!tag1 && !tag2);
 }
 
 void Graphics::Init(HWND hwnd) {
