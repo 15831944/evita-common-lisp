@@ -101,12 +101,10 @@ class TextEditWindow :
         } // SetInfo
     }; // ScrollBar
 
-    private: static int sm_nActiveTick;
-
     protected: DragMode     m_eDragMode;
     protected: bool         m_fBlink;
     protected: bool         m_fHasFocus;
-    private: const OwnPtr<gfx::Graphics> m_gfx;
+    private: const base::OwnPtr<gfx::Graphics> m_gfx;
     protected: Posn         m_lCaretPosn;
     protected: uint         m_nActiveTick;
     protected: uint         m_nBlinkTimerId;
@@ -116,8 +114,14 @@ class TextEditWindow :
     protected: ScrollBar    m_oVertScrollBar;
     protected: Range*       m_pBlink;
     protected: Page*        m_pPage;
-    protected: Selection*   m_pSelection;
+    // TODO(yosi): Manage life time of selection.
+    protected: Selection* selection_;
     protected: Range*       m_pViewRange;
+    #if SUPPORT_IME
+    private: bool m_fImeTarget;
+    private: Posn m_lImeStart;
+    private: Posn m_lImeEnd;
+    #endif // SUPPORT_IME
     protected: void*        m_pvHost;
     protected: RECT         m_rc;
 
@@ -162,7 +166,7 @@ class TextEditWindow :
         { return static_cast<const WindowItem*>(this)->GetPrev(); }
 
     public: HWND       GetScrollBarHwnd(int) const;
-    public: Selection* GetSelection() const { return m_pSelection; }
+    public: Selection* GetSelection() const { return &*selection_; }
     public: Posn       GetStart();
     public: size_t     GetUndoSize() const;
 
@@ -201,14 +205,11 @@ class TextEditWindow :
     protected: void updateScrollBar();
 
     #if SUPPORT_IME
-    private: bool m_fImeTarget;
-    private: Posn m_lImeStart;
-    private: Posn m_lImeEnd;
     private: void onImeComposition(LPARAM);
     public:  void Reconvert(Posn, Posn);
     private: uint setReconvert(RECONVERTSTRING*, Posn, Posn);
     private: BOOL showImeCaret(SIZE, POINT);
-    #endif SUPPORT_IME
+    #endif // SUPPORT_IME
 }; // TextEditWindow
 
 typedef DoubleLinkedList_<TextEditWindow, Buffer> WindowList;

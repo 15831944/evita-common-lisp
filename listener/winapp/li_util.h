@@ -542,12 +542,14 @@ class HashTable_
     } // rehash
 }; // HashTable_
 
+namespace base {
 template<class T>
 class OwnPtr {
   private: T* ptr_;
-  public: explicit OwnPtr(T* ptr) : ptr_(ptr) {}
+  public: explicit OwnPtr(T* ptr) : ptr_(ptr) { ASSERT(ptr_); }
   public: explicit OwnPtr(T& ptr) : ptr_(&ptr) {}
-  public: explicit OwnPtr(OwnPtr&& other) : ptr_(&ptr) {
+  public: OwnPtr(OwnPtr& other) : ptr_(other.ptr_) {}
+  public: OwnPtr(OwnPtr&& other) : ptr_(other.ptr_) {
     other.ptr_ = nullptr;
   }
   public: ~OwnPtr() { delete ptr_; }
@@ -564,7 +566,13 @@ class OwnPtr {
   public: bool operator!=(const T* other) const { return ptr_ != other; }
   public: bool operator==(const T& other) const { return ptr_ == &other; }
   public: bool operator!=(const T& other) const { return ptr_ != &other; }
+  public: T& Detach() {
+    auto const ptr = ptr_;
+    ptr_ = nullptr;
+    return *ptr;
+  }
 };
+} // namespace base
 
 // RefCounted
 template<class T>

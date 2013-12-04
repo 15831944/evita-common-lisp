@@ -228,7 +228,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
-  private: const OwnPtr<gfx::Graphics> gfx_;
+  private: const base::OwnPtr<gfx::Graphics> gfx_;
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;

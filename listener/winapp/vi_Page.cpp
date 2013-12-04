@@ -22,6 +22,8 @@
 #include "./vi_Selection.h"
 #include "./vi_util.h"
 
+#include <vector>
+
 namespace PageInternal
 {
 
@@ -64,6 +66,33 @@ inline void fillRect(const gfx::Graphics& gfx, const gfx::RectF& rect,
   gfx.FillRectangle(fillBrush, rect);
 }
 
+void DrawText(const gfx::Graphics& gfx, const Font& font,
+              const gfx::Brush& text_brush, const gfx::RectF& rect,
+              const char16* chars, uint num_chars) {
+  ASSERT(num_chars);
+  std::vector<uint32> code_points(num_chars);
+  auto it = code_points.begin();
+  for (auto s = chars; s < chars + num_chars; ++s) {
+    *it = *s;
+    ++it;
+  }
+  std::vector<uint16> glyph_indexs(num_chars);
+  COM_VERIFY(font.font_face()->GetGlyphIndices(&code_points[0], num_chars,
+                                               &glyph_indexs[0]));
+  DWRITE_GLYPH_RUN glyph_run;
+  glyph_run.fontFace = font.font_face();
+  glyph_run.fontEmSize = gfx::FactorySet::ScaleY(font.font_size());
+  glyph_run.glyphCount = glyph_indexs.size();
+  glyph_run.glyphIndices = &glyph_indexs[0];
+  glyph_run.glyphAdvances = nullptr;
+  glyph_run.glyphOffsets = nullptr;
+  glyph_run.isSideways = false;
+  glyph_run.bidiLevel = 0;
+
+  auto left_top = rect.left_top() + gfx::SizeF(0.0f, font.ascent());
+  gfx->DrawGlyphRun(left_top, &glyph_run, text_brush);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // CellKind
@@ -81,86 +110,80 @@ enum CellKind
 //
 // Cell
 //
-class Cell : public ObjectInHeap
-{
-    public: Cell* m_pNext;
-    public: float m_cx;
-    public: float m_cy;
+class Cell : public ObjectInHeap {
+  public: Cell* m_pNext;
+  public: float m_cx;
+  public: float m_cy;
 
-    protected: Color   m_crBackground;
+  protected: Color m_crBackground;
 
-    public: Cell(
-        Color cr,
-        float cx,
-        float cy) :
-            m_pNext(NULL),
-            m_crBackground(cr),
-            m_cx(cx),
-            m_cy(cy)
-    {
-        ASSERT(cx >= 1);
-        ASSERT(cy >= 1);
-    } // Page
+  public: Cell(Color cr, float cx, float cy)
+      : m_pNext(nullptr),
+        m_crBackground(cr),
+        m_cx(cx),
+        m_cy(cy) {
+    ASSERT(cx >= 1);
+    ASSERT(cy >= 1);
+  }
 
-    public: virtual Cell* Copy(HANDLE, char16*) const = 0;
+  public: virtual Cell* Copy(HANDLE, char16*) const = 0;
 
-    public: virtual bool Equal(const Cell* pCell) const
-    {
-        if (pCell->GetKind() != GetKind()) return false;
-        if (pCell->m_cx != m_cx) return false;
-        if (pCell->m_cy != m_cy) return false;
-        if (! pCell->m_crBackground.Equal(m_crBackground)) return false;
-        return true;
-    } // Equal
+  public: virtual bool Equal(const Cell* pCell) const {
+    if (pCell->GetKind() != GetKind()) return false;
+    if (pCell->m_cx != m_cx) return false;
+    if (pCell->m_cy != m_cy) return false;
+    if (!pCell->m_crBackground.Equal(m_crBackground)) return false;
+    return true;
+  } // Equal
 
-    public: virtual Posn Fix(const char16*, float iHeight, float) {
-        m_cy = iHeight;
-        return -1;
-    } // Fix
+  public: virtual Posn Fix(const char16*, float iHeight, float) {
+    m_cy = iHeight;
+    return -1;
+  }
 
-    public: virtual float GetDescent() const { return 0; }
-    public: virtual float GetHeight()  const = 0;
-    public: virtual CellKind GetKind()    const = 0;
-    public:         float GetWidth()   const { return m_cx; }
+  public: virtual float GetDescent() const { return 0; }
+  public: virtual float GetHeight()  const = 0;
+  public: virtual CellKind GetKind()    const = 0;
+  public: float GetWidth()   const { return m_cx; }
 
     public: virtual uint Hash() const {
-     uint nHash = static_cast<uint>(m_cx);
-     nHash ^= static_cast<uint>(m_cy);
-     nHash ^= m_crBackground.Hash();
-     return nHash;
-    }
+   uint nHash = static_cast<uint>(m_cx);
+   nHash ^= static_cast<uint>(m_cy);
+   nHash ^= m_crBackground.Hash();
+   return nHash;
+  }
 
     public: virtual float MapPosnToX(const gfx::Graphics&, Posn) const {
-      return -1.0f;
-    }
+    return -1.0f;
+  }
 
     // MapXToPosn - x is cell relative.
-    public: virtual Posn MapXToPosn(const gfx::Graphics&, float) const {
-      return -1;
-    }
+  public: virtual Posn MapXToPosn(const gfx::Graphics&, float) const {
+    return -1;
+  }
 
-    public: virtual bool Merge(Font*, Color, Color, TextDecoration, float) {
-      return false;
-    }
+  public: virtual bool Merge(Font*, Color, Color, TextDecoration, float) {
+    return false;
+  }
 
-    public: virtual void Render(const gfx::Graphics& gfx,
-                                const gfx::RectF& rc) const;
-}; // Cell
-
+  public: virtual void Render(const gfx::Graphics& gfx,
+                              const gfx::RectF& rect) const {
+    fillRect(gfx, rect, ColorToColorF(m_crBackground));
+  }
+};
 
 // EnumCell
-class EnumCell
-{
+class EnumCell {
     Cell*   m_pRunner;
 
     public: EnumCell(const Page::Line* p) :
         m_pRunner(p->GetCell()) {}
 
-    public: bool AtEnd() const { return NULL == m_pRunner; }
-    public: Cell* Get() const { ASSERT(! AtEnd()); return m_pRunner; }
+    public: bool AtEnd() const { return nullptr == m_pRunner; }
+    public: Cell* Get() const { ASSERT(!AtEnd()); return m_pRunner; }
 
     public: void Next()
-        { ASSERT(! AtEnd()); m_pRunner = m_pRunner->m_pNext; }
+        { ASSERT(!AtEnd()); m_pRunner = m_pRunner->m_pNext; }
 }; // EnumCell
 
 
@@ -227,9 +250,9 @@ class MarkerCell final : public Cell
 
     public: virtual bool Equal(const Cell* pCell) const
     {
-        if (! Cell::Equal(pCell)) return false;
+        if (!Cell::Equal(pCell)) return false;
         const MarkerCell* pMarker = reinterpret_cast<const MarkerCell*>(pCell);
-        if (! m_crColor.Equal(pMarker->m_crColor)) return false;
+        if (!m_crColor.Equal(pMarker->m_crColor)) return false;
         if (m_eKind != pMarker->m_eKind) return false;
         return true;
     } // Equal
@@ -383,16 +406,15 @@ class TextCell : public Cell {
     } // Copy
 
     // Equal - Returns true if specified cell is equal to this cell.
-    public: virtual bool Equal(const Cell* pCell) const
-    {
-        if (! Cell::Equal(pCell)) return false;
-        const TextCell* pText = reinterpret_cast<const TextCell*>(pCell);
-        if (! m_crColor.Equal(pText->m_crColor)) return false;
-        if (m_eDecoration != pText->m_eDecoration) return false;
-        if (m_cwch != pText->m_cwch) return false;
-        size_t cb = sizeof(char16) * m_cwch;
-        return 0 == ::memcmp(m_pwch, pText->m_pwch, cb);
-    } // Equal
+    public: virtual bool Equal(const Cell* pCell) const {
+      if (!Cell::Equal(pCell)) return false;
+      const TextCell* pText = reinterpret_cast<const TextCell*>(pCell);
+      if (!m_crColor.Equal(pText->m_crColor)) return false;
+      if (m_eDecoration != pText->m_eDecoration) return false;
+      if (m_cwch != pText->m_cwch) return false;
+      size_t cb = sizeof(char16) * m_cwch;
+      return !::memcmp(m_pwch, pText->m_pwch, cb);
+    }
 
     public: virtual Posn Fix(const char16* pwch, float iHeight,
                              float iDescent) override {
@@ -477,7 +499,7 @@ class TextCell : public Cell {
       gfx.FillRectangle(fillBrush, rect);
 
       gfx::Brush textBrush(gfx, ColorToColorF(m_crColor));
-      //gfx.DrawText(*m_pFont, textBrush, rect, m_pwch, m_cwch);
+      DrawText(gfx, *m_pFont, textBrush, rect, m_pwch, m_cwch);
 
       #if SUPPORT_IME
       switch (m_eDecoration) {
@@ -574,7 +596,7 @@ class EnumCI
         m_lPosn(lPosn)
     {
         m_pInterval = m_pBuffer->GetIntervalAt(m_lPosn);
-        ASSERT(NULL != m_pInterval);
+        ASSERT(nullptr != m_pInterval);
         fill();
     } // EmitCI
 
@@ -606,7 +628,7 @@ class EnumCI
     public: const StyleValues* GetStyle() const
     {
         if (AtEnd()) return m_pBuffer->GetDefaultStyle();
-        ASSERT(NULL != m_pInterval);
+        ASSERT(nullptr != m_pInterval);
         return m_pInterval->GetStyle();
     } // Style
 
@@ -622,7 +644,7 @@ class EnumCI
         if (m_lPosn >= m_pInterval->GetEnd())
         {
             Edit::Interval* pNext = m_pInterval->GetNext();
-            if (pNext != NULL)
+            if (pNext != nullptr)
             {
                 m_pInterval = pNext;
             } // if
@@ -713,7 +735,7 @@ bool Formatter::FormatLine(Page::Line* pLine) {
     m_oCharSink.Reset();
 
     Cell** ppPrevCell = &pLine->m_pCell;
-    *ppPrevCell = NULL;
+    *ppPrevCell = nullptr;
 
     float x = static_cast<float>(m_pPage->m_rc.left);
     float iDescent = 0;
@@ -783,8 +805,8 @@ bool Formatter::FormatLine(Page::Line* pLine) {
     //   o end of buffer: End-Of-Buffer MarkerCell
     //   o end of line:   End-Of-Line MarkerCell
     //   o wrapped line:  Warp MarkerCEll
-    ASSERT(NULL != pCell);
-    ASSERT(NULL == *ppPrevCell);
+    ASSERT(nullptr != pCell);
+    ASSERT(nullptr == *ppPrevCell);
     ASSERT(ppPrevCell != &pCell->m_pNext);
 
     *ppPrevCell = pCell;
@@ -894,7 +916,7 @@ Cell* Formatter::formatChar(
 
     auto const cx = pFont->GetCharWidth(wch);
 
-    if (NULL == pPrev)
+    if (nullptr == pPrev)
     {
         // We must draw a char at start of window line.
         TextCell* pCell = new(m_hObjHeap) TextCell(
@@ -1026,8 +1048,8 @@ void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
 //
 Page::Line* Page::FindLine(Posn lPosn) const
 {
-    if (lPosn < m_lStart) return NULL;
-    if (lPosn > m_lEnd)   return NULL;
+    if (lPosn < m_lStart) return nullptr;
+    if (lPosn > m_lEnd)   return nullptr;
 
     foreach (EnumLine, oEnum, m_oFormatBuf)
     {
@@ -1036,7 +1058,7 @@ Page::Line* Page::FindLine(Posn lPosn) const
     } // for each line
 
     // We must not here.
-    return NULL;
+    return nullptr;
 } // Page::FindLine
 
 
@@ -1044,17 +1066,12 @@ Page::Line* Page::FindLine(Posn lPosn) const
 //
 // Page::Format
 //
-void Page::Format(
-    const gfx::Graphics&     gfx,
-    RECT                rc,
-    const Selection*    pSelection,
-    Posn                lStart )
-{
-    prepare(pSelection);
-    m_rc = rc;
-    formatAux(gfx, lStart);
-} // Page::Format
-
+void Page::Format(const gfx::Graphics& gfx, gfx::RectF rect, 
+                  const Selection& selection, Posn lStart) {
+  Prepare(selection);
+  m_rc = rect;
+  formatAux(gfx, lStart);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1078,10 +1095,9 @@ void Page::formatAux(const gfx::Graphics& gfx, Posn lStart)
 //
 Page::Line* Page::FormatLine(
     const gfx::Graphics&     gfx,
-    const Selection*    pSelection,
-    Posn                lStart )
-{
-    prepare(pSelection);
+    const Selection&    selection,
+    Posn                lStart ) {
+    Prepare(selection);
     m_oFormatBuf.Reset();
 
     HANDLE hHeap = m_oFormatBuf.GetHeap();
@@ -1100,9 +1116,9 @@ Page::Line* Page::FormatLine(
 //  fSelection
 //    True if caller wants to show selection.
 //
-bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
+bool Page::IsDirty(RECT rc, const Selection& selection, bool fSelection) const
 {
-    if (NULL == m_pBuffer)
+    if (nullptr == m_pBuffer)
     {
         #if DEBUG_DIRTY
             DEBUG_PRINTF("%p: No buffer.\n", this);
@@ -1127,7 +1143,7 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
     }
 
     // Buffer
-    Edit::Buffer* pBuffer = pSelection->GetBuffer();
+    Edit::Buffer* pBuffer = selection.GetBuffer();
     if (m_pBuffer != pBuffer)
     {
         #if DEBUG_DIRTY
@@ -1144,8 +1160,8 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
         return true;
     }
 
-    Posn lSelStart = pSelection->GetStart();
-    Posn lSelEnd   = pSelection->GetEnd();
+    Posn lSelStart = selection.GetStart();
+    Posn lSelEnd   = selection.GetEnd();
 
     // Page shows caret instead of seleciton.
     if (m_lSelStart == m_lSelEnd)
@@ -1158,7 +1174,7 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
             return false;
         }
 
-        if (! fSelection)
+        if (!fSelection)
         {
             if (lSelEnd < m_lStart || lSelStart > m_lEnd)
             {
@@ -1175,7 +1191,7 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
         return true;
     } // if
 
-    if (! fSelection)
+    if (!fSelection)
     {
         // Page doesn't contain selection.
         if (m_lSelEnd < m_lStart || m_lSelStart > m_lEnd)
@@ -1216,7 +1232,7 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
         return true;
     }
 
-    if (m_crSelFg != pSelection->GetColor())
+    if (m_crSelFg != selection.GetColor())
     {
         #if DEBUG_DIRTY
             DEBUG_PRINTF("%p: SelColor is changed.\n", this);
@@ -1224,7 +1240,7 @@ bool Page::IsDirty(RECT rc, const Selection* pSelection, bool fSelection) const
         return true;
     }
 
-    if (m_crSelBg  != pSelection->GetBackground())
+    if (m_crSelBg  != selection.GetBackground())
     {
         #if DEBUG_DIRTY
             DEBUG_PRINTF("%p: SelBackground is changed.\n", this);
@@ -1265,28 +1281,28 @@ bool Page::isPosnVisible(Posn lPosn) const {
 //
 // Page::MapPointToPosn
 //
-Posn Page::MapPointToPosn(const gfx::Graphics& gfx, POINT pt) const
+Posn Page::MapPointToPosn(const gfx::Graphics& gfx, gfx::PointF pt) const
 {
     if (pt.y < m_rc.top)     return GetStart();
     if (pt.y >= m_rc.bottom) return GetEnd();
 
-    int yLine = m_rc.left;
+    float yLine = m_rc.left;
     foreach (EnumLine, oEnum, m_oFormatBuf)
     {
         const Line* pLine = oEnum.Get();
-        int y = pt.y - yLine;
+        float y = pt.y - yLine;
         yLine += pLine->GetHeight();
 
         if (y >= pLine->GetHeight()) continue;
 
-        int xCell = m_rc.left;
+        float xCell = m_rc.left;
         if (pt.x < xCell) return pLine->GetStart();
 
         Posn lPosn = pLine->GetEnd() - 1;
         foreach (EnumCell, oEnum, pLine)
         {
             const Cell* pCell = oEnum.Get();
-            int x = pt.x - xCell;
+            float x = pt.x - xCell;
             xCell += pCell->m_cx;
             Posn lMap = pCell->MapXToPosn(gfx, x);
             if (lMap >= 0) lPosn = lMap;
@@ -1308,48 +1324,32 @@ Posn Page::MapPointToPosn(const gfx::Graphics& gfx, POINT pt) const
 //
 //  A Page object must be formatted with the latest buffer.
 //
-int Page::MapPosnToPoint(const gfx::Graphics& gfx, Posn lPosn, POINT* out_pt) const
-{
-    if (lPosn <  m_lStart) return 0;
-    if (lPosn > m_lEnd)   return 0;
+gfx::RectF Page::MapPosnToPoint(const gfx::Graphics& gfx, Posn lPosn) const {
+  if (lPosn <  m_lStart)
+    return gfx::RectF();
+  if (lPosn > m_lEnd)
+    return gfx::RectF();
 
-    int y = m_rc.top;
-    foreach (EnumLine, oEnum, m_oFormatBuf)
-    {
-        const Line* pLine = oEnum.Get();
-
-        if (lPosn >= pLine->m_lStart &&
-            lPosn <  pLine->m_lEnd )
-        {
-            int x = m_rc.left;
-            foreach (EnumCell, oEnum, pLine)
-            {
-                const Cell* pCell = oEnum.Get();
-
-                int cx = pCell->MapPosnToX(gfx, lPosn);
-
-                if (cx >= 0)
-                {
-                    if (NULL != out_pt)
-                    {
-                        out_pt->x = x + cx;
-                        out_pt->y = y;
-                    }
-                    return pCell->m_cy;
-                }
-
-                x += pCell->m_cx;
-            } // for each Cell
-            // Why?
-            break;
-        } // if
-        y += pLine->GetHeight();
-    } // for each line
-
-    // Why do we here?
-    return 0;
-} // Page::MapPosnToPoint
-
+  auto y = m_rc.top;
+  foreach (EnumLine, oEnum, m_oFormatBuf) {
+    auto const pLine = oEnum.Get();
+    if (lPosn >= pLine->m_lStart && lPosn <  pLine->m_lEnd) {
+        auto x = m_rc.left;
+        foreach (EnumCell, oEnum, pLine) {
+          auto const pCell = oEnum.Get();
+          float cx = pCell->MapPosnToX(gfx, lPosn);
+          if (cx >= 0) {
+            return gfx::RectF(gfx::PointF(x + cx, y),
+                              gfx::SizeF(pCell->m_cx, pCell->m_cy));
+          }
+          x += pCell->m_cx;
+        } // for each Cell
+        CAN_NOT_HAPPEN();
+    } // if
+    y += pLine->GetHeight();
+  }
+  CAN_NOT_HAPPEN();
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1364,7 +1364,7 @@ int Page::pageLines(const gfx::Graphics& gfx) const
     Font* pFont = FontSet::Get(gfx, m_pBuffer->GetDefaultStyle())->
         FindFont(gfx, 'x');
 
-    return (m_rc.bottom - m_rc.top) / pFont->GetHeight();
+    return static_cast<int>(m_rc.height() / pFont->GetHeight());
 } // Page::pageLines
 
 
@@ -1372,36 +1372,32 @@ int Page::pageLines(const gfx::Graphics& gfx) const
 //
 // Page::prepare
 //
-void Page::prepare(const Selection* pSelection)
-{
-    Edit::Buffer* pBuffer = pSelection->GetBuffer();
+void Page::Prepare(const Selection& selection) {
+  auto& buffer = *selection.GetBuffer();
+  m_pBuffer = &buffer;
+  m_nModfTick = buffer.GetModfTick();
 
-    m_pBuffer   = pBuffer;
-    m_nModfTick = pBuffer->GetModfTick();
+  // Selection
+  m_lSelStart = selection.GetStart();
+  m_lSelEnd = selection.GetEnd();
+  m_crSelFg = selection.GetColor();
+  m_crSelBg = selection.GetBackground();
 
-    // Selection
-    m_lSelStart = pSelection->GetStart();
-    m_lSelEnd   = pSelection->GetEnd();
-    m_crSelFg   = pSelection->GetColor();
-    m_crSelBg   = pSelection->GetBackground();
+  #if DEBUG_FORMAT
+    DEBUG_PRINTF("selection: %d...%d 0x%x/0x%x\n",
+        m_lSelStart, m_lSelEnd,
+        m_crSelFg, m_crSelBg );
+  #endif // DEBUG_FORMAT
 
-    #if DEBUG_FORMAT
-        DEBUG_PRINTF("selection: %d...%d 0x%x/0x%x\n",
-            m_lSelStart, m_lSelEnd,
-            m_crSelFg, m_crSelBg );
-    #endif // DEBUG_FORMAT
-
-    // Page
-    m_crBackground = pBuffer->GetDefaultStyle()->GetBackground();
-} // Page::prepare
-
+  // Page
+  m_crBackground = buffer.GetDefaultStyle()->GetBackground();
+}
 
 //////////////////////////////////////////////////////////////////////
 //
 // Page::Render
 //
-void Page::Render(const gfx::Graphics& gfx, RECT rcClip) const
-{
+void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
     #if DEBUG_RENDER
     {
         DEBUG_PRINTF("%p"
@@ -1417,54 +1413,49 @@ void Page::Render(const gfx::Graphics& gfx, RECT rcClip) const
 
     //::SetTextAlign(gfx, TA_BASELINE | TA_NOUPDATECP);
 
-    int y = m_rc.top;
-    foreach (EnumLine, oEnum, m_oFormatBuf)
-    {
-        Line* pLine = oEnum.Get();
+    auto y = m_rc.top;
+    foreach (EnumLine, oEnum, m_oFormatBuf) {
+        auto const pLine = oEnum.Get();
 
         ASSERT(y < m_rc.bottom);
 
         if (y < rcClip.bottom &&
             y + pLine->GetHeight() >= rcClip.top )
         {
-            int x = m_rc.left;
+            auto x = m_rc.left;
             foreach (EnumCell, oEnum, pLine)
             {
-                Cell* pCell = oEnum.Get();
+                auto const pCell = oEnum.Get();
                 if (x < rcClip.right &&
                     x + pCell->m_cx >= rcClip.left )
                 {
-                    Rect rc(x, y, x + pCell->m_cx, y + pCell->m_cy);
-                    pCell->Render(gfx, &rc);
+                    gfx::RectF rc(x, y, x + pCell->m_cx, y + pCell->m_cy);
+                    pCell->Render(gfx, rc);
                 }
                 x += pCell->m_cx;
             } // for each cell
 
             // Fill right
             {
-                RECT rc;
+                gfx::RectF rc;
                 rc.left  = pLine->GetWidth();
                 rc.right = m_rc.right;
 
                 rc.left  = max(rc.left,  rcClip.left);
                 rc.right = min(rc.right, rcClip.right);
 
-                if (rc.left < rc.right)
-                {
-                    rc.top = y;
-                    rc.bottom = y + pLine->GetHeight();
+                if (rc.left < rc.right) {
+                  rc.top = y;
+                  rc.bottom = y + pLine->GetHeight();
 
-                    rc.top    = max(rc.top,    rcClip.top);
-                    rc.bottom = min(rc.bottom, rcClip.bottom);
+                  rc.top    = max(rc.top,    rcClip.top);
+                  rc.bottom = min(rc.bottom, rcClip.bottom);
 
-                    if (rc.top < rc.bottom)
-                    {
-                        fillRect(gfx, rc, ColorToColorF(m_crBackground));
-                    }
-                } // if
+                  if (rc.top < rc.bottom)
+                    fillRect(gfx, rc, ColorToColorF(m_crBackground));
+                }
             }
-        } // if
-
+        }
         y += pLine->m_iHeight;
     } // for each line
 
@@ -1479,27 +1470,25 @@ void Page::Render(const gfx::Graphics& gfx, RECT rcClip) const
 // Note:
 //  We need hwnd for ScrollWindowEx in renderAux.
 //
-bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
-{
-    ASSERT(NULL != hwnd);
+bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
+    ASSERT(hwnd);
     uint cRedraws = 0;
 
-    int yNew = m_rc.top;
+    auto yNew = m_rc.top;
 
     // Compute common Start -- pNewStart is end of common Start.
     Line* pCurStart = m_oScreenBuf.GetFirst();
     Line* pNewStart = m_oFormatBuf.GetFirst();
     {
-        while (pNewStart != NULL && pCurStart != NULL)
-        {
-            if (! pNewStart->Equal(pCurStart)) break;
+        while (pNewStart && pCurStart) {
+            if (!pNewStart->Equal(pCurStart)) 
+                break;
             yNew += pNewStart->GetHeight();
             pNewStart = pNewStart->GetNext();
             pCurStart = pCurStart->GetNext();
         } // while
 
-        if (pNewStart == NULL && pCurStart == NULL)
-        {
+        if (pNewStart == nullptr && pCurStart == nullptr) {
             // m_oFormatBuf and m_oScreenBuf are same.
             #if DEBUG_RENDER
                 DEBUG_PRINTF("nothing to do\n");
@@ -1508,7 +1497,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
         }
     }
 
-    int yCur = yNew;
+    auto yCur = yNew;
 
     // Compute common End -- pNewEnd is start of common End.
     Line* pCurEnd = m_oScreenBuf.GetLast();
@@ -1518,13 +1507,13 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
     {
         for (;;)
         {
-            if (! pNewEnd->Equal(pCurEnd)) break;
+            if (!pNewEnd->Equal(pCurEnd)) break;
             pNewEnd = pNewEnd->GetPrev();
             pCurEnd = pCurEnd->GetPrev();
         } // while
     } // if
 
-    if (NULL != pCurEnd) pCurEnd = pCurEnd->GetNext();
+    if (nullptr != pCurEnd) pCurEnd = pCurEnd->GetNext();
     pNewEnd = pNewEnd->GetNext();
 
     // We need to redraw pNewStart (inclusive) to pNewEnd (exclsuive).
@@ -1536,15 +1525,14 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
         pNewStart, pNewEnd, yNew,
         pCurStart, pCurEnd, yCur,
         &pScrollEnd );
-    if (NULL != pScrollStart)
-    {
+    if (pScrollStart) {
         bool fRedraw = true;
         for (
             Line* pNewLine = pNewStart;
             pNewLine != pNewEnd;
             pNewLine = pNewLine->GetNext() )
         {
-            ASSERT(NULL != pNewLine);
+            ASSERT(nullptr != pNewLine);
 
             if (pNewLine == pScrollStart)
             {
@@ -1555,10 +1543,9 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
                 fRedraw = true;
             }
 
-            if (fRedraw)
-            {
+            if (fRedraw) {
                 cRedraws += 1;
-                pNewLine->Render(gfx, m_rc.left, yNew);
+                pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
                 fillRight(gfx, pNewLine, yNew);
             } // if
 
@@ -1567,39 +1554,35 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
     }
     else
     {
-        int yCur = m_rc.top;
-        Line* pCurLine = pCurStart;
+        auto yCur = m_rc.top;
+        auto pCurLine = pCurStart;
 
         for (
-            Line* pNewLine = pNewStart;
+            auto pNewLine = pNewStart;
             pNewLine != pNewEnd;
             pNewLine = pNewLine->GetNext() )
         {
             bool fRedraw;
 
-            while (NULL != pCurLine)
+            while (nullptr != pCurLine)
             {
                 if (yCur >= yNew) break;
                 pCurLine = pCurLine->GetNext();
             } // while
 
-            ASSERT(NULL != pNewLine);
+            ASSERT(nullptr != pNewLine);
             
-            if (NULL == pCurLine)
-            {
+            if (!pCurLine) {
                 fRedraw = true;
-            }
-            else
-            {
-                fRedraw = yNew != yCur || ! pNewLine->Equal(pCurLine);
+            } else {
+                fRedraw = yNew != yCur || !pNewLine->Equal(pCurLine);
                 yCur += pCurLine->GetHeight();
                 pCurLine = pCurLine->GetNext();
             } // if
 
-            if (fRedraw)
-            {
+            if (fRedraw) {
                 cRedraws += 1;
-                pNewLine->Render(gfx, m_rc.left, yNew);
+                pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
                 fillRight(gfx, pNewLine, yNew);
             } // if
 
@@ -1607,8 +1590,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
         } // for each line
     } // if
 
-    while (NULL != pNewEnd)
-    {
+    while (pNewEnd) {
         yNew += pNewEnd->GetHeight();
         pNewEnd = pNewEnd->GetNext();
     } // while
@@ -1617,16 +1599,14 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
 
     // Update m_oScreenBuf for next rendering.
     {
-        HANDLE hHeap = m_oScreenBuf.Reset();
-        foreach (EnumLine, oEnum, m_oFormatBuf)
-        {
-            Line* pLine = oEnum.Get();
+        auto const hHeap = m_oScreenBuf.Reset();
+        foreach (EnumLine, oEnum, m_oFormatBuf) {
+            auto const pLine = oEnum.Get();
             m_oScreenBuf.Append(pLine->Copy(hHeap));
         } // for each line
     }
 
-    if (cRedraws >= 1)
-    {
+    if (cRedraws >= 1) {
         #if DEBUG_RENDER
         {
             DEBUG_PRINTF("%p"
@@ -1643,7 +1623,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd)
     } // if
 
     return cRedraws > 0;
-} // Page::Render
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -1654,213 +1634,173 @@ Page::Line* Page::renderAux(
     HWND    hwnd,
     Line*   pNewStart,
     Line*   pNewEnd,
-    int     yNewStart,
+    float   yNewStart,
     Line*   pCurStart,
     Line*   pCurEnd,
-    int     yCurStart,
-    Line**  out_pScrollEnd )
-{
-    int   yCurScroll   = 0;
-    int   yNewScroll   = 0;
-    int   cyScroll     = k_cyMinScroll;
-    Line* pScrollStart = NULL;
-    Line* pScrollEnd   = NULL;
+    float   yCurStart,
+    Line**  out_pScrollEnd) {
+    auto yCurScroll   = 0.0f;
+  auto yNewScroll   = 0.0f;
+  auto cyScroll     = k_cyMinScroll;
+  Line* pScrollStart = nullptr;
+  Line* pScrollEnd   = nullptr;
 
-    int yNew = yNewStart;
-    for (
-        Line* pNewLine = pNewStart;
-        pNewLine != pNewEnd;
-        pNewLine = pNewLine->GetNext() )
-    {
-        int yCur = yCurStart;
-        for (
-            Line* pCurLine = pCurStart;
-            pCurLine != pCurEnd;
-            pCurLine = pCurLine->GetNext() )
-        {
-            if (yCur != yNew)
-            {
-                if (pNewLine->Equal(pCurLine))
-                {
-                    int cy = pNewLine->GetHeight();
-                    Line* pNewRunner = pNewLine->GetNext();
-                    Line* pCurRunner = pCurLine->GetNext();
-                    while (pNewRunner != NULL && pCurRunner != NULL)
-                    {
-                        if (! pNewRunner->Equal(pCurRunner)) break;
-                        cy += pNewRunner->GetHeight();
-                        pNewRunner = pNewRunner->GetNext();
-                        pCurRunner = pCurRunner->GetNext();
-                    } // while
+  auto yNew = yNewStart;
+  for (auto pNewLine = pNewStart; pNewLine != pNewEnd;
+    pNewLine = pNewLine->GetNext())  {
+    auto yCur = yCurStart;
+    for (auto pCurLine = pCurStart; pCurLine != pCurEnd;
+         pCurLine = pCurLine->GetNext()) {
+      if (yCur != yNew) {
+          if (pNewLine->Equal(pCurLine)) {
+            auto cy = pNewLine->GetHeight();
+            auto pNewRunner = pNewLine->GetNext();
+            auto pCurRunner = pCurLine->GetNext();
+            while (pNewRunner != nullptr && pCurRunner != nullptr) {
+              if (!pNewRunner->Equal(pCurRunner))
+                break;
+              cy += pNewRunner->GetHeight();
+              pNewRunner = pNewRunner->GetNext();
+              pCurRunner = pCurRunner->GetNext();
+            }
 
-                    if (cyScroll < cy)
-                    {
-                        cyScroll     = cy;
-                        yNewScroll   = yNew;
-                        yCurScroll   = yCur;
-                        pScrollStart = pNewLine;
-                        pScrollEnd   = pNewRunner;
-                    }
-                } // if
-            } // if
-            yCur += pCurLine->GetHeight();
-        } // for each line
-
-        yNew += pNewLine->GetHeight();
-    } // for each line
-
-    if (cyScroll <= k_cyMinScroll) return NULL;
-
-    // Note:
-    //  SW_INVALIDATE is needed for when source area is not
-    //  visible, e.g. out of screen, other windows hides
-    //  this window.
-    RECT rc;
-        rc.left   = m_rc.left;
-        rc.right  = m_rc.right;
-        rc.top    = yCurScroll;
-        rc.bottom = rc.top + cyScroll;
-
-    int iRgn = ::ScrollWindowEx(
-        hwnd,
-        0, yNewScroll - yCurScroll,
-        &rc,        // prcScroll
-        &m_rc,      // prcClip
-        NULL,       // prgnUpdate
-        NULL,       // prcUpdate
-        SW_INVALIDATE );
-
-    #if DEBUG_RENDER
-    {
-        DEBUG_PRINTF("scroll %d->%d+%d %d\n",
-            yCurScroll, yNewScroll, cyScroll, iRgn );
+            if (cyScroll < cy) {
+              cyScroll     = cy;
+              yNewScroll   = yNew;
+              yCurScroll   = yCur;
+              pScrollStart = pNewLine;
+              pScrollEnd   = pNewRunner;
+            }
+         }
+      }
+      yCur += pCurLine->GetHeight();
     }
-    #endif // DEBUG_RENDER
+    yNew += pNewLine->GetHeight();
+  }
 
-    if (iRgn == ERROR) return NULL;
+  if (cyScroll <= k_cyMinScroll)
+    return nullptr;
 
-    *out_pScrollEnd = pScrollEnd;
-    return pScrollStart;
-} // Page::renderAux
+  // Note:
+  //  SW_INVALIDATE is needed for when source area is not
+  //  visible, e.g. out of screen, other windows hides
+  //  this window.
+  RECT rc = gfx::RectF(m_rc.left, yCurScroll, m_rc.right, rc.top + cyScroll);
+  RECT rc_clip = m_rc;
+  auto const iRgn = ::ScrollWindowEx(hwnd, 0, 
+                                     static_cast<int>(yNewScroll - yCurScroll),
+                                     &rc, // prcScroll
+                                     &rc_clip, // prcClip
+                                     nullptr, // prgnUpdate
+                                     nullptr, // prcUpdate
+                                     SW_INVALIDATE);
 
+  #if DEBUG_RENDER
+    DEBUG_PRINTF("scroll %d->%d+%d %d\n", yCurScroll, yNewScroll, cyScroll,
+                 iRgn);
+  #endif // DEBUG_RENDER
+
+  if (iRgn == ERROR) {
+    DEBUG_PRINTF("ScorllWindowEx failed!\n");
+    return nullptr;
+  }
+
+  *out_pScrollEnd = pScrollEnd;
+  return pScrollStart;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
 // Page::ScrollDown
 //
-bool Page::ScrollDown(const gfx::Graphics& gfx)
-{
-    if (m_lStart == 0)
-    {
-        // This page shows start of buffer.
-        return false;
+bool Page::ScrollDown(const gfx::Graphics& gfx) {
+  if (!m_lStart) {
+    // This page shows start of buffer.
+    return false;
+  }
+
+  auto const pLine = m_oFormatBuf.GetHeight() < m_rc.height() ?
+      m_oFormatBuf.NewLine() : m_oFormatBuf.ScrollDown();
+  if (!pLine) {
+    // This page shows only one line.
+    return false;
+  }
+
+  auto const lGoal  = m_lStart - 1;
+  auto const lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lGoal);
+  Formatter formatter(gfx, m_oFormatBuf.GetHeap(), this, lStart);
+
+  do {
+    formatter.FormatLine(pLine);
+  } while (lGoal >= pLine->GetEnd());
+
+  m_oFormatBuf.Prepend(pLine);
+
+  while (m_oFormatBuf.GetHeight() > m_rc.height()) {
+    auto const pLast = m_oFormatBuf.ScrollDown();
+    if (!pLast)
+      break;
+    pLast->Discard();
+  }
+
+  m_lStart = GetFirstLine()->GetStart();
+  m_lEnd   = GetLastLine()->GetEnd();
+  return true;
+}
+
+bool Page::ScrollToPosn(const gfx::Graphics& gfx, Posn lPosn) {
+  if (isPosnVisible(lPosn))
+    return false;
+
+  auto const cLines = pageLines(gfx);
+  auto const cLines2 = max(cLines / 2, 1);
+
+  if (lPosn > m_lStart) {
+    for (auto k = 0; k < cLines2; k++) {
+        if (!ScrollUp(gfx))
+          return k;
+        if (isPosnVisible(lPosn))
+          return true;
     }
-
-    int cyPage = m_rc.bottom - m_rc.top;
-
-    Line* pLine;
-    if (m_oFormatBuf.GetHeight() < cyPage)
-    {
-        pLine = m_oFormatBuf.NewLine();
+  } else {
+    for (int k = 0; k < cLines2; k++) {
+      if (!ScrollDown(gfx))
+        return k;
+      if (isPosnVisible(lPosn))
+        return true;
     }
-    else
-    {
-        pLine = m_oFormatBuf.ScrollDown();
-        if (NULL == pLine)
-        {
-            // This page shows only one line.
-            return false;
-        }
+  } // if
+
+  auto lStart = lPosn;
+  for (int k = 0; k < cLines2; k++) {
+    if (!lStart == 0)
+      break;
+    lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lStart - 1);
+  }
+
+  #if DEBUG_FORMAT
+    DEBUG_PRINTF("%p\n", this);
+  #endif // DEBUG_FORMAT
+
+  formatAux(gfx, lStart);
+  for (;;) {
+    if (isPosnVisible(lPosn))
+      break;
+    if (!ScrollUp(gfx))
+      break;
+  }
+
+  // If this page shows end of buffer, we shows lines as much as 
+  // posibble to fit in page.
+  if (GetEnd() >= m_pBuffer->GetEnd()) {
+    while (isPosnVisible(lPosn)) {
+      if (!ScrollDown(gfx))
+        return true;
     }
-
-    Posn lGoal  = m_lStart - 1;
-    Posn lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lGoal);
-
-    Formatter oFormatter(gfx, m_oFormatBuf.GetHeap(), this, lStart);
-
-    for (;;)
-    {
-        oFormatter.FormatLine(pLine);
-        if (lGoal < pLine->GetEnd()) break;
-    } // for
-
-    m_oFormatBuf.Prepend(pLine);
-
-    while (m_oFormatBuf.GetHeight() > cyPage)
-    {
-        Line* pLast = m_oFormatBuf.ScrollDown();
-        if (NULL == pLast) break;
-        pLast->Discard();
-    } // while
-
-    m_lStart = GetFirstLine()->GetStart();
-    m_lEnd   = GetLastLine()->GetEnd();
-
-    return true;
-} // Page::ScrollDown
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Page::ScrollToPosn
-//
-bool Page::ScrollToPosn(const gfx::Graphics& gfx, Posn lPosn)
-{
-    if (isPosnVisible(lPosn)) return false;
-
-    int cLines = pageLines(gfx);
-    int cLines2 = max(cLines / 2, 1);
-
-    if (lPosn > m_lStart)
-    {
-        for (int k = 0; k < cLines2; k++)
-        {
-            if (! ScrollUp(gfx)) return k != 0;
-            if (isPosnVisible(lPosn)) return true;
-        } // for k
-    }
-    else
-    {
-        for (int k = 0; k < cLines2; k++)
-        {
-            if (! ScrollDown(gfx)) return k != 0;
-            if (isPosnVisible(lPosn)) return true;
-        } // for k
-    } // if
-
-    Posn lStart = lPosn;
-
-    for (int k = 0; k < cLines2; k++)
-    {
-        if (lStart == 0) break;
-        lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lStart - 1);
-    } // for k
-
-    #if DEBUG_FORMAT
-        DEBUG_PRINTF("%p\n", this);
-    #endif // DEBUG_FORMAT
-
-    formatAux(gfx, lStart);
-    for (;;)
-    {
-        if (isPosnVisible(lPosn)) break;
-        if (! ScrollUp(gfx)) break;
-    } // for
-
-    // If this page shows end of buffer, we shows lines as much as 
-    // posibble to fit in page.
-    if (GetEnd() >= m_pBuffer->GetEnd())
-    {
-        while (isPosnVisible(lPosn))
-        {
-            if (! ScrollDown(gfx)) return true;
-        }
-        ScrollUp(gfx);
-    } // if
-
-    return true;
-} // Page::ScrollToPosn
-
+    ScrollUp(gfx);
+  }
+  return true;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1873,7 +1813,7 @@ bool Page::ScrollUp(const gfx::Graphics& gfx)
 
     // Recycle the first line.
     Line* pLine = m_oFormatBuf.ScrollUp();
-    if (NULL == pLine)
+    if (nullptr == pLine)
     {
         // This page shows only one line.
         return false;
@@ -1891,73 +1831,64 @@ bool Page::ScrollUp(const gfx::Graphics& gfx)
 
     m_oFormatBuf.Append(pLine);
 
-    int cyPage = m_rc.bottom - m_rc.top;
-    while (m_oFormatBuf.GetHeight() > cyPage)
-    {
-        Line* pFirst = m_oFormatBuf.ScrollUp();
-        if (NULL == pFirst) break;
+    auto const cyPage = m_rc.height();
+    while (m_oFormatBuf.GetHeight() > cyPage) {
+        auto const pFirst = m_oFormatBuf.ScrollUp();
+        if (!pFirst) 
+          break;
         pFirst->Discard();
-    } // while
+    }
 
     m_lStart = GetFirstLine()->GetStart();
     m_lEnd   = GetLastLine()->GetEnd();
 
     return fMore;
-} // Page::ScrollUp
+}
 
+Page::DisplayBuffer::DisplayBuffer()
+    : m_cy(0),
+      m_hObjHeap(nullptr),
+      m_pFirst(nullptr),
+      m_pLast(nullptr) {
+}
 
-// Page::DisplayBuffer ctor
-Page::DisplayBuffer::DisplayBuffer() :
-    m_cy(0),
-    m_hObjHeap(NULL),
-    m_pFirst(NULL),
-    m_pLast(NULL) {}
+Page::DisplayBuffer::~DisplayBuffer() {
+  #if DEBUG_HEAP
+    DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
+  #endif // DEBUG_HEAP
 
-// Page::DisplayBuffer ctor
-Page::DisplayBuffer::~DisplayBuffer()
-{
-    #if DEBUG_HEAP
-        DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
-    #endif // DEBUG_HEAP
-
-    if (NULL != m_hObjHeap) 
-    {
-        ::HeapDestroy(m_hObjHeap);
-    }
-} // Page::DisplayBuffer ctor
-
+  if (m_hObjHeap) 
+    ::HeapDestroy(m_hObjHeap);
+}
 
 // Page::DisplayBuffer::Append
-void Page::DisplayBuffer::Append(Line* pLine)
-{
-    if (NULL == m_pFirst) m_pFirst = pLine;
-    if (NULL != m_pLast)  m_pLast->m_pNext = pLine;
-    pLine->m_pPrev = m_pLast;
-    m_pLast = pLine;
-    m_cy += pLine->GetHeight();
-} // DisplayBuffer::Append
-
-
-// Page::DisplayBuffer::Alloc
-void* Page::DisplayBuffer::Alloc(size_t cb)
-    { return ::HeapAlloc(m_hObjHeap, 0, cb); }
-
-// Page::DisplayBuffer::NewLine
-Page::Line* Page::DisplayBuffer::NewLine()
-{
-    return new(m_hObjHeap) Line(m_hObjHeap);
-} // Page::DisplayBuffer::NewLine
-
-// Page::DisplayBuffer::Prepend
-void Page::DisplayBuffer::Prepend(Line* pLine)
-{
-    if (NULL == m_pLast) m_pLast = pLine;
-    if (NULL != m_pFirst) m_pFirst->m_pPrev = pLine;
-    pLine->m_pNext = m_pFirst;
+void Page::DisplayBuffer::Append(Line* pLine) {
+  if (!m_pFirst)
     m_pFirst = pLine;
-    m_cy += pLine->GetHeight();
-} // DisplayBuffer::Prepend
+  if (m_pLast)
+    m_pLast->m_pNext = pLine;
+  pLine->m_pPrev = m_pLast;
+  m_pLast = pLine;
+  m_cy += pLine->GetHeight();
+}
 
+void* Page::DisplayBuffer::Alloc(size_t cb) {
+  return ::HeapAlloc(m_hObjHeap, 0, cb);
+}
+
+Page::Line* Page::DisplayBuffer::NewLine() {
+  return new(m_hObjHeap) Line(m_hObjHeap);
+}
+
+void Page::DisplayBuffer::Prepend(Line* pLine) {
+  if (!m_pLast)
+    m_pLast = pLine;
+  if (m_pFirst)
+    m_pFirst->m_pPrev = pLine;
+  pLine->m_pNext = m_pFirst;
+  m_pFirst = pLine;
+  m_cy += pLine->GetHeight();
+}
 
 // Page::DisplayBuffer::Reset
 HANDLE Page::DisplayBuffer::Reset()
@@ -1966,14 +1897,14 @@ HANDLE Page::DisplayBuffer::Reset()
         DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
     #endif // DEBUG_HEAP
 
-    if (NULL != m_hObjHeap)
+    if (nullptr != m_hObjHeap)
     {
         ::HeapDestroy(m_hObjHeap);
     } // if
 
     m_hObjHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-    m_pFirst = NULL;
-    m_pLast  = NULL;
+    m_pFirst = nullptr;
+    m_pLast  = nullptr;
     m_cy = 0;
 
     #if DEBUG_HEAP
@@ -1987,11 +1918,11 @@ HANDLE Page::DisplayBuffer::Reset()
 // Page::DisplayBuffer::ScrollDown
 Page::Line* Page::DisplayBuffer::ScrollDown()
 {
-    if (m_pLast == m_pFirst) return NULL;
+    if (m_pLast == m_pFirst) return nullptr;
 
     Line* pLine = m_pLast;
     m_pLast = m_pLast->GetPrev();
-    m_pLast->m_pNext = NULL;
+    m_pLast->m_pNext = nullptr;
     m_cy -= pLine->GetHeight();
     return pLine;
 } // Page::DisplayBuffer::ScrollDown
@@ -2000,11 +1931,11 @@ Page::Line* Page::DisplayBuffer::ScrollDown()
 // Page::DisplayBuffer::ScrollUp
 Page::Line* Page::DisplayBuffer::ScrollUp()
 {
-    if (m_pLast == m_pFirst) return NULL;
+    if (m_pLast == m_pFirst) return nullptr;
 
     Line* pLine = m_pFirst;
     m_pFirst = m_pFirst->GetNext();
-    m_pFirst->m_pPrev = NULL;
+    m_pFirst->m_pPrev = nullptr;
     m_cy -= pLine->GetHeight();
     return pLine;
 } // Page::DisplayBuffer::ScrollUp
@@ -2042,7 +1973,7 @@ Page::Line* Page::Line::Copy(HANDLE hHeap) const
 // Page::Line::Discard
 void Page::Line::Discard()
 {
-    if (m_pwch != NULL) ::HeapFree(m_hObjHeap, 0, m_pwch);
+    if (m_pwch != nullptr) ::HeapFree(m_hObjHeap, 0, m_pwch);
     ::HeapFree(m_hObjHeap, 0, this);
 } // Page::Line::Discard
 
@@ -2061,7 +1992,7 @@ bool Page::Line::Equal(const Line* pLine2) const
         if (oEnum2.AtEnd()) return false;
         Cell* pCell2 = oEnum2.Get();
         oEnum2.Next();
-        if (! pCell->Equal(pCell2)) return false;
+        if (!pCell->Equal(pCell2)) return false;
     } // for each cell
     return oEnum2.AtEnd();
 } // Page::Line::Equal
@@ -2074,20 +2005,18 @@ bool Page::Line::Equal(const Line* pLine2) const
 // o Assign real pointer to m_pwch.
 // o Adjust line cell height.
 //
-void Page::Line::Fix(int iDescent)
-{
-    const char16* pwch = m_pwch;
-    int cx = 0;
-    foreach (EnumCell, oEnum, this)
-    {
-        Cell* pCell = oEnum.Get();
-        Posn lEnd = pCell->Fix(pwch, m_iHeight, iDescent);
-        if (lEnd >= 0) m_lEnd = lEnd;
-        cx += pCell->GetWidth();
-    } // for each cell
-    m_iWidth  = cx;
-} // Page::Line::Fix
-
+void Page::Line::Fix(float iDescent) {
+  auto const pwch = m_pwch;
+  auto cx = 0.0f;
+  foreach (EnumCell, oEnum, this) {
+    auto const pCell = oEnum.Get();
+    auto const lEnd = pCell->Fix(pwch, m_iHeight, iDescent);
+    if (lEnd >= 0) 
+      m_lEnd = lEnd;
+    cx += pCell->GetWidth();
+  } // for each cell
+  m_iWidth  = cx;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2104,56 +2033,35 @@ uint Page::Line::Hash() const
         m_nHash >>= 3;
     } // for each cell
     return m_nHash;
-} // Page::Line::Hash
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Line::MapXToPosn
-//
-Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, int xGoal) const
-{
-    int xCell = 0;
-    Posn lPosn = GetEnd() - 1;
-    foreach (EnumCell, oEnum, this)
-    {
-        const Cell* pCell = oEnum.Get();
-        int x = xGoal - xCell;
-        xCell += pCell->m_cx;
-        Posn lMap = pCell->MapXToPosn(gfx, x);
-        if (lMap >= 0) lPosn = lMap;
-        if (x >= 0 && x < pCell->m_cx) break;
-    } // for each cell
-    return lPosn;
-} // MapXToPosn
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Cell::Render
-//
-void Cell::Render(const gfx::Graphics& gfx, const RECT* prc) const { 
-  fillRect(gfx, *prc, ColorToColorF(m_crBackground));
 }
 
+Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
+  auto xCell = 0.0f;
+  auto lPosn = GetEnd() - 1;
+  foreach (EnumCell, oEnum, this) {
+    auto const pCell = oEnum.Get();
+    auto const x = xGoal - xCell;
+    xCell += pCell->m_cx;
+    auto const lMap = pCell->MapXToPosn(gfx, x);
+    if (lMap >= 0) 
+      lPosn = lMap;
+    if (x >= 0 && x < pCell->m_cx) 
+      break;
+  }
+  return lPosn;
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Line::Render
-//
-void Page::Line::Render(const gfx::Graphics& gfx, int x, int y) const
-{
-    foreach (EnumCell, oEnum, this)
-    {
-        Cell* pCell = oEnum.Get();
-
-        Rect rc(x, y, x + pCell->m_cx, y + pCell->m_cy);
-
-        pCell->Render(gfx, &rc);
-        x = rc.right;
-    } // for each cell
-} // Page::Line::Render
-
+void Page::Line::Render(const gfx::Graphics& gfx,
+                        const gfx::PointF& left_top) const {
+  auto x = left_top.x;
+  foreach (EnumCell, oEnum, this) {
+    auto const pCell = oEnum.Get();
+    gfx::RectF rect(gfx::PointF(x, left_top.y),
+                    gfx::SizeF(pCell->m_cx, pCell->m_cy));
+    pCell->Render(gfx, rect);
+    x = rect.right;
+  }
+}
 
 // Page::Line::Reset
 void Page::Line::Reset()
@@ -2163,10 +2071,10 @@ void Page::Line::Reset()
     m_nHash   = 0;
     m_lStart  = -1;
     m_lEnd    = -1;
-    m_pCell   = NULL;
-    m_pNext   = NULL;
-    m_pPrev   = NULL;
+    m_pCell   = nullptr;
+    m_pNext   = nullptr;
+    m_pPrev   = nullptr;
     m_cwch    = 0;
-    if (m_pwch != NULL) ::HeapFree(m_hObjHeap, 0, m_pwch);
-    m_pwch = NULL;
+    if (m_pwch != nullptr) ::HeapFree(m_hObjHeap, 0, m_pwch);
+    m_pwch = nullptr;
 } // Page::Line::Reset

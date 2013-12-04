@@ -648,7 +648,7 @@ LRESULT Frame::onMessage(
       ::EndPaint(m_hwnd, &ps);
       return 0;
     }
-#else
+#elif 0
     case WM_PAINT:
       ::ValidateRect(m_hwnd, nullptr);
       break;
@@ -867,10 +867,9 @@ void Frame::Realize() {
   }
 
   auto& font = *FontSet::Get(&g_DefaultStyle)->FindFont('x');
-  gfx::RectF rect(0.0f, 0.0f,
-    font.GetCharWidth('M') * cColumns,
-    font.GetHeight() * cRows);
-  rect *= gfx::FactorySet::dpi_scale();
+  gfx::SizeF size(font.GetCharWidth('M') * cColumns,
+                  font.GetHeight() * cRows);
+  gfx::RectF rect(gfx::PointF(), gfx::FactorySet::Scale(size));
   RECT rc = rect;
   ::AdjustWindowRectEx(&rc, dwStyle, TRUE, dwExStyle);
   rc.right += ::GetSystemMetrics(SM_CXVSCROLL) + 10;

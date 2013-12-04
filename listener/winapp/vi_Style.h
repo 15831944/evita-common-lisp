@@ -17,7 +17,7 @@
 #include "./li_util.h"
 
 namespace gfx {
-class Font;
+class FontFace;
 class Graphics;
 class TextFormat;
 class TextLayout;
@@ -31,27 +31,31 @@ class Font {
     public: typedef LOGFONT Key;
 
     private: LOGFONT m_oLogFont;
-    private: const OwnPtr<gfx::Font> font_;
-    private: float ascent_;
-    private: float descent_;
-    private: float height_;
+    private: const base::OwnPtr<gfx::FontFace> font_face_;
+    private: float const ascent_;
+    private: float const descent_;
+    private: float const height_;
+    private: float const fixed_width_;
 
     private: Font(const LOGFONT&);
     public: ~Font();
 
-    public: const gfx::Font& font() const { return *font_; }
+    public: float ascent() const { return ascent_; }
+    public: const gfx::FontFace& font_face() const { return *font_face_; }
+
+    public: float font_size() const {
+      return m_oLogFont.lfHeight * 96.0f / 72.0f;
+    }
 
     // [C]
-    public: static OwnPtr<Font> Create(const LOGFONT*);
+    public: static base::OwnPtr<Font> Create(const LOGFONT*);
 
     // [E]
-    public: bool EqualKey(const Key* pKey) const
-    {
-        return 0 == ::memcmp(&m_oLogFont, pKey, sizeof(m_oLogFont));
-    } // EqualKey
+    public: bool EqualKey(const Key* pKey) const {
+      return !::memcmp(&m_oLogFont, pKey, sizeof(m_oLogFont));
+    }
 
     // [G]
-    public: float GetAscent()  const { return ascent_; }
     public: float GetCharWidth(char16) const;
     public: float GetDescent() const { return descent_; }
     public: float GetHeight()  const { return height_; }
@@ -61,11 +65,14 @@ class Font {
     // [H]
     public: bool HasCharacter(char16) const;
 
-    // [H]
-    public: uint Hash() const
-        { return static_cast<uint>(reinterpret_cast<UINT_PTR>(this)); }
+    public: uint Hash() const {
+      return static_cast<uint>(reinterpret_cast<UINT_PTR>(this));
+    }
 
     public: static int HashKey(const Key*);
+
+    // [S]
+    private: float Scale(int design_unit) const;
 
     DISALLOW_COPY_AND_ASSIGN(Font);
 }; // Font

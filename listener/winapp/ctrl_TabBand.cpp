@@ -515,14 +515,11 @@ class Item : public Element {
     if (!hIcon)
       return;
     gfx::Bitmap bitmap(gfx, hIcon);
-    int const iconWidth = 16;
-    int const iconHeight = 16;
-    RECT rc;
-    rc.left = m_rcLabel.left - 20;
-    rc.top = m_rc.top + 8;
-    rc.right = rc.left + iconWidth;
-    rc.bottom = rc.top + iconHeight;
-    gfx->DrawBitmap(bitmap, gfx.scaledRect(rc));
+    auto const icon_size = gfx.Scale(gfx::SizeF(16, 16));
+    auto const icon_offset = gfx.Scale(gfx::SizeF(-20, 8));
+    auto const icon_left_top = gfx::PointF(m_rcLabel.left, m_rc.top) +
+                               icon_offset;
+    gfx->DrawBitmap(bitmap, gfx::RectF(icon_left_top, icon_size));
   }
 
   // [G]
@@ -825,15 +822,10 @@ class TabBand : public Element {
   // [C]
   private: bool changeFont(const gfx::Graphics& gfx) {
     LOGFONT lf;
-
-    if (!::SystemParametersInfo(
-        SPI_GETICONTITLELOGFONT,
-        sizeof(lf),
-        &lf, 0)) {
+    if (!::SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0))
       return false;
-    }
 
-    lf.lfHeight = -13;
+    //lf.lfHeight = -13;
 
     if (auto const old_format = gfx.work<gfx::TextFormat*>())
         delete old_format;

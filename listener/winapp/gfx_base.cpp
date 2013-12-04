@@ -8,6 +8,8 @@
 //
 #include "gfx_base.h"
 
+#include <utility>
+
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
 #pragma comment(lib, "windowscodecs.lib")
@@ -79,7 +81,7 @@ base::ComPtr<ID2D1Bitmap> CreateBitmap(const Graphics& gfx, HICON hIcon) {
       WICBitmapPaletteTypeMedianCut));
   base::ComPtr<ID2D1Bitmap> bitmap;
   COM_VERIFY(gfx->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap));
-  return bitmap;
+  return std::move(bitmap);
 }
 
 ID2D1Factory& CreateD2D1Factory() {
@@ -99,33 +101,30 @@ IDWriteFactory& CreateDWriteFactory() {
   return *factory;
 }
 
-base::ComPtr<IDWriteFont> CreateFont(const char16* family_name) {
- base::ComPtr<IDWriteFontCollection> font_collection;
- COM_VERIFY(gfx::FactorySet::dwrite().
-    GetSystemFontCollection(&font_collection, false));
+base::ComPtr<IDWriteFontFace> CreateFontFace(const char16* family_name) {
+  base::ComPtr<IDWriteFontCollection> font_collection;
+  COM_VERIFY(gfx::FactorySet::dwrite().
+      GetSystemFontCollection(&font_collection, false));
 
- uint32 index;
- BOOL exists;
- COM_VERIFY(font_collection->FindFamilyName(family_name, &index, &exists));
- if (!exists)
-   return CreateFont(L"Courier New");
+  uint32 index;
+  BOOL exists;
+  COM_VERIFY(font_collection->FindFamilyName(family_name, &index, &exists));
+  if (!exists)
+   return CreateFontFace(L"Courier New");
 
- base::ComPtr<IDWriteFontFamily> font_family;
- COM_VERIFY(font_collection->GetFontFamily(index, &font_family));
+  base::ComPtr<IDWriteFontFamily> font_family;
+  COM_VERIFY(font_collection->GetFontFamily(index, &font_family));
 
- base::ComPtr<IDWriteFont> font;
- COM_VERIFY(font_family->GetFirstMatchingFont(
+  base::ComPtr<IDWriteFont> font;
+  COM_VERIFY(font_family->GetFirstMatchingFont(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
     DWRITE_FONT_STYLE_NORMAL, // normal, italic or oblique
     &font));
-  return font;
-}
 
-base::ComPtr<IDWriteFontFace> CreateFontFace(IDWriteFont* font) {
   base::ComPtr<IDWriteFontFace> font_face;
   COM_VERIFY(font->CreateFontFace(&font_face));
-  return font_face;
+  return std::move(font_face);
 }
 
 IWICImagingFactory& CreateImageFactory() {
@@ -149,8 +148,8 @@ base::ComPtr<IDWriteTextFormat> CreateTextFormat(
     const FactorySet&,
     const LOGFONT& log_font) {
   ASSERT(log_font.lfHeight < 0);
-  auto const height = static_cast<float>(-log_font.lfHeight) *
-      FactorySet::dpi_scale().y * 72 / 96;
+  auto const height = FactorySet::ScaleY(
+    static_cast<float>(-log_font.lfHeight) * 96.0f / 72.0f);
   base::ComPtr<IDWriteTextFormat> text_format;
   COM_VERIFY(FactorySet::dwrite().CreateTextFormat(
     log_font.lfFaceName,
@@ -161,10 +160,10 @@ base::ComPtr<IDWriteTextFormat> CreateTextFormat(
     height,
     L"en-us",
     &text_format));
-  return text_format;
+  return std::move(text_format);
 }
 
-DWRITE_FONT_METRICS GetFontMetrics(IDWriteFont* font) {
+DWRITE_FONT_METRICS GetFontMetrics(IDWriteFontFace* font) {
   DWRITE_FONT_METRICS metrics;
   font->GetMetrics(&metrics);
   return metrics;
@@ -189,12 +188,11 @@ FactorySet::FactorySet()
   // All render targets except for ID2D1HwndRenderTarget, DPI values are
   // 96 DPI.
   float const default_dpi = 96.0f;
-  dpi_scale_ = PointF(dpi_x, dpi_y) / default_dpi;
+  dpi_scale_ = SizeF(dpi_x, dpi_y) / default_dpi;
 }
 
-Font::Font(const char16* family_name)
-    : SimpleObject_(CreateFont(family_name)),
-      ALLOW_THIS_IN_INITIALIZER_LIST(font_face_(CreateFontFace(*this))),
+FontFace::FontFace(const char16* family_name)
+    : SimpleObject_(CreateFontFace(family_name)),
       ALLOW_THIS_IN_INITIALIZER_LIST(metrics_(GetFontMetrics(*this))) {
 }
 
@@ -203,14 +201,6 @@ FactorySet& FactorySet::instance() {
   if (!instance)
     instance = new FactorySet();
   return *instance;
-}
-
-// Font
-
-bool Font::HasCharacter(char16 wch) const {
-  BOOL exists;
-  auto const hr = font_->HasCharacter(wch, &exists);
-  return SUCCEEDED(hr) && exists;
 }
 
 // Graphics
@@ -235,6 +225,11 @@ void Graphics::Init(HWND hwnd) {
                                    pixel_format),
       D2D1::HwndRenderTargetProperties(hwnd, size),
       &render_target_));
+}
+
+void Graphics::Resize(const RECT& rc) const {
+  auto size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+  render_target().Resize(size);
 }
 
 // TextFormat
