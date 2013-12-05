@@ -1351,7 +1351,8 @@ class TabBand : public Element {
 
       if (pElement->Is<CloseBox>()) {
         if (sendNotify(TABBAND_NOTIFY_QUERY_CLOSE)) {
-          sendNotify(TABBAND_NOTIFY_CLOSE);
+          if (auto const item = pElement->GetParent()->DynamicCast<Item>())
+            sendNotify(TABBAND_NOTIFY_CLOSE, item->m_iItem);
         }
         return;
       }
@@ -1746,17 +1747,18 @@ class TabBand : public Element {
   }
 
   // sendNotify
-  private: LRESULT sendNotify(uint const nCode) {
+  private: LRESULT sendNotify(uint const nCode, int tab_index = 0) {
     auto const hwndParent = ::GetParent(m_hwnd);
 
     if (!hwndParent) {
       return TRUE;
     }
 
-    NMHDR oNotify;
+    TabBandNotifyData oNotify;
     oNotify.code = nCode;
     oNotify.hwndFrom = m_hwnd;
     oNotify.idFrom = ::GetDlgCtrlID(m_hwnd);
+    oNotify.tab_index_ = tab_index;
 
     return ::SendMessage(
       hwndParent,

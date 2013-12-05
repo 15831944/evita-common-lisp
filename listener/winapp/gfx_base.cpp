@@ -231,7 +231,8 @@ void Graphics::Init(HWND hwnd) {
   COM_VERIFY(FactorySet::d2d1().CreateHwndRenderTarget(
       D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
                                    pixel_format),
-      D2D1::HwndRenderTargetProperties(hwnd, size),
+      D2D1::HwndRenderTargetProperties(hwnd, size,
+                                       D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS),
       &render_target_));
 }
 

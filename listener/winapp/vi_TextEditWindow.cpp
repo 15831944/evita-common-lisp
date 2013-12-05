@@ -10,13 +10,13 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_TextEditWindow.cpp#3 $
 //
 #define DEBUG_AUTOSCROLL 0
-#define DEBUG_CARET      1
+#define DEBUG_CARET      0
 #define DEBUG_FOCUS      0
-#define DEBUG_IDLE       1
+#define DEBUG_IDLE       0
 #define DEBUG_KEY        0
 #define DEBUG_PAINT      1
-#define DEBUG_REDRAW     1
-#define DEBUG_RESIZE     0
+#define DEBUG_REDRAW     0
+#define DEBUG_RESIZE     1
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -652,14 +652,6 @@ LRESULT TextEditWindow::onMessage(
         break;
 
     case WM_CREATE:
-      #if DEBUG_RESIZE
-      {
-        CREATESTRUCT* p = reinterpret_cast<CREATESTRUCT*>(lParam);
-        DEBUG_PRINTF("WM_CREATE %p %d+%d+%dx%d\n",
-            this,
-            p->x, p->y, p->cx, p->cy );
-      }
-      #endif // DEBUG_RESIZE
       m_gfx->Init(m_hwnd);
       break;
 
@@ -818,6 +810,13 @@ LRESULT TextEditWindow::onMessage(
       SmallScroll(0, GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? -2 : 2);
       return 0;
 
+    case WM_USER: {
+      gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+      m_pPage->Reset();
+      m_pPage->Render(*m_gfx, m_hwnd);
+      return 0;
+    }
+
     case WM_PAINT: {
       #if DEBUG_PAINT
         DEBUG_PRINTF("~~~~~~~~~~ WM_PAINT Start\n");
@@ -825,8 +824,17 @@ LRESULT TextEditWindow::onMessage(
       // Note: We don't need to show/hide caret. See MSDN/Carets/Using
       // Carets/Hiding a Caret
       {
+        RECT rc;
+        if (::GetUpdateRect(m_hwnd, &rc, false)) {
+          DEBUG_PRINTF("update_rect=(%d,%d)-(%d,%d)\n", rc.left, rc.top,
+                       rc.right, rc.bottom);
+        } else {
+          DEBUG_PRINTF("GetUpdateRectFailed\n");
+        }
+
         gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-        //(*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Red));
+        (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Red));
+        m_pPage->Reset();
         m_pPage->Render(*m_gfx, m_hwnd);
       }
       ::ValidateRect(*this, nullptr);
@@ -929,10 +937,12 @@ LRESULT TextEditWindow::onMessage(
       ::GetClientRect(m_hwnd, &m_rc);
       m_gfx->Resize(m_rc);
       m_pPage->Reset();
+      #if 0
       {
         gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-        (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Red));
+        (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Blue));
       }
+      #endif
       redraw();
       return 0;
     } // WM_WINDOWPOSCHANGED

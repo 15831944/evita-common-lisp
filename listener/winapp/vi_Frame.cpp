@@ -90,7 +90,8 @@ extern uint g_TabBand__TabDragMsg;
 ///   Construct this frame.
 /// </summary>
 Frame::Frame()
-    : m_pActivePane(nullptr) {
+    : gfx_(new gfx::Graphics()),
+      m_pActivePane(nullptr) {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
 }
 
@@ -538,6 +539,7 @@ LRESULT Frame::onMessage(
       }
 
       CompositionState::Update(m_hwnd);
+      gfx_->Init(m_hwnd);
       break;
     }
 
@@ -594,10 +596,10 @@ LRESULT Frame::onMessage(
         case CtrlId_TabBand:
           switch (pNotify->code) {
             case TABBAND_NOTIFY_CLOSE: {
-                auto const iCurSel = TabCtrl_GetCurSel(m_hwndTabBand);
-                if (auto const pPane = getPaneFromTab(iCurSel)) {
-                    pPane->Destroy();
-                }
+                auto const tab_index = reinterpret_cast<TabBandNotifyData*>(pNotify)
+                    ->tab_index_;
+                if (auto const pPane = getPaneFromTab(tab_index))
+                  pPane->Destroy();
                 break;
             }
 
@@ -636,13 +638,23 @@ LRESULT Frame::onMessage(
 #else
     case WM_ERASEBKGND:
       DEBUG_PRINTF("WM_ERASEBKGND\n");
-      return 0;
+      return TRUE;
 
-    case WM_PAINT:
+    case WM_PAINT: {
       DEBUG_PRINTF("WM_PAINT Start\n");
+      Rect rc;
+      if (::GetUpdateRect(m_hwnd, &rc, false)) {
+        DEBUG_PRINTF("update_rect=(%d,%d)-(%d,%d)\n", rc.left, rc.top,
+                     rc.right, rc.bottom);
+        if (rc) {
+          gfx::Graphics::DrawingScope drawing_scope(*gfx_);
+          (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::LightGray));
+        }
+      }
       ::ValidateRect(m_hwnd, nullptr);
       DEBUG_PRINTF("WM_PAINT End\n");
       return 0;
+    }
 #endif
 
     case WM_PARENTNOTIFY:
@@ -708,12 +720,6 @@ LRESULT Frame::onMessage(
 
       auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
 
-      #if DEBUG_WINDOWPOS
-        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
-                     this, wp->flags,
-                     wp->cx, wp->cy, wp->x, wp->y );
-      #endif // DEBUG_WINDOWPOS
-
       if (wp->flags & SWP_HIDEWINDOW) {
         // We don't take care hidden window.
         return 0;
@@ -726,6 +732,11 @@ LRESULT Frame::onMessage(
         // We don't take care miminize window.
         return 0;
       }
+
+      #if DEBUG_WINDOWPOS
+        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
+                     this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
+      #endif // DEBUG_WINDOWPOS
 
       ::GetClientRect(m_hwnd, &m_rc);
 
@@ -769,6 +780,7 @@ LRESULT Frame::onMessage(
 
       RECT rc;
       GetPaneRect(&rc);
+      gfx_->Resize(rc);
 
       for (const auto& pane: m_oPanes) {
         ::SetWindowPos(
@@ -844,12 +856,15 @@ void Frame::Realize() {
   int const cColumns = 80;
   int const cRows    = 40;
 
+  // Note: WS_EX_COMPOSITED posts WM_PAINT many times.
+  // Note: WS_EX_LAYERED doesn't show window with Win7+.
   DWORD dwExStyle =
       WS_EX_APPWINDOW
       | WS_EX_WINDOWEDGE;
 
   DWORD dwStyle =
     WS_OVERLAPPEDWINDOW
+    | WS_CLIPCHILDREN
     | WS_VISIBLE;
 
   CompositionState::Update();

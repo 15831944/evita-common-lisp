@@ -20,6 +20,10 @@ enum TabBandDragAndDrop {
     kThrow,
 };
 
+struct TabBandNotifyData : NMHDR {
+  int tab_index_;
+};
+
 const char16 TabBand__TabDragMsgStr[] = L"Evita.TabBand.TabDrag";
 void TabBand__Init(HINSTANCE);
 

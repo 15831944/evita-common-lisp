@@ -13,26 +13,40 @@
 
 #include "./resource.h"
 
-struct Point : POINT
-{
-    Point(int xx = 0, int yy = 0)
-        { x = xx; y  = yy; }
+struct Point : POINT {
+  Point() {
+    x = y = 0;
+  }
 
-    Point(POINTS pt)
-        { x = pt.x; y = pt.y; }
-}; // Point
+  Point(int x, int y) {
+    this->x = x;
+    this->y = y;
+  }
 
-struct Rect : RECT
-{
-    Rect(int l = 0, int t = 0, int r = 0, int b = 0)
-        { left= l; right= r; top= t; bottom= b; }
+ Point(POINTS pt) {
+   x = pt.x; y = pt.y;
+ }
+};
 
-    Rect(RECT rc)
-        { left = rc.left; right = rc.right; top = rc.top; bottom = rc.bottom; }
-}; // Rect
+struct Rect : RECT {
+  Rect() {
+    left = right = top = bottom =0;
+  }
+
+  Rect(int l, int t, int r, int b) {
+    left= l; right= r; top= t; bottom= b;
+  }
+
+  Rect(RECT rc) {
+    left = rc.left; right = rc.right; top = rc.top; bottom = rc.bottom;
+  }
+
+  operator bool() const { return !width() && !height(); }
+  int height() const { return bottom - top; }
+  int width() const { return right - left; }
+};
 
 extern HINSTANCE g_hInstance;
 extern HINSTANCE g_hResource;
-
 
 #endif //!defined(INCLUDE_listener_winapp_visual_defs_h)

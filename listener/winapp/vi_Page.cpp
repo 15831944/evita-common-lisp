@@ -1771,7 +1771,7 @@ bool Page::ScrollToPosn(const gfx::Graphics& gfx, Posn lPosn) {
 
   auto lStart = lPosn;
   for (int k = 0; k < cLines2; k++) {
-    if (!lStart == 0)
+    if (!lStart)
       break;
     lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lStart - 1);
   }

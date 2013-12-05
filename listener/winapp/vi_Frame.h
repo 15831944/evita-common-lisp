@@ -17,6 +17,10 @@
 #include "./ctrl_TabBand.h"
 #include "./ctrl_TitleBar.h"
 
+namespace gfx {
+class Graphics;
+}
+
 /// <summary>
 ///   Sevirity of message.
 /// </summary>
@@ -50,6 +54,7 @@ class Frame :
 
     protected: typedef ChildList_<Frame, Pane> Panes;
 
+    private: base::OwnPtr<gfx::Graphics> gfx_;
     protected: int              m_cyTabBand;
     protected: HWND             m_hwndTabBand;
     protected: Panes            m_oPanes;
