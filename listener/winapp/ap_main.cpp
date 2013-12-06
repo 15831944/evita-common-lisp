@@ -247,7 +247,7 @@ static int MainLoop(EnumArg* pEnumArg) {
   {
       const char16* pwszArg = pEnumArg->Get();
       Buffer* pBuffer = Application::Get()->Load(pwszArg);
-      EditPane* pPane = new EditPane(pBuffer);
+      EditPane* pPane = new EditPane(pFrame, pBuffer);
       pFrame->AddPane(pPane);
 
         pEnumArg->Next();
@@ -264,7 +264,7 @@ static int MainLoop(EnumArg* pEnumArg) {
       #endif // USE_LISTENER
 
         Application::Get()->InternalAddBuffer(pBuffer);
-      EditPane* pPane = new EditPane(pBuffer);
+      EditPane* pPane = new EditPane(pFrame, pBuffer);
       pFrame->AddPane(pPane);
   } // if
 

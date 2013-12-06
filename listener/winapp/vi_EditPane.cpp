@@ -35,10 +35,11 @@ static HCURSOR s_hVSplitCursor;
 
 class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
                       public RefCounted_<EditPane::Box> {
+    protected: EditPane* edit_pane_;
     private: bool is_removed_;
     private: LayoutBox* outer_;
     private: Rect rect_;
-    protected: Box(LayoutBox*);
+    protected: Box(EditPane*, LayoutBox*);
     public: virtual ~Box();
     public: bool is_removed() const { return is_removed_; }
     public: virtual Box* first_child() const { return nullptr; }
@@ -63,7 +64,7 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
 
     public: virtual bool OnIdle(uint) = 0;
 
-    public: virtual void Realize(HWND, const Rect&);
+    public: virtual void Realize(EditPane*, const Rect&);
     public: virtual void Redraw() const {}
     public: void Removed();
 
@@ -76,8 +77,7 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
 class EditPane::LayoutBox : public EditPane::Box {
   protected: typedef DoubleLinkedList_<Box> BoxList;
   protected: BoxList boxes_;
-  protected: HWND hwndParent_;
-  protected: LayoutBox(LayoutBox*);
+  protected: LayoutBox(EditPane*, LayoutBox*);
   public: virtual ~LayoutBox();
   public: virtual Box* first_child() const override final {
     return boxes_.GetFirst();
@@ -102,7 +102,7 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: bool IsSingle() const;
   public: virtual bool IsVerticalLayoutBox() const = 0;
   public: virtual bool OnIdle(uint) override final;
-  public: virtual void Realize(HWND, const Rect&) override;
+  public: virtual void Realize(EditPane*, const Rect&) override;
   public: virtual void Redraw() const override final;
   public: void RemoveBox(Box&);
   public: void Replace(Box&, Box&);
@@ -116,15 +116,15 @@ class EditPane::LayoutBox : public EditPane::Box {
   }
 
   // [U]
-  protected: void UpdateSplitters();
+  public: void UpdateSplitters();
 };
 
 class EditPane::LeafBox final : public EditPane::Box {
   private: HWND m_hwndVScrollBar;
   private: Window* m_pWindow;
 
-  public: LeafBox(LayoutBox* outer, Window* pWindow)
-    : Box(outer),
+  public: LeafBox(EditPane* edit_pane, LayoutBox* outer, Window* pWindow)
+    : Box(edit_pane, outer),
       m_hwndVScrollBar(nullptr),
       m_pWindow(pWindow) {
   }
@@ -165,7 +165,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual bool OnIdle(uint) override;
 
   // [R]
-  public: virtual void Realize(HWND, const Rect&) override;
+  public: virtual void Realize(EditPane*, const Rect&) override;
   public: virtual void Redraw() const override;
 
   // [S]
@@ -179,28 +179,28 @@ class EditPane::LeafBox final : public EditPane::Box {
 };
 
 class EditPane::HorizontalLayoutBox final : public EditPane::LayoutBox {
-  public: HorizontalLayoutBox(LayoutBox*);
+  public: HorizontalLayoutBox(EditPane*, LayoutBox*);
   public: virtual ~HorizontalLayoutBox();
   protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) override;
   public: virtual HitTestResult HitTest(Point) const override;
   public: virtual void DrawSplitters(const gfx::Graphics&) override;
   public: virtual bool IsVerticalLayoutBox() const override;
   public: virtual void MoveSplitter(const Point&, Box&) override;
-  public: virtual void Realize(HWND, const Rect&) override;
+  public: virtual void Realize(EditPane*, const Rect&) override;
   public: virtual void SetRect(const Rect&) override;
   public: virtual LeafBox& Split(Box&, int) override;
   public: virtual void StopSplitter(const Point&, Box&) override;
 };
 
 class EditPane::VerticalLayoutBox final : public LayoutBox {
-  public: VerticalLayoutBox(LayoutBox*);
+  public: VerticalLayoutBox(EditPane*, LayoutBox*);
   public: virtual ~VerticalLayoutBox();
   protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) override;
   public: virtual HitTestResult HitTest(Point) const override;
   public: virtual void DrawSplitters(const gfx::Graphics&) override;
   public: virtual bool IsVerticalLayoutBox() const override;
   public: virtual void MoveSplitter(const Point&, Box&) override;
-  public: virtual void Realize(HWND, const Rect&) override;
+  public: virtual void Realize(EditPane*, const Rect&) override;
   public: virtual void SetRect(const Rect&) override;
   public: virtual LeafBox& Split(Box&, int) override;
   public: virtual void StopSplitter(const Point&, Box&) override;
@@ -252,7 +252,8 @@ namespace {
 void DrawSplitter(const gfx::Graphics& gfx, RECT* prc,
                          uint /*grfFlag*/) {
   auto rc = *prc;
-  gfx::Brush fillBrush(gfx, gfx::sysColor(COLOR_3DFACE));
+  //gfx::Brush fillBrush(gfx, gfx::sysColor(COLOR_3DFACE));
+  gfx::Brush fillBrush(gfx, gfx::ColorF(gfx::ColorF::Pink));
   gfx.FillRectangle(fillBrush, rc);
   //::DrawEdge(gfx, &rc, EDGE_RAISED, grfFlag);
 }
@@ -270,8 +271,9 @@ EditPane::HitTestResult::HitTestResult(Type type, const Box& box)
   ASSERT(type != None);
 }
 
-EditPane::Box::Box(LayoutBox* outer)
-    : is_removed_(false),
+EditPane::Box::Box(EditPane* edit_pane, LayoutBox* outer)
+    : edit_pane_(edit_pane),
+      is_removed_(false),
       outer_(outer) {}
 
 EditPane::Box::~Box() {
@@ -281,7 +283,7 @@ EditPane::Box::~Box() {
   ASSERT(!GetPrev());
 }
 
-void EditPane::Box::Realize(HWND, const Rect& rect) {
+void EditPane::Box::Realize(EditPane*, const Rect& rect) {
   rect_ = rect;
 }
 
@@ -297,8 +299,10 @@ void EditPane::Box::SetRect(const Rect& rect) {
 }
 
 // HorizontalLayoutBox
-EditPane::HorizontalLayoutBox::HorizontalLayoutBox(LayoutBox* outer)
-    : LayoutBox(outer) {}
+EditPane::HorizontalLayoutBox::HorizontalLayoutBox(EditPane* edit_pane,
+                                                   LayoutBox* outer)
+    : LayoutBox(edit_pane, outer) {
+}
 
 EditPane::HorizontalLayoutBox::~HorizontalLayoutBox() {
   DEBUG_PRINTF("%p\n", this);
@@ -391,9 +395,9 @@ void EditPane::HorizontalLayoutBox::MoveSplitter(
 }
 
 void EditPane::HorizontalLayoutBox::Realize(
-    HWND hwndParent,
+    EditPane* edit_pane,
     const Rect& rect) {
-  LayoutBox::Realize(hwndParent, rect);
+  LayoutBox::Realize(edit_pane, rect);
 
   auto const num_boxes = boxes_.Count();
   if (!num_boxes) {
@@ -401,7 +405,7 @@ void EditPane::HorizontalLayoutBox::Realize(
   }
 
   if (num_boxes == 1) {
-    boxes_.GetFirst()->Realize(hwndParent, rect);
+    boxes_.GetFirst()->Realize(edit_pane, rect);
     return;
   }
 
@@ -411,7 +415,7 @@ void EditPane::HorizontalLayoutBox::Realize(
   RECT elemRect(rect);
   foreach (BoxList::Enum, it, boxes_) {
     elemRect.right = rect.left + box_width;
-    it->Realize(hwndParent, elemRect);
+    it->Realize(edit_pane, elemRect);
     elemRect.left = elemRect.right + k_cxSplitter;
   }
 }
@@ -493,8 +497,6 @@ void EditPane::HorizontalLayoutBox::SetRect(const Rect& newRect) {
     newRect.bottom = rect().bottom;
     pBox->SetRect(newRect);
   }
-
-  UpdateSplitters();
 }
 
 EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
@@ -518,7 +520,7 @@ EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
   pWindow->GetSelection()->SetStartIsActive(
       pSelection->IsStartActive());
 
-  auto const pAbove = new LeafBox(this, pWindow);
+  auto const pAbove = new LeafBox(edit_pane_, this, pWindow);
   auto const prcAbove = &pAbove->rect();
 
   boxes_.InsertBefore(pAbove, pBelow);
@@ -529,7 +531,7 @@ EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
   prcAbove->left = prcBelow->left;
   prcAbove->right = prcBelow->left + cxBox;
 
-  pAbove->Realize(hwndParent_, *prcAbove);
+  pAbove->Realize(edit_pane_, *prcAbove);
 
   prcBelow->left = prcAbove->right + k_cxSplitter;
   pBelow->SetRect(pBelow->rect());
@@ -564,9 +566,9 @@ void EditPane::HorizontalLayoutBox::StopSplitter(
 }
 
 // LayoutBox
-EditPane::LayoutBox::LayoutBox(LayoutBox* outer)
-    : Box(outer),
-      hwndParent_(nullptr) {}
+EditPane::LayoutBox::LayoutBox(EditPane* edit_pane, LayoutBox* outer)
+    : Box(edit_pane, outer) {
+}
 
 EditPane::LayoutBox::~LayoutBox() {
   ASSERT(boxes_.IsEmpty());
@@ -660,10 +662,9 @@ bool EditPane::LayoutBox::OnIdle(uint count) {
   return more;
 }
 
-void EditPane::LayoutBox::Realize(HWND hwndParent, const Rect& rect) {
+void EditPane::LayoutBox::Realize(EditPane* edit_pane, const Rect& rect) {
   ASSERT(!is_removed());
-  Box::Realize(hwndParent, rect);
-  hwndParent_ = hwndParent;
+  Box::Realize(edit_pane, rect);
 }
 
 void EditPane::LayoutBox::Redraw() const {
@@ -714,14 +715,10 @@ void EditPane::LayoutBox::Replace(Box& new_box, Box& old_box) {
 }
 
 void EditPane::LayoutBox::UpdateSplitters() {
-  if (is_removed()) {
+  if (is_removed())
     return;
-  }
-
-  auto const pane = EditPane::FromHwnd(hwndParent_);
-  auto& gfx = pane->gfx();
-  gfx::Graphics::DrawingScope scope(gfx);
-  DrawSplitters(gfx);
+  gfx::Graphics::DrawingScope drawing_scope(edit_pane_->frame().gfx());
+  DrawSplitters(edit_pane_->frame().gfx());
 }
 
 // LeafBox
@@ -755,10 +752,10 @@ void EditPane::LeafBox::EnsureInHorizontalLayoutBox() {
     return;
   }
 
-  auto& layout_box = *new HorizontalLayoutBox(outer());
+  auto& layout_box = *new HorizontalLayoutBox(edit_pane_, outer());
   ScopedRefCount_<LeafBox> protect(*this);
   outer()->Replace(layout_box, *this);
-  layout_box.Realize(::GetParent(*GetWindow()), rect());
+  layout_box.Realize(edit_pane_, rect());
   layout_box.Add(*this);
   set_outer(layout_box);
 }
@@ -768,10 +765,10 @@ void EditPane::LeafBox::EnsureInVerticalLayoutBox() {
     return;
   }
 
-  auto& layout_box = *new VerticalLayoutBox(outer());
+  auto& layout_box = *new VerticalLayoutBox(edit_pane_, outer());
   ScopedRefCount_<LeafBox> protect(*this);
   outer()->Replace(layout_box, *this);
-  layout_box.Realize(::GetParent(*GetWindow()), rect());
+  layout_box.Realize(edit_pane_, rect());
   layout_box.Add(*this);
   set_outer(layout_box);
 }
@@ -806,8 +803,8 @@ bool EditPane::LeafBox::OnIdle(uint count) {
     return GetWindow()->OnIdle(count);
 }
 
-void EditPane::LeafBox::Realize(HWND hwndParent, const Rect& rect) {
-  Box::Realize(hwndParent, rect);
+void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
+  Box::Realize(edit_pane, rect);
 
   m_hwndVScrollBar = ::CreateWindowExW(
         0,
@@ -818,17 +815,18 @@ void EditPane::LeafBox::Realize(HWND hwndParent, const Rect& rect) {
         0, // y
         0, // width
         0, // height
-        hwndParent, // parent
+        edit_pane->frame(),
         nullptr, // menu
         g_hInstance,
         nullptr);
 
- ::SetWindowLongPtr(m_hwndVScrollBar, GWLP_USERDATA,
-      reinterpret_cast<LONG_PTR>(this));
+  ::SetWindowLongPtr(m_hwndVScrollBar, GWLP_USERDATA,
+                     reinterpret_cast<LONG_PTR>(this));
 
- m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, hwndParent);
- m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
- SetRect(rect);
+  m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE,
+                            edit_pane->frame());
+  m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
+  SetRect(rect);
 }
 
 void EditPane::LeafBox::Redraw() const {
@@ -873,8 +871,9 @@ void EditPane::LeafBox::SetRect(const Rect& rect) {
       SWP_NOZORDER);
 }
 
-EditPane::VerticalLayoutBox::VerticalLayoutBox(LayoutBox* outer)
-    : LayoutBox(outer) {}
+EditPane::VerticalLayoutBox::VerticalLayoutBox(EditPane* edit_pane,
+                                               LayoutBox* outer)
+    : LayoutBox(edit_pane, outer) {}
 
 EditPane::VerticalLayoutBox::~VerticalLayoutBox() {
   DEBUG_PRINTF("%p\n", this);
@@ -976,9 +975,9 @@ void EditPane::VerticalLayoutBox::MoveSplitter(
 }
 
 void EditPane::VerticalLayoutBox::Realize(
-    HWND hwndParent,
+    EditPane* edit_pane,
     const Rect& rect) {
-  LayoutBox::Realize(hwndParent, rect);
+  LayoutBox::Realize(edit_pane, rect);
 
   auto const num_boxes = boxes_.Count();
   if (!num_boxes) {
@@ -986,7 +985,7 @@ void EditPane::VerticalLayoutBox::Realize(
   }
 
   if (num_boxes == 1) {
-    boxes_.GetFirst()->Realize(hwndParent, rect);
+    boxes_.GetFirst()->Realize(edit_pane, rect);
     return;
   }
 
@@ -996,7 +995,7 @@ void EditPane::VerticalLayoutBox::Realize(
   RECT elemRect(rect);
   foreach (BoxList::Enum, it, boxes_) {
     elemRect.bottom = rect.top + box_height;
-    it->Realize(hwndParent, elemRect);
+    it->Realize(edit_pane, elemRect);
     elemRect.top = elemRect.bottom + k_cySplitter;
   }
 }
@@ -1078,8 +1077,6 @@ void EditPane::VerticalLayoutBox::SetRect(const Rect& newRect) {
     newRect.right = rect().right;
     pBox->SetRect(newRect);
   }
-
-  UpdateSplitters();
 }
 
 EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
@@ -1103,7 +1100,7 @@ EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
   pWindow->GetSelection()->SetStartIsActive(
       pSelection->IsStartActive());
 
-  auto const pAbove = new LeafBox(this, pWindow);
+  auto const pAbove = new LeafBox(edit_pane_, this, pWindow);
   auto const prcAbove = &pAbove->rect();
 
   boxes_.InsertBefore(pAbove, pBelow);
@@ -1114,7 +1111,7 @@ EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
   prcAbove->top = prcBelow->top;
   prcAbove->bottom = prcBelow->top + cyBox;
 
-  pAbove->Realize(hwndParent_, *prcAbove);
+  pAbove->Realize(edit_pane_, *prcAbove);
 
   prcBelow->top = prcAbove->bottom + k_cySplitter;
   pBelow->SetRect(pBelow->rect());
@@ -1195,11 +1192,12 @@ void EditPane::SplitterDrag::Stop() {
   ASSERT(!m_pBox);
 }
 
-EditPane::EditPane(Buffer* pBuffer, Posn lStart)
+EditPane::EditPane(Frame* frame, Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
-      root_box_(*new VerticalLayoutBox(nullptr)) {
+      frame_(frame),
+      root_box_(*new VerticalLayoutBox(this, nullptr)) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
-  ScopedRefCount_<LeafBox> box(*new LeafBox(root_box_, pWindow));
+  ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
   root_box_->Add(*box);
   m_pwszName = pBuffer->GetName();
 }
@@ -1219,6 +1217,49 @@ void EditPane::Activate() {
 
 void EditPane::CloseAllBut(Window* window) {
   root_box_->CloseAllBut(window);
+}
+
+void EditPane::Destroy() {
+  root_box_->Destroy();
+}
+
+void EditPane::DidCreateHwnd(HWND hwnd) {
+  auto const box = root_box_->GetLeafBox(hwnd);
+  if (!box) {
+    // |hwnd| isn't TextEditorWindow.
+    return;
+  }
+
+  auto const next_leaf_box = box->GetNext() ?
+      box->GetNext()->GetFirstLeafBox() : nullptr;
+   auto const next_window = next_leaf_box ? next_leaf_box->GetWindow() :
+      nullptr;
+  if (next_window)
+    m_oWindows.InsertBefore(box->GetWindow(), next_window);
+  else
+    m_oWindows.Append(box->GetWindow());
+}
+
+bool EditPane::DidDestroyHwnd(HWND hwnd) {
+  auto const box = root_box_->GetLeafBox(hwnd);
+  if (!box)
+    return false;
+
+  DEBUG_PRINTF("box=%\n", box);
+  m_oWindows.Delete(box->GetWindow());
+  box->DetachWindow();
+  auto const outer = box->outer();
+  outer->RemoveBox(*box);
+  if (m_eState != State_Realized)
+    return true;
+  if (root_box_->CountLeafBox())
+    return true;
+  frame().WillDestroyPane(this);
+
+  // There is no window in this pane. So, we delete this pane.
+  m_eState = State_Destroyed;
+  root_box_->Destroy();
+  return true;
 }
 
 // Returns the last active Box.
@@ -1290,28 +1331,6 @@ LRESULT EditPane::onMessage(
     WPARAM wParam,
     LPARAM lParam) {
   switch (uMsg) {
-    case WM_CREATE: {
-      auto const pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
-      m_eState = State_Realized;
-      ::SetWindowText(m_hwnd, m_pwszName);
-      m_rc.left = 0;
-      m_rc.top = 0;
-      m_rc.right = pCreate->cx;
-      m_rc.bottom = pCreate->cy;
-      root_box_->Realize(*this, m_rc);
-      //gfx_->Init(m_hwnd);
-      break;
-    }
-
-    case WM_DESTROY:
-      #if DEBUG_DESTROY
-       DEBUG_PRINTF("WM_DESTROY %p\n", this);
-      #endif
-
-      m_eState = State_Destroyed;
-      root_box_->Destroy();
-      break;
-
     case WM_LBUTTONDOWN: {
       Point pt(MAKEPOINTS(lParam));
       auto const result = root_box_->HitTest(pt);
@@ -1337,76 +1356,6 @@ LRESULT EditPane::onMessage(
 
     case WM_MOUSEMOVE:
       m_oSplitterDrag.Move(MAKEPOINTS(lParam));
-      return 0;
-
-    case WM_ERASEBKGND:
-      DEBUG_PRINTF("WM_ERASEBKGND %p\n", this);
-      return TRUE;
-
-#if 0
-    case WM_PAINT: {
-      DEBUG_PRINTF("WM_PAINT Start %p\n", this);
-      {
-        gfx::Graphics::DrawingScope scope(*gfx_);
-        //(*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Pink));
-        root_box_->DrawSplitters(*gfx_);
-      }
-      root_box_->Redraw();
-      {
-        RECT rc;
-        if (::GetUpdateRect(m_hwnd, &rc, false)) {
-          DEBUG_PRINTF("update_rect=(%d,%d)-(%d,%d)\n", rc.left, rc.top,
-                       rc.right, rc.bottom);
-        } else {
-          DEBUG_PRINTF("GetUpdateRectFailed\n");
-        }
-      }
-      ::ValidateRect(m_hwnd, nullptr);
-      DEBUG_PRINTF("WM_PAINT End %p\n", this);
-      return 0;
-    }
-#endif
-
-    case WM_PARENTNOTIFY:
-      switch (LOWORD(wParam)) {
-        case WM_CREATE: {
-          auto const hwnd = reinterpret_cast<HWND>(lParam);
-          if (auto const box = root_box_->GetLeafBox(hwnd)) {
-            DEBUG_PRINTF("WM_PARENTNOTIFY: CREATE box=%p\n", box);
-            auto const next_leaf_box = box->GetNext()
-                ? box->GetNext()->GetFirstLeafBox()
-                : nullptr;
-            auto const next_window = next_leaf_box
-                ? next_leaf_box->GetWindow()
-                : nullptr;
-            if (next_window) {
-              m_oWindows.InsertBefore(box->GetWindow(), next_window);
-            } else {
-              m_oWindows.Append(box->GetWindow());
-            }
-          }
-          break;
-        }
-
-        case WM_DESTROY: {
-          auto const hwnd = reinterpret_cast<HWND>(lParam);
-          if (auto const box = root_box_->GetLeafBox(hwnd)) {
-            DEBUG_PRINTF("WM_PARENTNOTIFY: DESTROY box=%p\n", box);
-            m_oWindows.Delete(box->GetWindow());
-            box->DetachWindow();
-            auto const outer = box->outer();
-            outer->RemoveBox(*box);
-            if (State_Realized == m_eState) {
-              if (!root_box_->CountLeafBox()) {
-                // There is no window in this pane. So, we delete
-                // this pane.
-                ::DestroyWindow(*this);
-              }
-            }
-          }
-          break;
-        }
-      }
       return 0;
 
     case WM_SETCURSOR: {
@@ -1447,21 +1396,6 @@ LRESULT EditPane::onMessage(
       return TRUE;
     }
 
-    case WM_SETFOCUS:
-      DEBUG_PRINTF("WM_SETFOCUS %p\n", this);
-      Pane::onMessage(uMsg, wParam, lParam);
-      if (auto const pWindow = GetActiveWindow()) {
-        pWindow->Activate();
-        GetBuffer()->UpdateFileStatus(true);
-      }
-      return 0;
-
-#if 0
-    case WM_SIZE:
-      Resize();
-      return 0;
-#endif
-
     case WM_VSCROLL: {
       auto const pBox = reinterpret_cast<LeafBox*>(
           ::GetWindowLongPtr(
@@ -1470,20 +1404,6 @@ LRESULT EditPane::onMessage(
       if (auto const pWindow = pBox->GetWindow()) {
         pWindow->SendMessage(WM_VSCROLL, wParam, lParam);
       }
-      return 0;
-    }
-
-    case WM_WINDOWPOSCHANGED: {
-      auto const wp = reinterpret_cast<const WINDOWPOS*>(lParam);
-      if (wp->flags & SWP_NOSIZE)
-        return 0;
-
-      #if DEBUG_REDRAW || DEBUG_RESIZE
-        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
-                     this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
-      #endif
-
-      //Resize();
       return 0;
     }
 
@@ -1506,18 +1426,19 @@ LRESULT EditPane::onMessage(
 }
 
 
-void EditPane::Realize(Frame& frame, const gfx::Graphics& gfx) {
+void EditPane::Realize() {
   ASSERT(!IsRealized());
-  m_hwnd = frame;
-  gfx_ = &gfx;
   m_eState = State_Realized;
-  frame.GetPaneRect(&m_rc);
-  root_box_->Realize(*this, m_rc);
+  frame_->GetPaneRect(&m_rc);
+  root_box_->Realize(this, m_rc);
 }
 
 void EditPane::Resize(const RECT& rc) {
+  DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rc.left, rc.top, rc.right,
+      rc.bottom);
   m_rc = rc;
   root_box_->SetRect(m_rc);
+  root_box_->DrawSplitters(frame().gfx());
 }
 
 void EditPane::setupStatusBar() {
@@ -1543,6 +1464,7 @@ void EditPane::setupStatusBar() {
 
 void EditPane::Show() {
   root_box_->Show();
+  root_box_->UpdateSplitters();
 }
 
 EditPane::Window* EditPane::SplitHorizontally() {

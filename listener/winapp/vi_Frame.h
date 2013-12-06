@@ -68,6 +68,7 @@ class Frame :
     public:     Frame();
     protected: ~Frame();
 
+    public: gfx::Graphics& gfx() const { return *gfx_; }
     public: const Panes& panes() const { return m_oPanes; }
     public: Panes& panes() { return m_oPanes; }
 
@@ -127,6 +128,9 @@ class Frame :
 
     // [U]
     public: void updateTitleBar();
+
+    // [W]
+    public: void WillDestroyPane(Pane*);
 
     DISALLOW_COPY_AND_ASSIGN(Frame);
 }; // Frame

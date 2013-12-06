@@ -209,12 +209,13 @@ class RectF : public D2D1_RECT_F {
     return *this;
   }
 
+  public: operator bool() const { return !is_empty(); }
   public: bool operator!() const { return is_empty(); }
 
   public: float height() const { return bottom - top; }
 
   public: bool is_empty() const {
-    return !width() && !height();
+    return width() <= 0 || height() <= 0;
   }
 
   public: PointF left_top() const {
@@ -354,13 +355,13 @@ class Graphics : public Object {
 
   public: void DrawRectangle(const Brush& brush, const RECT& rc,
                              float strokeWidth = 1) const {
-    ASSERT(drawing_);
-    render_target().DrawRectangle(RectF(rc), brush, strokeWidth);
+    DrawRectangle(brush, RectF(rc), strokeWidth);
   }
 
   public: void DrawRectangle(const Brush& brush, const RectF& rect,
                              float strokeWidth = 1) const {
     ASSERT(drawing_);
+    ASSERT(!!rect);
     render_target().DrawRectangle(rect, brush, strokeWidth);
   }
 
@@ -369,29 +370,29 @@ class Graphics : public Object {
                         const RECT& rc,
                         const char16* pwch, size_t cwch) const {
     ASSERT(drawing_);
-    render_target().DrawText(pwch, cwch, text_format, RectF(rc), brush);
+    auto rect = RectF(rc);
+    ASSERT(!!rect);
+    render_target().DrawText(pwch, cwch, text_format, rect, brush);
   }
 
   // [F]
   public: void FillRectangle(const Brush& brush, int left, int top,
                              int right, int bottom) const {
-    ASSERT(drawing_);
     render_target().FillRectangle(RectF(left, top, right, bottom), brush);
   }
 
   public: void FillRectangle(const Brush& brush, float left, float top,
                              float right, float bottom) const {
-    ASSERT(drawing_);
-    render_target().FillRectangle(RectF(left, top, right, bottom), brush);
+    FillRectangle(brush, RectF(left, top, right, bottom));
   }
 
   public: void FillRectangle(const Brush& brush, const RECT& rc) const {
-    ASSERT(drawing_);
-    render_target().FillRectangle(RectF(rc), brush);
+    FillRectangle(brush, RectF(rc));
   }
 
   public: void FillRectangle(const Brush& brush, const RectF& rect) const {
     ASSERT(drawing_);
+    ASSERT(!!rect);
     render_target().FillRectangle(rect, brush);
   }
 

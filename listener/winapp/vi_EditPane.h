@@ -101,23 +101,28 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
+  private: Frame* frame_;
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;
   private: RECT m_rc;
-  private: const gfx::Graphics* gfx_;
 
   // ctro/dtor
-  public: EditPane(Buffer*, Posn = 0);
+  public: EditPane(Frame*, Buffer*, Posn = 0);
   public: virtual ~EditPane();
 
-  public: const gfx::Graphics& gfx() const { return *gfx_; }
+  public: Frame& frame() const { return *frame_; }
 
   // [A]
   public: virtual void Activate() override;
 
   // [C]
   public: void CloseAllBut(Window*);
+
+  // [D]
+  public: virtual void Destroy();
+  public: virtual void DidCreateHwnd(HWND hwnd) override;
+  public: virtual bool DidDestroyHwnd(HWND hwnd) override;
 
   // [G]
   private: LeafBox* GetActiveLeafBox() const;
@@ -142,8 +147,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
 
   // [R]
-  public: virtual void Realize(Frame& frame,
-                               const gfx::Graphics& gfx) override;
+  public: virtual void Realize() override;
   public: virtual void Resize(const RECT& rc) override;
 
   // [S]

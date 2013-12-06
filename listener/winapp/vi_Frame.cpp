@@ -139,7 +139,7 @@ Pane* Frame::AddPane(Pane* const pane) {
 
   if (IsRealized()) {
     if (!pane->IsRealized()) {
-      pane->Realize(*this, *gfx_);
+      pane->Realize();
     } else {
       RECT rc;
       GetPaneRect(&rc);
@@ -359,7 +359,7 @@ void Frame::onDropFiles(HDROP const hDrop) {
     }
 
     if (!pPane) {
-      pPane = new EditPane(pBuffer);
+      pPane = new EditPane(this, pBuffer);
       AddPane(pPane);
     }
 
@@ -533,7 +533,7 @@ LRESULT Frame::onMessage(
       gfx_->Init(m_hwnd);
 
       for (auto& pane: m_oPanes) {
-        pane.Realize(*this, *gfx_);
+        pane.Realize();
         addTab(&pane);
       }
 
@@ -626,49 +626,34 @@ LRESULT Frame::onMessage(
         return 0;
     }
 
-#if 0
-    case WM_PAINT: {
-      PAINTSTRUCT ps;
-      auto const hdc = ::BeginPaint(m_hwnd, &ps);
-      ASSERT(hdc);
-      //::ValidateRect(m_hwnd, nullptr);
-      ::EndPaint(m_hwnd, &ps);
-      return 0;
-    }
-#else
     case WM_ERASEBKGND:
       DEBUG_PRINTF("WM_ERASEBKGND\n");
       return TRUE;
 
     case WM_PAINT: {
       DEBUG_PRINTF("WM_PAINT Start\n");
-      Rect rc;
-      if (::GetUpdateRect(m_hwnd, &rc, false)) {
-        DEBUG_PRINTF("update_rect=(%d,%d)-(%d,%d)\n", rc.left, rc.top,
-                     rc.right, rc.bottom);
-        if (rc) {
-          gfx::Graphics::DrawingScope drawing_scope(*gfx_);
-          (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Red));
-        }
-      }
       ::ValidateRect(m_hwnd, nullptr);
       DEBUG_PRINTF("WM_PAINT End\n");
       return 0;
     }
-#endif
 
     case WM_PARENTNOTIFY:
       switch (wParam) {
         case WM_DESTROY: {
           auto const hwnd = reinterpret_cast<HWND>(lParam);
           for (auto& pane: m_oPanes) {
-            if (pane == hwnd) {
-              detachPane(&pane);
+            if (pane.DidDestroyHwnd(hwnd))
               break;
-            }
           }
           break;
         }
+        case WM_CREATE:
+          if (auto const pane = GetActivePane()) {
+            pane->DidCreateHwnd(reinterpret_cast<HWND>(lParam));
+          } else {
+            CAN_NOT_HAPPEN();
+          }
+          break;
       }
       return 0;
 
@@ -782,22 +767,13 @@ LRESULT Frame::onMessage(
       RECT rc;
       GetPaneRect(&rc);
       gfx_->Resize(rc);
+      {
+        gfx::Graphics::DrawingScope drawing_scope(*gfx_);
+        (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Green));
 
-      for (auto& pane: m_oPanes) {
-#if 0
-        ::SetWindowPos(
-            pane,
-            HWND_TOP,
-            rc.left + kPaddingLeft,
-            rc.top + kPaddingTop,
-            rc.right  - rc.left - kPaddingRight,
-            rc.bottom - rc.top - kPaddingBottom,
-            SWP_NOZORDER);
-#else
-        DEBUG_PRINTF("resize and move pane %p to %dx%d+%d+%d\n",
-            &pane, rc.right - rc.left, rc.bottom - rc.top, rc.left, rc.top);
-        pane.Resize(rc);
-#endif
+        for (auto& pane: m_oPanes) {
+          pane.Resize(rc);
+        }
       }
 
       Paint();
@@ -988,7 +964,7 @@ bool Frame::ShowBuffer(Buffer* const pBuffer) {
     }
   }
 
-  auto const pPane = new EditPane(pBuffer);
+  auto const pPane = new EditPane(this, pBuffer);
   AddPane(pPane);
   pPane->Activate();
   return true;
@@ -1045,4 +1021,8 @@ void Frame::updateTitleBar() {
   m_oTitleBar.SetText(wszTitle, ::lstrlenW(wszTitle));
 
   m_pActivePane->UpdateStatusBar();
+}
+
+void Frame::WillDestroyPane(Pane* edit_pane) {
+  detachPane(edit_pane);
 }

@@ -29,6 +29,17 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
     ++m_nActiveTick;
   }
 
+  // [D]
+  public: virtual void DidCreateHwnd(HWND) {
+    // TODO: Once make EditPane isn't derived from Pane, we should remove
+    // Pane::DidCreateHwnd().
+  }
+  public: virtual bool DidDestroyHwnd(HWND) {
+    // TODO: Once make EditPane isn't derived from Pane, we should remove
+    // Pane::DidDestoryHwnd().
+    return false;
+  }
+
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
 
@@ -49,8 +60,9 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   protected: LRESULT onMessage(uint, WPARAM, LPARAM);
 
   // [R]
-  public: void virtual Realize(Frame&, const gfx::Graphics&) {
-    // TODO: We shoule make Pane::Realize() as abstract member function.
+  public: void virtual Realize() {
+    // TODO: Once make EditPane isn't derived from Pane, we should remove
+    // Pane::Realize().
     CAN_NOT_HAPPEN();
   }
 
