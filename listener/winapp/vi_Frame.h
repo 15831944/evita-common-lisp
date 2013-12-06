@@ -118,7 +118,7 @@ class Frame :
     private: void xRemovePane(Pane*);
 
     // [S]
-    public: void SetActivePane(Pane*);
+    private: void SetActivePane(Pane*);
     public: void SetStatusBar(int, const char16*);
     public: void SetStatusBarf(int, const char16*, ...);
     public: void SetStatusBarParts(const int*, int);

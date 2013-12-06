@@ -8,8 +8,8 @@
 //
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Pane.h#1 $
 //
-#if !defined(INCLUDE_visual_panewnd_h)
-#define INCLUDE_visual_panewnd_h
+#if !defined(INCLUDE_vi_Pane_h)
+#define INCLUDE_vi_Pane_h
 
 #include "./vi_CommandWindow.h"
 
@@ -17,49 +17,53 @@ namespace gfx {
 class Graphics;
 }
 
-class Pane :
-    public CommandWindow,
-    public ChildNode_<Frame, Pane>
-{
-    protected: uint             m_nActiveTick;
-    protected: const char16*    m_pwszName;
+class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
+  protected: uint             m_nActiveTick;
+  protected: const char16*    m_pwszName;
 
-    // ctor
-    protected: Pane() :
-        m_nActiveTick(0),
-        m_pwszName(L"") {}
+  // ctor
+  protected: Pane();
 
-    // [A]
-    public: void Activate();
+  // [A]
+  public: virtual void Activate() {
+    ++m_nActiveTick;
+  }
 
-    // [G]
-    public: uint GetActiveTick() const { return m_nActiveTick; }
+  // [G]
+  public: uint GetActiveTick() const { return m_nActiveTick; }
 
-    public: Frame*   GetFrame() const { return m_pParent; }
-    public: const char16*  GetName()  const { return m_pwszName; }
-    public: virtual int    GetTitle(char16* pwsz, int) = 0;
+  public: Frame*   GetFrame() const { return m_pParent; }
+  public: const char16*  GetName()  const { return m_pwszName; }
+  public: virtual int    GetTitle(char16* pwsz, int) = 0;
 
-    // [H]
-    public: virtual bool HasFocus() const
-        { return ::GetFocus() == m_hwnd; }
+  // [H]
+  public: virtual bool HasFocus() const { return ::GetFocus() == m_hwnd; }
+  public: virtual void Hide() {}
 
-    // [I]
-    public: virtual bool IsPane() const override { return true; }
+  // [I]
+  public: virtual bool IsPane() const override { return true; }
 
-    public: static bool Is_(const CommandWindow* p)
-        { return p->IsPane(); }
+  public: static bool Is_(const CommandWindow* p) { return p->IsPane(); }
 
-    // [O]
-    protected: LRESULT onMessage(uint, WPARAM, LPARAM);
+  // [O]
+  protected: LRESULT onMessage(uint, WPARAM, LPARAM);
 
-    // [R]
-    public: void virtual Realize(Frame&, const gfx::Graphics&) {
-      // TODO: We shoule make Pane::Realize() as abstract member function.
-      CAN_NOT_HAPPEN();
-    }
+  // [R]
+  public: void virtual Realize(Frame&, const gfx::Graphics&) {
+    // TODO: We shoule make Pane::Realize() as abstract member function.
+    CAN_NOT_HAPPEN();
+  }
 
-    // [U]
-    public: virtual void UpdateStatusBar() {}
-}; // Pane
+  public: virtual void Resize(const RECT&) {
+    // TODO: We shoule make Pane::Resize() as abstract member function.
+    CAN_NOT_HAPPEN();
+  }
 
-#endif //!defined(INCLUDE_visual_panewnd_h)
+  // [S]
+  public: virtual void Show() {}
+
+  // [U]
+  public: virtual void UpdateStatusBar() {}
+};
+
+#endif //!defined(INCLUDE_vi_Pane_h)

@@ -15,23 +15,13 @@
 
 extern uint g_nDropTargetMsg;
 
-//////////////////////////////////////////////////////////////////////
-//
-// Pane::Activate
-//
-void Pane::Activate()
-{
-    ASSERT(IsRealized());
-    GetFrame()->SetActivePane(this);
-} // Activate
 
+Pane::Pane()
+    : m_nActiveTick(0),
+      m_pwszName(L"") {
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// Pane::onMessage
-//
-LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg)
     {
     case WM_SETFOCUS:

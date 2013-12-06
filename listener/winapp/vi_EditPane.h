@@ -20,7 +20,7 @@ class TextEditWindow;
 
 // EditPane is a container of multiple TextEditWindow windows and layouts
 // them vertically with draggable splitter.
-class EditPane : public CommandWindow_<EditPane, Pane> {
+class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: enum Limits {
     k_cxSplitter = 8,
     k_cxSplitterBig = 11,
@@ -74,6 +74,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: class LeafBox;
   private: class HorizontalLayoutBox;
   private: class VerticalLayoutBox;
+  private: class BoxWalker;
 
   private: class SplitterDrag {
     public: enum State {
@@ -112,6 +113,9 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
 
   public: const gfx::Graphics& gfx() const { return *gfx_; }
 
+  // [A]
+  public: virtual void Activate() override;
+
   // [C]
   public: void CloseAllBut(Window*);
 
@@ -124,29 +128,32 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   public: Window* GetFirstWindow() const { return m_oWindows.GetFirst(); }
   public: Window* GetLastWindow() const { return m_oWindows.GetLast(); }
 
-  public: virtual int GetTitle(char16*, int) override final;
+  public: virtual int GetTitle(char16*, int) override;
 
   // [H]
-  public: virtual bool HasFocus() const override final;
+  public: virtual bool HasFocus() const override;
+  public: virtual void Hide() override;
 
   // [M]
-  public: virtual Command::KeyBindEntry* MapKey(uint) override final;
+  public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
   // [O]
-  public:  virtual bool OnIdle(uint) override final;
-  private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override final;
+  public:  virtual bool OnIdle(uint) override;
+  private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
 
   // [R]
-  public: void Realize(Frame& frame, const gfx::Graphics& gfx) override final;
-  private: void Resize();
+  public: virtual void Realize(Frame& frame,
+                               const gfx::Graphics& gfx) override;
+  public: virtual void Resize(const RECT& rc) override;
 
   // [S]
   private: void setupStatusBar();
+  public: virtual void Show() override;
   public: Window* SplitHorizontally();
   public: Window* SplitVertically();
 
   // [U]
-  public: virtual void UpdateStatusBar() override final;
+  public: virtual void UpdateStatusBar() override;
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_EditPane_h)

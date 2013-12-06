@@ -10,9 +10,9 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Frame.cpp#5 $
 //
 #define DEBUG_DROPFILES 0
-#define DEBUG_FOCUS     0
-#define DEBUG_REDRAW    1
-#define DEBUG_WINDOWPOS 1
+#define DEBUG_FOCUS     _DEBUG
+#define DEBUG_REDRAW    _DEBUG
+#define DEBUG_WINDOWPOS _DEBUG
 #include "./vi_Frame.h"
 
 #include "./ed_Mode.h"
@@ -609,15 +609,13 @@ LRESULT Frame::onMessage(
             case TCN_SELCHANGE: {
               auto const iCurSel = TabCtrl_GetCurSel(m_hwndTabBand);
               if (auto const pPane = getPaneFromTab(iCurSel)) {
-                if (m_pActivePane) {
-                  DEBUG_PRINTF("Hide pane %p\n", m_pActivePane);
-                  ::ShowWindow(*m_pActivePane, SW_HIDE);
-                }
+                if (m_pActivePane)
+                  m_pActivePane->Hide();
 
                 m_pActivePane = pPane;
                 DEBUG_PRINTF("Show pane %p\n", m_pActivePane);
-                //::ShowWindow(*pPane, SW_SHOW);
-                //::SetFocus(*pPane);
+                m_pActivePane->Show();
+                m_pActivePane->Activate();
                 updateTitleBar();
               }
               break;
@@ -650,7 +648,7 @@ LRESULT Frame::onMessage(
                      rc.right, rc.bottom);
         if (rc) {
           gfx::Graphics::DrawingScope drawing_scope(*gfx_);
-          (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::LightGray));
+          (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Red));
         }
       }
       ::ValidateRect(m_hwnd, nullptr);
@@ -677,10 +675,11 @@ LRESULT Frame::onMessage(
     case WM_SETFOCUS:
       if (auto const pPane = GetActivePane()) {
         #if DEBUG_FOCUS
-            DEBUG_PRINTF("WM_SETFOCUS %p pane=%p\n", this, pPane);
+            DEBUG_PRINTF("WM_SETFOCUS %p pane=%p (%ls)\n",
+                this, pPane, pPane->GetName());
         #endif
         Application::Get()->SetActiveFrame(this);
-        pPane->Activate();
+        SetActivePane(pPane);
       }
       return 0;
 
@@ -784,7 +783,7 @@ LRESULT Frame::onMessage(
       GetPaneRect(&rc);
       gfx_->Resize(rc);
 
-      for (const auto& pane: m_oPanes) {
+      for (auto& pane: m_oPanes) {
 #if 0
         ::SetWindowPos(
             pane,
@@ -797,6 +796,7 @@ LRESULT Frame::onMessage(
 #else
         DEBUG_PRINTF("resize and move pane %p to %dx%d+%d+%d\n",
             &pane, rc.right - rc.left, rc.bottom - rc.top, rc.left, rc.top);
+        pane.Resize(rc);
 #endif
       }
 
@@ -911,9 +911,11 @@ void Frame::ResetMessages() {
 
 void Frame::SetActivePane(Pane* const pPane) {
   #if DEBUG_FOCUS
-      DEBUG_PRINTF("%p new=%p cur=%p\n", this, pPane, m_pActivePane);
+   DEBUG_PRINTF("%p new=%p cur=%p\n", this, pPane, m_pActivePane);
   #endif
+  pPane->Activate();
 
+#if 0
   int iItem = 0;
   for (;;) {
     TCITEM oItem;
@@ -930,7 +932,8 @@ void Frame::SetActivePane(Pane* const pPane) {
     }
     iItem += 1;
   }
-}// Frame::SetActivePane
+#endif
+}
 
 /// <summary>
 ///   Set status bar message on specified part.
