@@ -14,11 +14,8 @@
 #include "./vi_defs.h"
 #include "./vi_Pane.h"
 
-namespace gfx {
-class Graphics;
-}
-
 class Buffer;
+class Frame;
 class TextEditWindow;
 
 // EditPane is a container of multiple TextEditWindow windows and layouts
@@ -103,11 +100,11 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
-  private: const base::OwnPtr<gfx::Graphics> gfx_;
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;
   private: RECT m_rc;
+  private: const gfx::Graphics* gfx_;
 
   // ctro/dtor
   public: EditPane(Buffer*, Posn = 0);
@@ -140,6 +137,7 @@ class EditPane : public CommandWindow_<EditPane, Pane> {
   private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override final;
 
   // [R]
+  public: void Realize(Frame& frame, const gfx::Graphics& gfx) override final;
   private: void Resize();
 
   // [S]

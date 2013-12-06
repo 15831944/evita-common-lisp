@@ -1109,7 +1109,6 @@ void EditPane::SplitterDrag::Stop() {
 
 EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
-      gfx_(new gfx::Graphics()),
       root_box_(*new VerticalLayoutBox(nullptr)) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(root_box_, pWindow));
@@ -1199,7 +1198,7 @@ LRESULT EditPane::onMessage(
       m_rc.right = pCreate->cx;
       m_rc.bottom = pCreate->cy;
       root_box_->Realize(*this, m_rc);
-      gfx_->Init(m_hwnd);
+      //gfx_->Init(m_hwnd);
       break;
     }
 
@@ -1243,6 +1242,7 @@ LRESULT EditPane::onMessage(
       DEBUG_PRINTF("WM_ERASEBKGND %p\n", this);
       return TRUE;
 
+#if 0
     case WM_PAINT: {
       DEBUG_PRINTF("WM_PAINT Start %p\n", this);
       {
@@ -1264,6 +1264,7 @@ LRESULT EditPane::onMessage(
       DEBUG_PRINTF("WM_PAINT End %p\n", this);
       return 0;
     }
+#endif
 
     case WM_PARENTNOTIFY:
       switch (LOWORD(wParam)) {
@@ -1401,13 +1402,17 @@ LRESULT EditPane::onMessage(
   return Pane::onMessage(uMsg, wParam, lParam);
 }
 
+
+void EditPane::Realize(Frame& frame, const gfx::Graphics& gfx) {
+  ASSERT(!IsRealized());
+  m_hwnd = frame;
+  gfx_ = &gfx;
+  m_eState = State_Realized;
+  frame.GetPaneRect(&m_rc);
+  root_box_->Realize(*this, m_rc);
+}
+
 void EditPane::Resize() {
-  ::GetClientRect(*this, &m_rc);
-  gfx_->Resize(m_rc);
-  {
-    gfx::Graphics::DrawingScope scope(*gfx_);
-    (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Pink));
-  }
   root_box_->SetRect(m_rc);
 }
 

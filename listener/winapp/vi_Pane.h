@@ -13,10 +13,10 @@
 
 #include "./vi_CommandWindow.h"
 
-//////////////////////////////////////////////////////////////////////
-//
-// Pane
-//
+namespace gfx {
+class Graphics;
+}
+
 class Pane :
     public CommandWindow,
     public ChildNode_<Frame, Pane>
@@ -53,7 +53,10 @@ class Pane :
     protected: LRESULT onMessage(uint, WPARAM, LPARAM);
 
     // [R]
-    public: void virtual Realize();
+    public: void virtual Realize(Frame&, const gfx::Graphics&) {
+      // TODO: We shoule make Pane::Realize() as abstract member function.
+      CAN_NOT_HAPPEN();
+    }
 
     // [U]
     public: virtual void UpdateStatusBar() {}

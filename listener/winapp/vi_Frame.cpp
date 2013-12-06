@@ -139,7 +139,7 @@ Pane* Frame::AddPane(Pane* const pane) {
 
   if (IsRealized()) {
     if (!pane->IsRealized()) {
-      pane->Realize();
+      pane->Realize(*this, *gfx_);
     } else {
       RECT rc;
       GetPaneRect(&rc);
@@ -529,17 +529,17 @@ LRESULT Frame::onMessage(
 
       ::GetClientRect(m_hwnd, &m_rc);
 
+      CompositionState::Update(m_hwnd);
+      gfx_->Init(m_hwnd);
+
       for (auto& pane: m_oPanes) {
-        pane.Realize();
+        pane.Realize(*this, *gfx_);
         addTab(&pane);
       }
 
       if (m_oPanes.GetFirst()) {
         m_oPanes.GetFirst()->Activate();
       }
-
-      CompositionState::Update(m_hwnd);
-      gfx_->Init(m_hwnd);
       break;
     }
 
@@ -596,8 +596,8 @@ LRESULT Frame::onMessage(
         case CtrlId_TabBand:
           switch (pNotify->code) {
             case TABBAND_NOTIFY_CLOSE: {
-                auto const tab_index = reinterpret_cast<TabBandNotifyData*>(pNotify)
-                    ->tab_index_;
+                auto const tab_index =
+                    reinterpret_cast<TabBandNotifyData*>(pNotify)->tab_index_;
                 if (auto const pPane = getPaneFromTab(tab_index))
                   pPane->Destroy();
                 break;
@@ -610,12 +610,14 @@ LRESULT Frame::onMessage(
               auto const iCurSel = TabCtrl_GetCurSel(m_hwndTabBand);
               if (auto const pPane = getPaneFromTab(iCurSel)) {
                 if (m_pActivePane) {
+                  DEBUG_PRINTF("Hide pane %p\n", m_pActivePane);
                   ::ShowWindow(*m_pActivePane, SW_HIDE);
                 }
 
                 m_pActivePane = pPane;
-                ::ShowWindow(*pPane, SW_SHOW);
-                ::SetFocus(*pPane);
+                DEBUG_PRINTF("Show pane %p\n", m_pActivePane);
+                //::ShowWindow(*pPane, SW_SHOW);
+                //::SetFocus(*pPane);
                 updateTitleBar();
               }
               break;
@@ -783,6 +785,7 @@ LRESULT Frame::onMessage(
       gfx_->Resize(rc);
 
       for (const auto& pane: m_oPanes) {
+#if 0
         ::SetWindowPos(
             pane,
             HWND_TOP,
@@ -791,6 +794,10 @@ LRESULT Frame::onMessage(
             rc.right  - rc.left - kPaddingRight,
             rc.bottom - rc.top - kPaddingBottom,
             SWP_NOZORDER);
+#else
+        DEBUG_PRINTF("resize and move pane %p to %dx%d+%d+%d\n",
+            &pane, rc.right - rc.left, rc.bottom - rc.top, rc.left, rc.top);
+#endif
       }
 
       Paint();

@@ -48,28 +48,3 @@ LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam)
 
     return BaseWindow::onMessage(uMsg, wParam, lParam);
 } // Pane::onMessage
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Pane::Realize
-//
-void Pane::Realize()
-{
-    when (IsRealized()) return;
-
-    Frame* pFrame = GetFrame();
-
-    RECT rc;
-    pFrame->GetPaneRect(&rc);
-
-    CreateWindowEx(
-        0,
-        NULL,
-        WS_CHILD,
-        *pFrame,
-        rc.left,
-        rc.top,
-        rc.right - rc.left,
-        rc.bottom - rc.top );
-} // Pane::Realize
