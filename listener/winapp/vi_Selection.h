@@ -15,6 +15,7 @@
 
 #include "./ed_Range.h"
 #include "./ed_Style.h"
+#include "./gfx_base.h"
 
 enum SelectionType
 {
@@ -44,7 +45,7 @@ class Selection : public Edit::Range
     private: bool               m_fStartIsActive;
     private: Count              m_lRestoreLineNum;  // for reloading
     private: Buffer*            m_pBuffer;
-    private: Point              m_ptGoal;   // Goal point of vertical motion
+    private: gfx::PointF        m_ptGoal; // Goal point of vertical motion
     private: TextEditWindow*    m_pWindow;
 
     // ctor

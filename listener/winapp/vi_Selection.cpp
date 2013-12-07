@@ -586,12 +586,14 @@ bool Selection::updateGoal()
         return false;
     }
 
-    Posn lPosn = GetActivePosn();
-    GetWindow()->MapPosnToPoint(lPosn, &m_ptGoal);
+    const auto rect = GetWindow()->MapPosnToPoint(GetActivePosn());
+    if (rect)
+      m_ptGoal = rect.left_top();
 
     #if DEBUG_GOAL
         DEBUG_PRINTF("%d %p (%d,%d)\n",
-            ::GetTickCount(), this, m_ptGoal.x, m_ptGoal.y );
+            ::GetTickCount(), this, static_cast<int>(m_ptGoal.x * 100),
+            static_cast<int>(m_ptGoal.y * 100));
     #endif // DEBUG_GOAL
 
     return true;

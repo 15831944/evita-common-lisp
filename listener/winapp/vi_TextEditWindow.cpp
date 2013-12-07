@@ -251,7 +251,7 @@ void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
 //
 // TextEditWindow::computeGoalX
 //
-Posn TextEditWindow::computeGoalX(int xGoal, Posn lGoal)
+Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal)
 {
     when (xGoal < 0) return lGoal;
 
@@ -291,7 +291,7 @@ Posn TextEditWindow::computeGoalX(int xGoal, Posn lGoal)
 Count TextEditWindow::ComputeMotion(
     Unit  eUnit,
     Count n,
-    POINT pt,
+    const gfx::PointF& pt,
     Posn* inout_lPosn )
 {
     switch (eUnit)
@@ -555,7 +555,7 @@ void TextEditWindow::MakeSelectionVisible()
 //
 // Description:
 //  Maps window position to buffer position.
-Posn TextEditWindow::MapPointToPosn(POINT pt)
+Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt)
 {
     updateScreen();
     return m_pPage->MapPointToPosn(*m_gfx, pt);
@@ -570,18 +570,12 @@ Posn TextEditWindow::MapPointToPosn(POINT pt)
 //  Maps position specified buffer position and returns height
 //  of caret, If specified buffer position isn't in window, this function
 //  returns 0.
-// TODO(yosi): We should return gfx::RectF for TextEditWindow::MapPosnToPoint()
-int TextEditWindow::MapPosnToPoint(Posn lPosn, POINT* out_pt) {
+gfx::RectF TextEditWindow::MapPosnToPoint(Posn lPosn) {
   updateScreen();
   for (;;) {
     auto rect = m_pPage->MapPosnToPoint(*m_gfx, lPosn);
-    if (rect.height() > 0) {
-      if (out_pt) {
-        out_pt->x = static_cast<int>(rect.left);
-        out_pt->y = static_cast<int>(rect.top);
-      }
-      return static_cast<int>(rect.height());
-    }
+    if (rect)
+      return rect;
     m_pPage->ScrollToPosn(*m_gfx, lPosn);
   }
 }

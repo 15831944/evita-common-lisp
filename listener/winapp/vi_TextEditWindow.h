@@ -17,6 +17,8 @@
 
 namespace gfx {
 class Graphics;
+class PointF;
+class RectF;
 };
 
 class Buffer;
@@ -136,8 +138,8 @@ class TextEditWindow :
     public: void Blink(Posn, uint);
 
     // [C]
-    public:    Count ComputeMotion(Unit, Count, POINT, Posn*);
-    protected: Posn  computeGoalX(int, Posn);
+    public:    Count ComputeMotion(Unit, Count, const gfx::PointF&, Posn*);
+    protected: Posn  computeGoalX(float, Posn);
 
     // [E]
     public:    Posn EndOfLine(Posn);
@@ -179,8 +181,8 @@ class TextEditWindow :
     // [M]
     public: virtual Command::KeyBindEntry* MapKey(uint) override;
     public: void MakeSelectionVisible();
-    public: Posn MapPointToPosn(POINT);
-    public: int  MapPosnToPoint(Posn, POINT* = NULL);
+    public: Posn MapPointToPosn(const gfx::PointF point);
+    public: gfx::RectF MapPosnToPoint(Posn);
 
     // [O]
     public:    virtual bool    OnIdle(uint);

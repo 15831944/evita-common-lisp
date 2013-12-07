@@ -452,13 +452,16 @@ class TextCell : public Cell {
         return nHash;
     } // Hash
 
-    public: virtual float MapPosnToX(const gfx::Graphics&,
+    public: virtual float MapPosnToX(const gfx::Graphics& gfx,
                                      Posn lPosn) const override {
         if (lPosn <  m_lStart) return -1;
         if (lPosn >= m_lEnd)   return -1;
         int cwch = lPosn - m_lStart;
         if (cwch == 0) return 0;
-        return m_pFont->GetTextWidth(m_pwch, cwch);
+        auto const pixel_size = gfx.Scale(gfx::SizeF(1, 1));
+        // To avoid rounding error, we use point adding one physical pixel
+        // width.
+        return m_pFont->GetTextWidth(m_pwch, cwch) + pixel_size.width;
     } // MapPosnToX
 
     public: virtual Posn MapXToPosn(const gfx::Graphics&,
