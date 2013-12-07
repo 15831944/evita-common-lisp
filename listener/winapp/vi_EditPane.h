@@ -106,12 +106,14 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: SplitterDrag m_oSplitterDrag;
   private: Windows m_oWindows;
   private: RECT m_rc;
+  private: bool showed_;
 
   // ctro/dtor
   public: EditPane(Frame*, Buffer*, Posn = 0);
   public: virtual ~EditPane();
 
   public: Frame& frame() const { return *frame_; }
+  public: bool is_showed() const { return showed_; }
 
   // [A]
   public: virtual void Activate() override;

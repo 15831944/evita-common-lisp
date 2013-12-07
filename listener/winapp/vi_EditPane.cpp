@@ -715,7 +715,7 @@ void EditPane::LayoutBox::Replace(Box& new_box, Box& old_box) {
 }
 
 void EditPane::LayoutBox::UpdateSplitters() {
-  if (is_removed())
+  if (is_removed() || !edit_pane_->is_showed())
     return;
   gfx::Graphics::DrawingScope drawing_scope(edit_pane_->frame().gfx());
   DrawSplitters(edit_pane_->frame().gfx());
@@ -1195,7 +1195,8 @@ void EditPane::SplitterDrag::Stop() {
 EditPane::EditPane(Frame* frame, Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
       frame_(frame),
-      root_box_(*new VerticalLayoutBox(this, nullptr)) {
+      root_box_(*new VerticalLayoutBox(this, nullptr)),
+      showed_(false) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
   root_box_->Add(*box);
@@ -1314,6 +1315,9 @@ bool EditPane::HasFocus() const {
 }
 
 void EditPane::Hide() {
+  ASSERT(m_eState == State_Realized);
+  ASSERT(showed_);
+  showed_ = false;
   root_box_->Hide();
 }
 
@@ -1437,7 +1441,8 @@ void EditPane::Resize(const RECT& rc) {
       rc.bottom);
   m_rc = rc;
   root_box_->SetRect(m_rc);
-  root_box_->DrawSplitters(frame().gfx());
+  if (showed_)
+    root_box_->DrawSplitters(frame().gfx());
 }
 
 void EditPane::setupStatusBar() {
@@ -1462,6 +1467,9 @@ void EditPane::setupStatusBar() {
 }
 
 void EditPane::Show() {
+  ASSERT(m_eState == State_Realized);
+  ASSERT(!showed_);
+  showed_ = true;
   root_box_->Show();
   root_box_->UpdateSplitters();
 }
