@@ -179,6 +179,14 @@ Brush::Brush(const Graphics& gfx, ColorF color)
     : SimpleObject_(CreateSolidColorBrush(gfx, color)) {
 }
 
+#if _DEBUG
+Brush::~Brush() {
+  uint ref_count = (*this)->AddRef();
+  ASSERT(ref_count == 2);
+  (*this)->Release();
+}
+#endif
+
 FactorySet::FactorySet()
       : d2d1_factory_(CreateD2D1Factory()),
         dwrite_factory_(CreateDWriteFactory()),

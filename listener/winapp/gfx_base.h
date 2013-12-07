@@ -236,6 +236,9 @@ class Bitmap : public SimpleObject_<ID2D1Bitmap> {
 
 class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
   public: Brush(const Graphics& gfx, ColorF color);
+  #if _DEBUG
+    public: ~Brush();
+  #endif
 };
 
 class FactorySet : public RefCounted_<FactorySet>,
