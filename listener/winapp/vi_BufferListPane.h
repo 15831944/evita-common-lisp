@@ -17,57 +17,49 @@
 
 class Buffer;
 
-//////////////////////////////////////////////////////////////////////
-//
-// BufferListPane
-//
-class BufferListPane : public CommandWindow_<BufferListPane, Pane>
-{
-    private: enum Constant
-    {
-        ListViewId = 1234,
-    }; // Constant
+class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
+  private: enum Constant {
+      ListViewId = 1234,
+  };
 
-    private: static HCURSOR             sm_hDragCursor;
-    private: static Command::KeyBinds*  sm_pKeyBinds;
+  private: static HCURSOR sm_hDragCursor;
+  private: static Command::KeyBinds* sm_pKeyBinds;
 
-    private: Buffer*    m_pDragItem;
-    private: HWND       m_hwndListView;
+  private: Buffer* m_pDragItem;
+  private: HWND m_hwndListView;
 
-    // ctor/dtor
-    public: BufferListPane();
+  // ctor/dtor
+  public: BufferListPane();
 
-    // [A]
-    private: void ActivateBuffers(bool);
+  // [A]
+  private: void ActivateBuffers(bool);
 
-    // [C]
-    private: static int CALLBACK compareItems(LPARAM, LPARAM, LPARAM);
+  // [C]
+  private: static int CALLBACK compareItems(LPARAM, LPARAM, LPARAM);
 
-    // [D]
-    private: void dragFinish(POINT);
-    private: void dragMove(POINT);
-    private: void dragStart(int);
-    private: void dragStop();
+  // [D]
+  private: void dragFinish(POINT);
+  private: void dragMove(POINT);
+  private: void dragStart(int);
+  private: void dragStop();
 
-    // [G]
-    public: static   const char16* GetClass_()
-        { return L"BufferListPane"; }
+  // [G]
+  public: static const char16* GetClass_() { return L"BufferListPane"; }
 
-    public: HWND GetListWindow() const
-        { return m_hwndListView; }
+  public: HWND GetListWindow() const { return m_hwndListView; }
 
-    public: virtual int GetTitle(char16*, int) override;
+  public: virtual int GetTitle(char16*, int) override;
 
-    // [L]
-    public: void Refresh();
+  // [L]
+  public: void Refresh();
 
-    // [M]
-    public: virtual Command::KeyBindEntry* MapKey(uint) override;
+  // [M]
+  public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
-    // [O]
-    private: void onCreate(CREATESTRUCT*);
-    private: void onKeyDown(uint);
-    private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
-}; // BufferListPane
+  // [O]
+  private: void onCreate(CREATESTRUCT*);
+  private: void onKeyDown(uint);
+  private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
+};
 
 #endif //!defined(INCLUDE_visual_BufferListPane_h)
