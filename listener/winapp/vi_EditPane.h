@@ -120,8 +120,8 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: void CloseAllBut(Window*);
 
   // [D]
-  public: virtual void Destroy();
-  public: virtual void DidCreateHwnd(HWND hwnd) override;
+  public: virtual void Destroy() override;
+  public: virtual bool DidCreateHwnd(HWND hwnd) override;
   public: virtual bool DidDestroyHwnd(HWND hwnd) override;
 
   // [G]

@@ -1223,12 +1223,10 @@ void EditPane::Destroy() {
   root_box_->Destroy();
 }
 
-void EditPane::DidCreateHwnd(HWND hwnd) {
+bool EditPane::DidCreateHwnd(HWND hwnd) {
   auto const box = root_box_->GetLeafBox(hwnd);
-  if (!box) {
-    // |hwnd| isn't TextEditorWindow.
-    return;
-  }
+  if (!box)
+    return false;
 
   auto const next_leaf_box = box->GetNext() ?
       box->GetNext()->GetFirstLeafBox() : nullptr;
@@ -1238,6 +1236,7 @@ void EditPane::DidCreateHwnd(HWND hwnd) {
     m_oWindows.InsertBefore(box->GetWindow(), next_window);
   else
     m_oWindows.Append(box->GetWindow());
+  return true;
 }
 
 bool EditPane::DidDestroyHwnd(HWND hwnd) {
@@ -1245,7 +1244,7 @@ bool EditPane::DidDestroyHwnd(HWND hwnd) {
   if (!box)
     return false;
 
-  DEBUG_PRINTF("box=%\n", box);
+  DEBUG_PRINTF("box=%p\n", box);
   m_oWindows.Delete(box->GetWindow());
   box->DetachWindow();
   auto const outer = box->outer();

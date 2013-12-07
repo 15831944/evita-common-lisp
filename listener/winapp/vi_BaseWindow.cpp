@@ -52,6 +52,11 @@ bool BaseWindow::CreateWindowEx(
     return NULL != hwnd;
 } // BaseWindow::CreateWindowEx
 
+void BaseWindow::Destroy() {
+  ASSERT(IsRealized());
+  ::DestroyWindow(m_hwnd);
+}
+
 BaseWindow* BaseWindow::MapHwndToWindow(HWND const hwnd) {
   return reinterpret_cast<BaseWindow*>(
     static_cast<LONG_PTR>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA)));

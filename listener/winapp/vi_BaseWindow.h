@@ -65,11 +65,7 @@ class BaseWindow
         int     h = CW_USEDEFAULT );
 
     // [D]
-    public: void Destroy()
-    {
-        ASSERT(IsRealized());
-        ::DestroyWindow(m_hwnd);
-    } // Destroy
+    public: virtual void Destroy();
 
     // [I]
     public: static int Init();

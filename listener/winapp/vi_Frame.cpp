@@ -647,13 +647,14 @@ LRESULT Frame::onMessage(
           }
           break;
         }
-        case WM_CREATE:
-          if (auto const pane = GetActivePane()) {
-            pane->DidCreateHwnd(reinterpret_cast<HWND>(lParam));
-          } else {
-            CAN_NOT_HAPPEN();
+        case WM_CREATE: {
+          auto const hwnd = reinterpret_cast<HWND>(lParam);
+          for (auto& pane: m_oPanes) {
+            if (pane.DidCreateHwnd(hwnd))
+              break;
           }
           break;
+        }
       }
       return 0;
 
