@@ -431,7 +431,7 @@ class TextCell : public Cell {
     return nHash;
   }
 
-  public: virtual float MapPosnToX(const gfx::Graphics& gfx,
+  public: virtual float MapPosnToX(const gfx::Graphics&,
                                    Posn lPosn) const override final {
     if (lPosn <  m_lStart)
       return -1;
@@ -440,10 +440,7 @@ class TextCell : public Cell {
     auto const cwch = lPosn - m_lStart;
     if (!cwch)
       return 0;
-    auto const pixel_size = gfx.Scale(gfx::SizeF(1, 1));
-    // To avoid rounding error, we use point adding one physical pixel
-    // width.
-    return m_pFont->GetTextWidth(m_pwch, cwch) + pixel_size.width;
+    return ::ceilf(m_pFont->GetTextWidth(m_pwch, cwch));
   }
 
     public: virtual Posn MapXToPosn(const gfx::Graphics&,
@@ -451,9 +448,9 @@ class TextCell : public Cell {
     if (x >= m_cx)
       return m_lEnd;
     for (uint k = 1; k <= m_cwch; ++k) {
-      auto const cx = m_pFont->GetTextWidth(m_pwch, k);
-        if (x < cx)
-          return m_lStart + k - 1;
+      auto const cx = ::floorf(m_pFont->GetTextWidth(m_pwch, k));
+      if (x < cx)
+        return m_lStart + k - 1;
     }
     return m_lEnd;
   }
