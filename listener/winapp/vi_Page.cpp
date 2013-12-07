@@ -131,6 +131,13 @@ class Cell : public ObjectInHeap {
     return true;
   } // Equal
 
+  protected: void FillBackground(const gfx::Graphics& gfx,
+                                 const gfx::RectF& rect) const {
+    fillRect(gfx, gfx::RectF(rect.left, rect.top, ::ceilf(rect.right),
+                             ::ceilf(rect.bottom)),
+             ColorToColorF(m_crBackground));
+  }
+
   public: virtual Posn Fix(const char16*, float iHeight, float) {
     m_cy = iHeight;
     return -1;
@@ -163,7 +170,7 @@ class Cell : public ObjectInHeap {
 
   public: virtual void Render(const gfx::Graphics& gfx,
                                const gfx::RectF& rect) const {
-    fillRect(gfx, rect, ColorToColorF(m_crBackground));
+    FillBackground(gfx, rect);
   }
 };
 
@@ -284,7 +291,7 @@ class MarkerCell final : public Cell {
 
   public: virtual void Render(const gfx::Graphics& gfx,
                               const gfx::RectF& rect) const override {
-    Cell::Render(gfx, rect);
+    FillBackground(gfx, rect);
 
     auto const yBottom = rect.bottom - m_iDescent;
     auto const yTop    = yBottom - m_iAscent;
@@ -475,16 +482,13 @@ class TextCell : public Cell {
   // Render - Render text of this cell
   public: virtual void Render(const gfx::Graphics& gfx,
                               const gfx::RectF& rect) const override {
-    auto const y = rect.bottom - m_iDescent -
-                   (m_eDecoration != TextDecoration_None ? 1 : 0);
-
-    gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
-    gfx.FillRectangle(fill_brush, rect);
-
+    FillBackground(gfx, rect);
     gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
     DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
-      #if SUPPORT_IME
+    auto const y = rect.bottom - m_iDescent -
+                   (m_eDecoration != TextDecoration_None ? 1 : 0);
+    #if SUPPORT_IME
     switch (m_eDecoration) {
       case TextDecoration_ImeInput:
         // TODO: We should use dotted line. It was PS_DOT.
@@ -546,8 +550,7 @@ class UnicodeCell final : public TextCell {
 
   public: virtual void Render(const gfx::Graphics& gfx,
                               const gfx::RectF& rect) const override {
-    gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
-    gfx.FillRectangle(fill_brush, rect);
+    FillBackground(gfx, rect);
 
     gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
     DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
@@ -979,7 +982,7 @@ void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
   rc.right = m_rc.right;
   if (rc.left < rc.right) {
     rc.top = y;
-    rc.bottom = y + pLine->GetHeight();
+    rc.bottom = ::ceilf(y + pLine->GetHeight());
     fillRect(gfx, rc, ColorToColorF(m_crBackground));
   }
 }
@@ -1325,33 +1328,13 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
       foreach (EnumCell, oEnum, pLine) {
         auto const pCell = oEnum.Get();
         if (x < rcClip.right && x + pCell->m_cx >= rcClip.left) {
-            gfx::RectF rc(x, y, ::ceilf(x + pCell->m_cx),
+            gfx::RectF rc(x, y, x + pCell->m_cx, 
                           ::ceilf(y + pCell->m_cy));
             pCell->Render(gfx, rc);
         }
         x += pCell->m_cx;
       }
-
-      // Fill right
-      {
-        gfx::RectF rc;
-        rc.left  = pLine->GetWidth();
-        rc.right = m_rc.right;
-
-        rc.left  = max(rc.left,  rcClip.left);
-        rc.right = min(rc.right, rcClip.right);
-
-        if (rc.left < rc.right) {
-          rc.top = y;
-          rc.bottom = y + pLine->GetHeight();
-
-          rc.top    = max(rc.top,    rcClip.top);
-          rc.bottom = min(rc.bottom, rcClip.bottom);
-
-          if (rc.top < rc.bottom)
-            fillRect(gfx, rc, ColorToColorF(m_crBackground));
-        }
-      }
+      fillRight(gfx, pLine, y);
     }
     y += pLine->m_iHeight;
   }
@@ -1922,8 +1905,8 @@ void Page::Line::Render(const gfx::Graphics& gfx,
   auto x = left_top.x;
   foreach (EnumCell, oEnum, this) {
     auto const pCell = oEnum.Get();
-    gfx::RectF rect(gfx::PointF(x, left_top.y),
-                    gfx::SizeF(pCell->m_cx, pCell->m_cy));
+    gfx::RectF rect(x, left_top.y, x + pCell->m_cx, 
+                    ::ceilf(left_top.y + pCell->m_cy));
     pCell->Render(gfx, rect);
     x = rect.right;
   }
