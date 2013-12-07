@@ -765,9 +765,9 @@ LRESULT Frame::onMessage(
               reinterpret_cast<LPARAM>(wsz));
       }
 
+      gfx_->Resize(m_rc);
       RECT rc;
       GetPaneRect(&rc);
-      gfx_->Resize(rc);
       {
         gfx::Graphics::DrawingScope drawing_scope(*gfx_);
         (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Green));
