@@ -24,17 +24,16 @@
 
 #include <vector>
 
-namespace PageInternal
-{
+namespace PageInternal {
 
 const float cxLeftMargin = 7.0f;
 const int k_nTabWidth = 4;
 const float k_cyMinScroll = 100.0f;
 
-inline char16 toxdigit(int k)
-{
-    if (k <= 9) return static_cast<char16>(k + '0');
-    return static_cast<char16>(k - 10 + 'A');
+inline char16 toxdigit(int k) {
+  if (k <= 9)
+    return static_cast<char16>(k + '0');
+ return static_cast<char16>(k - 10 + 'A');
 } // toxdigit
 
 inline gfx::ColorF ColorToColorF(Color color) {
@@ -52,12 +51,12 @@ inline void drawLine(const gfx::Graphics& gfx, const gfx::Brush& brush,
 
 inline void drawHLine(const gfx::Graphics& gfx, const gfx::Brush& brush,
                       float sx, float ex, float y) {
-  drawLine(gfx, brush, sx, y, ex + 1, y);
+  drawLine(gfx, brush, sx, y, ex, y);
 }
 
 inline void drawVLine(const gfx::Graphics& gfx, const gfx::Brush& brush,
                       float x, float sy, float ey) {
-  drawLine(gfx, brush, x, sy, x, ey + 1);
+  drawLine(gfx, brush, x, sy, x, ey);
 }
 
 inline void fillRect(const gfx::Graphics& gfx, const gfx::RectF& rect,
@@ -95,16 +94,11 @@ static void DrawText(const gfx::Graphics& gfx, const Font& font,
   gfx.Flush();
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// CellKind
-//
-enum CellKind
-{
-    CellKind_Filler,
-    CellKind_Marker,
-    CellKind_Text,
-    CellKind_Unicode,
+enum CellKind {
+  CellKind_Filler,
+  CellKind_Marker,
+  CellKind_Text,
+  CellKind_Unicode,
 }; // CellKind
 
 //////////////////////////////////////////////////////////////////////
@@ -147,14 +141,14 @@ class Cell : public ObjectInHeap {
   public: virtual CellKind GetKind()    const = 0;
   public: float GetWidth()   const { return m_cx; }
 
-    public: virtual uint Hash() const {
-   uint nHash = static_cast<uint>(m_cx);
-   nHash ^= static_cast<uint>(m_cy);
-   nHash ^= m_crBackground.Hash();
-   return nHash;
+  public: virtual uint Hash() const {
+    uint nHash = static_cast<uint>(m_cx);
+    nHash ^= static_cast<uint>(m_cy);
+    nHash ^= m_crBackground.Hash();
+    return nHash;
   }
 
-    public: virtual float MapPosnToX(const gfx::Graphics&, Posn) const {
+  public: virtual float MapPosnToX(const gfx::Graphics&, Posn) const {
     return -1.0f;
   }
 
@@ -173,360 +167,348 @@ class Cell : public ObjectInHeap {
   }
 };
 
-// EnumCell
 class EnumCell {
-    Cell*   m_pRunner;
+  private: Cell*   m_pRunner;
 
-    public: EnumCell(const Page::Line* p) :
-        m_pRunner(p->GetCell()) {}
+  public: EnumCell(const Page::Line* p)
+    : m_pRunner(p->GetCell()) {
+  }
 
-    public: bool AtEnd() const { return nullptr == m_pRunner; }
-    public: Cell* Get() const { ASSERT(!AtEnd()); return m_pRunner; }
+  public: bool AtEnd() const { return nullptr == m_pRunner; }
+  public: Cell* Get() const { ASSERT(!AtEnd()); return m_pRunner; }
 
-    public: void Next()
-        { ASSERT(!AtEnd()); m_pRunner = m_pRunner->m_pNext; }
-}; // EnumCell
+  public: void Next() {
+    ASSERT(!AtEnd()); m_pRunner = m_pRunner->m_pNext;
+  }
+};
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// FillerCell
-//
 class FillerCell final : public Cell {
   public: FillerCell(Color cr, float cx, float cy) : Cell(cr, cx, cy) {}
 
   public: virtual Cell* Copy(HANDLE hHeap, char16*) const override {
     return new(hHeap) FillerCell(*this);
-  } // Copy
+  }
 
   public: virtual float GetHeight() const override { return 0.0f; }
-  
+
   public: virtual CellKind GetKind() const override { 
     return CellKind_Filler;
   }
-}; // FillerCell
-
+};
 
 //////////////////////////////////////////////////////////////////////
 //
 // MarkerCell
 //
-class MarkerCell final : public Cell
-{
-    public: enum Kind
-    {
-        Kind_Eob,
-        Kind_Eol,
-        Kind_Tab,
-        Kind_Wrap,
-    }; // Kind
+class MarkerCell final : public Cell {
+  public: enum Kind {
+    Kind_Eob,
+    Kind_Eol,
+    Kind_Tab,
+    Kind_Wrap,
+  };
 
-    private: Posn    m_lStart;
-    private: Posn    m_lEnd;
-    private: Color  m_crColor;
-    private: float m_iAscent;
-    private: float m_iDescent;
-    private: Kind    m_eKind;
+  private: Posn m_lStart;
+  private: Posn m_lEnd;
+  private: Color m_crColor;
+  private: float m_iAscent;
+  private: float m_iDescent;
+  private: Kind  m_eKind;
 
-    public: MarkerCell(
-        Color crColor,
-        Color crBackground,
-        float cx,
-        float iHeight,
-        float iDescent,
-        Posn lPosn,
-        Kind eKind ) :
-            m_crColor(crColor),
-            m_iAscent(iHeight - iDescent),
-            m_iDescent(iDescent),
-            m_eKind(eKind),
-            m_lStart(lPosn),
-            m_lEnd(eKind == Kind_Wrap ? lPosn : lPosn + 1),
-            Cell(crBackground, cx, iHeight) {}
+  public: MarkerCell(Color crColor,
+                     Color crBackground,
+                     float cx,
+                     float iHeight,
+                     float iDescent,
+                     Posn lPosn,
+                     Kind eKind)
+      : m_crColor(crColor),
+        m_iAscent(iHeight - iDescent),
+        m_iDescent(iDescent),
+        m_eKind(eKind),
+        m_lStart(lPosn),
+        m_lEnd(eKind == Kind_Wrap ? lPosn : lPosn + 1),
+        Cell(crBackground, cx, iHeight) {
+  }
 
-    public: virtual Cell* Copy(HANDLE hHeap, char16*) const
-    {
-        return new(hHeap) MarkerCell(*this);
-    } // Copy
+  public: virtual Cell* Copy(HANDLE hHeap, char16*) const {
+    return new(hHeap) MarkerCell(*this);
+  }
 
-    public: virtual bool Equal(const Cell* pCell) const
-    {
-        if (!Cell::Equal(pCell)) return false;
-        const MarkerCell* pMarker = reinterpret_cast<const MarkerCell*>(pCell);
-        if (!m_crColor.Equal(pMarker->m_crColor)) return false;
-        if (m_eKind != pMarker->m_eKind) return false;
-        return true;
-    } // Equal
+  public: virtual bool Equal(const Cell* pCell) const {
+    if (!Cell::Equal(pCell))
+      return false;
+    auto const pMarker = reinterpret_cast<const MarkerCell*>(pCell);
+    if (!m_crColor.Equal(pMarker->m_crColor))
+      return false;
+    if (m_eKind != pMarker->m_eKind)
+      return false;
+    return true;
+  }
 
-    public: virtual Posn Fix(const char16*, float iHeight,
-                             float iDescent) override {
-        m_cy = iHeight;
-        m_iDescent = iDescent;
-        return m_lEnd;
-    } // Fix
+  public: virtual Posn Fix(const char16*, float iHeight,
+                           float iDescent) override {
+    m_cy = iHeight;
+    m_iDescent = iDescent;
+    return m_lEnd;
+  }
 
-    public: virtual float GetDescent() const override { return m_iDescent; }
-    public: virtual float GetHeight()  const override { return m_cy; }
-    public: virtual CellKind GetKind() const override {
-      return CellKind_Marker;
-    }
+  public: virtual float GetDescent() const override { return m_iDescent; }
+  public: virtual float GetHeight()  const override { return m_cy; }
+  public: virtual CellKind GetKind() const override {
+    return CellKind_Marker;
+  }
 
-    public: virtual uint Hash() const override {
-        uint nHash = Cell::Hash();
-        nHash <<= 8;
-        nHash ^= m_crColor.Hash();
-        nHash <<= 8;
-        nHash ^= m_eKind;
-        return nHash;
-    } // Hash
+  public: virtual uint Hash() const override {
+    auto nHash = Cell::Hash();
+    nHash <<= 8;
+    nHash ^= m_crColor.Hash();
+    nHash <<= 8;
+    nHash ^= m_eKind;
+    return nHash;
+  }
 
-    public: virtual float MapPosnToX(const gfx::Graphics&,
-                                     Posn lPosn) const override {
-      if (lPosn <  m_lStart)
-        return -1.0f;
-      if (lPosn >= m_lEnd)
-        return -1.0f;
-      return 0.0f;
-    }
+  public: virtual float MapPosnToX(const gfx::Graphics&,
+                                   Posn lPosn) const override {
+    if (lPosn <  m_lStart)
+      return -1.0f;
+    if (lPosn >= m_lEnd)
+      return -1.0f;
+    return 0.0f;
+  }
 
-    public: virtual Posn MapXToPosn(const gfx::Graphics&,
-                                    float) const override {
-      return m_lStart;
-    }
+  public: virtual Posn MapXToPosn(const gfx::Graphics&,
+                                  float) const override {
+    return m_lStart;
+  }
 
-    public: virtual void Render(const gfx::Graphics& gfx,
-                                const gfx::RectF& rect) const override {
-        Cell::Render(gfx, rect);
+  public: virtual void Render(const gfx::Graphics& gfx,
+                              const gfx::RectF& rect) const override {
+    Cell::Render(gfx, rect);
 
-        float yBottom = rect.bottom - m_iDescent;
-        float yTop    = yBottom - m_iAscent;
-        float xLeft   = rect.left;
-        float xRight  = rect.right;
+    auto const yBottom = rect.bottom - m_iDescent;
+    auto const yTop    = yBottom - m_iAscent;
+    auto const xLeft   = rect.left;
+    auto const xRight  = rect.right;
 
-        gfx::Brush stroke_brush(gfx, ColorToColorF(m_crColor));
+    gfx::Brush stroke_brush(gfx, ColorToColorF(m_crColor));
 
-        switch (m_eKind)
-        {
-        case Kind_Eob:
-        {
-            // Draw <-
+    switch (m_eKind) {
+      case Kind_Eob: { // Draw <-
+        // FIXME 2007-06-13 We should get internal leading from font.
+        auto const iInternalLeading = 3;
+        auto const w = max(m_iAscent / 6, 2);
+        auto const y = yBottom - (m_iAscent - iInternalLeading) / 2;
+        drawHLine(gfx, stroke_brush, xLeft, xRight, y);
+        drawLine(gfx, stroke_brush, xLeft + w, y - w, xLeft, y);
+        drawLine(gfx, stroke_brush, xLeft + w, y + w, xLeft, y);
+        break;
+      } // Kind_Eob
 
-            // FIXME 2007-06-13 We should get internal leading from font.
-            float iInternalLeading = 3;
-            float w = max(m_iAscent / 6, 2);
-            float y = yBottom - (m_iAscent - iInternalLeading) / 2;
-            drawHLine(gfx, stroke_brush, xLeft, xRight, y);
-            drawLine(gfx, stroke_brush, xLeft + w, y - w, xLeft, y);
-            drawLine(gfx, stroke_brush, xLeft + w, y + w, xLeft, y);
-            break;
-        } // Kind_Eob
+      case Kind_Eol: { // Draw V
+        auto const y = yBottom - m_iAscent * 3 / 5;
+        auto const w = max(m_cx / 6, 2);
+        auto const x = xLeft + m_cx / 2;
+        drawVLine(gfx, stroke_brush, x, y, yBottom);
+        drawLine(gfx, stroke_brush, x - w, yBottom - w, x, yBottom);
+        drawLine(gfx, stroke_brush, x + w, yBottom - w, x, yBottom);
+        break;
+      } // Kind_Eol
 
-        case Kind_Eol:
-        {
-            // Draw V
-            yTop = yBottom - m_iAscent * 3 / 5;
-            float w = max(m_cx / 6, 2);
-            float x = xLeft + m_cx / 2;
-            drawVLine(gfx, stroke_brush, x, yTop, yBottom);
-            drawLine(gfx, stroke_brush, x - w, yBottom - w, x, yBottom);
-            drawLine(gfx, stroke_brush, x + w, yBottom - w, x, yBottom);
-            break;
-        } // Kind_Eol
+      case Kind_Tab: { // Draw |_|
+        auto const w = max(m_iAscent / 6, 2);
+        drawHLine(gfx, stroke_brush, xLeft + 2, xRight - 3, yBottom);
+        drawVLine(gfx, stroke_brush, xLeft + 2, yBottom, yBottom - w * 2);
+        drawVLine(gfx, stroke_brush, xRight - 3, yBottom, yBottom - w * 2);
+        break;
+      } // Kind_Tab
 
-        case Kind_Tab:
-        {
-            // Draw |_|
-            float w = max(m_iAscent / 6, 2);
-            drawHLine(gfx, stroke_brush, xLeft + 2, xRight - 3, yBottom);
-            drawVLine(gfx, stroke_brush, xLeft + 2, yBottom, yBottom - w * 2);
-            drawVLine(gfx, stroke_brush, xRight - 3, yBottom, yBottom - w * 2);
-            break;
-        } // Kind_Tab
-
-        case Kind_Wrap:
-        {
-            // Draw ->
-            xRight -= 1;
-            float w = max(m_iAscent / 6, 2);
-            float y = yTop + m_iAscent / 2;
-            drawHLine(gfx, stroke_brush, xLeft, xRight, y);
-            drawLine(gfx, stroke_brush, xRight - w, y - w, xRight, y);
-            drawLine(gfx, stroke_brush, xRight - w, y + w, xRight, y);
-            break;
-        } // Kind_Wrap
+      case Kind_Wrap: { // Draw ->
+        auto const ex = xRight - 1;
+        auto const w = max(m_iAscent / 6, 2);
+        auto const y = yTop + m_iAscent / 2;
+        drawHLine(gfx, stroke_brush, xLeft, ex, y);
+        drawLine(gfx, stroke_brush, ex - w, y - w, xRight, y);
+        drawLine(gfx, stroke_brush, ex - w, y + w, xRight, y);
+        break;
+      } // Kind_Wrap
 
         default:
-            CAN_NOT_HAPPEN();
-        } // switch kind
-    } // Render
-}; // MarkerCell
-
+        CAN_NOT_HAPPEN();
+    }
+  }
+};
 
 //////////////////////////////////////////////////////////////////////
 //
 // TextCell
 //
 class TextCell : public Cell {
-    protected: Color            m_crColor;
-    protected: TextDecoration   m_eDecoration;
-    protected: float m_iDescent;
+  protected: Color            m_crColor;
+  protected: TextDecoration   m_eDecoration;
+  protected: float m_iDescent;
 
-    protected: Posn             m_lStart;
-    protected: Posn             m_lEnd;
+  protected: Posn             m_lStart;
+  protected: Posn             m_lEnd;
 
-    protected: Font*            m_pFont;
-    protected: const char16*    m_pwch;
-    protected: uint             m_cwch;
-    protected: uint             m_ofs;
+  protected: Font*            m_pFont;
+  protected: const char16*    m_pwch;
+  protected: uint             m_cwch;
+  protected: uint             m_ofs;
 
+  public: TextCell(
+      const StyleValues*    pStyle,
+      Color           crColor,
+      Color           crBackground,
+      Font*           pFont,
+      float           cx,
+      Posn            lPosn,
+      uint            ofs,
+      uint            cwch = 1)
+        : m_cwch(cwch),
+          m_crColor(crColor),
+          m_eDecoration(pStyle->GetDecoration()),
+          m_lStart(lPosn),
+          m_lEnd(lPosn + 1),
+          m_ofs(ofs),
+          m_pFont(pFont),
+          Cell(crBackground, cx, pFont->GetHeight()) {
+  }
 
-    public: TextCell(
-        const StyleValues*    pStyle,
-        Color           crColor,
-        Color           crBackground,
-        Font*           pFont,
-        float           cx,
-        Posn            lPosn,
-        uint            ofs,
-        uint            cwch = 1 ) :
-            m_cwch(cwch),
-            m_crColor(crColor),
-            m_eDecoration(pStyle->GetDecoration()),
-            m_lStart(lPosn),
-            m_lEnd(lPosn + 1),
-            m_ofs(ofs),
-            m_pFont(pFont),
-            Cell(crBackground, cx, pFont->GetHeight()) {}
+  public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
+    auto const pCell = new(hHeap) TextCell(*this);
+    pCell->m_pwch = pwch + m_ofs;
+    return pCell;
+  }
 
-    // Copy
-    public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const
-    {
-        TextCell* pCell = new(hHeap) TextCell(*this);
-        pCell->m_pwch = pwch + m_ofs;
-        return pCell;
-    } // Copy
+  // Equal - Returns true if specified cell is equal to this cell.
+  public: virtual bool Equal(const Cell* pCell) const {
+    if (!Cell::Equal(pCell))
+      return false;
+    auto const pText = reinterpret_cast<const TextCell*>(pCell);
+    if (!m_crColor.Equal(pText->m_crColor))
+      return false;
+    if (m_eDecoration != pText->m_eDecoration)
+      return false;
+    if (m_cwch != pText->m_cwch)
+      return false;
+    auto const cb = sizeof(char16) * m_cwch;
+    return !::memcmp(m_pwch, pText->m_pwch, cb);
+  }
 
-    // Equal - Returns true if specified cell is equal to this cell.
-    public: virtual bool Equal(const Cell* pCell) const {
-      if (!Cell::Equal(pCell)) return false;
-      const TextCell* pText = reinterpret_cast<const TextCell*>(pCell);
-      if (!m_crColor.Equal(pText->m_crColor)) return false;
-      if (m_eDecoration != pText->m_eDecoration) return false;
-      if (m_cwch != pText->m_cwch) return false;
-      size_t cb = sizeof(char16) * m_cwch;
-      return !::memcmp(m_pwch, pText->m_pwch, cb);
+  public: virtual Posn Fix(const char16* pwch, float iHeight,
+                           float iDescent) override {
+      ASSERT(m_lStart <= m_lEnd);
+      m_pwch     = pwch + m_ofs;
+      m_cy       = iHeight;
+      m_iDescent = iDescent;
+      return m_lEnd;
+  }
+
+  public: virtual float GetDescent() const override {
+    return m_pFont->GetDescent();
+  }
+
+  public: virtual float GetHeight() const override {
+   return m_pFont->GetHeight();
+  }
+
+  public: virtual CellKind GetKind() const override {
+    return CellKind_Text;
+  }
+
+  public: virtual uint Hash() const override final {
+    uint nHash = Cell::Hash();
+    nHash ^= m_crColor.Hash();
+    nHash ^= m_pFont->Hash();
+    nHash ^= m_eDecoration;
+    nHash ^= m_cwch;
+
+    auto const pEnd = m_pwch + m_cwch;
+    for (const char16* p = m_pwch; p < pEnd; p++) {
+      nHash <<= 5; nHash ^= *p; nHash >>= 3;
     }
+    return nHash;
+  }
 
-    public: virtual Posn Fix(const char16* pwch, float iHeight,
-                             float iDescent) override {
-        ASSERT(m_lStart <= m_lEnd);
-        m_pwch     = pwch + m_ofs;
-        m_cy       = iHeight;
-        m_iDescent = iDescent;
-        return m_lEnd;
-    }
-
-    public: virtual float GetDescent() const override {
-      return m_pFont->GetDescent();
-    }
-
-    public: virtual float GetHeight() const override {
-     return m_pFont->GetHeight();
-    }
-
-    public: virtual CellKind GetKind() const override {
-      return CellKind_Text;
-    }
-
-    public: virtual uint Hash() const override {
-        uint nHash = Cell::Hash();
-        nHash ^= m_crColor.Hash();
-        nHash ^= m_pFont->Hash();
-        nHash ^= m_eDecoration;
-        nHash ^= m_cwch;
-
-        const char16* pEnd = m_pwch + m_cwch;
-        for (const char16* p = m_pwch; p < pEnd; p++)
-            { nHash <<= 5; nHash ^= *p; nHash >>= 3; }
-
-        return nHash;
-    } // Hash
-
-    public: virtual float MapPosnToX(const gfx::Graphics& gfx,
-                                     Posn lPosn) const override {
-        if (lPosn <  m_lStart) return -1;
-        if (lPosn >= m_lEnd)   return -1;
-        int cwch = lPosn - m_lStart;
-        if (cwch == 0) return 0;
-        auto const pixel_size = gfx.Scale(gfx::SizeF(1, 1));
-        // To avoid rounding error, we use point adding one physical pixel
-        // width.
-        return m_pFont->GetTextWidth(m_pwch, cwch) + pixel_size.width;
-    } // MapPosnToX
+  public: virtual float MapPosnToX(const gfx::Graphics& gfx,
+                                   Posn lPosn) const override final {
+    if (lPosn <  m_lStart)
+      return -1;
+    if (lPosn >= m_lEnd)
+      return -1;
+    auto const cwch = lPosn - m_lStart;
+    if (!cwch)
+      return 0;
+    auto const pixel_size = gfx.Scale(gfx::SizeF(1, 1));
+    // To avoid rounding error, we use point adding one physical pixel
+    // width.
+    return m_pFont->GetTextWidth(m_pwch, cwch) + pixel_size.width;
+  }
 
     public: virtual Posn MapXToPosn(const gfx::Graphics&,
-                                    float x) const override {
-        if (x >= m_cx) return m_lEnd;
-        for (uint k = 1; k <= m_cwch; ++k) {
-            auto const cx = m_pFont->GetTextWidth(m_pwch, k);
-            if (x < cx) {
-                return m_lStart + k - 1;
-            }
-        } // for k
-        return m_lEnd;
-    } // MapXToPosn
+                                  float x) const override final {
+    if (x >= m_cx)
+      return m_lEnd;
+    for (uint k = 1; k <= m_cwch; ++k) {
+      auto const cx = m_pFont->GetTextWidth(m_pwch, k);
+        if (x < cx)
+          return m_lStart + k - 1;
+    }
+    return m_lEnd;
+  }
 
-    // Merge - Returns true if specified cell is mergable to this cell.
-    public: virtual bool Merge(
-        Font*           pFont,
-        Color           crColor,
-        Color           crBackground,
-        TextDecoration  eDecoration,
-        float cx) override {
-      if (m_pFont        != pFont) return false;
-      if (m_crColor      != crColor) return false;
-      if (m_crBackground != crBackground) return false;
-      if (m_eDecoration  != eDecoration)  return false;
-      m_cx   += cx;
-      m_cwch += 1;
-      m_lEnd += 1;
-      return true;
-    } // Merge
+  // Merge - Returns true if specified cell is mergable to this cell.
+  public: virtual bool Merge(
+      Font*           pFont,
+      Color           crColor,
+      Color           crBackground,
+      TextDecoration  eDecoration,
+      float cx) override {
+    if (m_pFont        != pFont) return false;
+    if (m_crColor      != crColor) return false;
+    if (m_crBackground != crBackground) return false;
+    if (m_eDecoration  != eDecoration)  return false;
+    m_cx   += cx;
+    m_cwch += 1;
+    m_lEnd += 1;
+    return true;
+  } // Merge
 
-    // Render - Render text of this cell
-    public: virtual void Render(const gfx::Graphics& gfx,
-                                const gfx::RectF& rect) const override {
-      auto const y = rect.bottom - m_iDescent -
-                     (m_eDecoration != TextDecoration_None ? 1 : 0);
+  // Render - Render text of this cell
+  public: virtual void Render(const gfx::Graphics& gfx,
+                              const gfx::RectF& rect) const override {
+    auto const y = rect.bottom - m_iDescent -
+                   (m_eDecoration != TextDecoration_None ? 1 : 0);
 
       gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
-      gfx.FillRectangle(fill_brush, rect);
+    gfx.FillRectangle(fill_brush, rect);
 
       gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
-      DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
+    DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
       #if SUPPORT_IME
-      switch (m_eDecoration) {
-        case TextDecoration_ImeInput:
-          // TODO: We should use dotted line. It was PS_DOT.
-          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
-          break;
+    switch (m_eDecoration) {
+      case TextDecoration_ImeInput:
+        // TODO: We should use dotted line. It was PS_DOT.
+        drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
+        break;
 
         case TextDecoration_ImeInactiveA:
-          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
-          break;
+        drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
+        break;
 
         case TextDecoration_ImeInactiveB:
-          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
-          break;
+        drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
+        break;
 
         case TextDecoration_ImeActive:
-          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
-          drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 2);
-          break;
-      }
-      #endif
+        drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
+        drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 2);
+        break;
     }
+    #endif
+  }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -534,50 +516,49 @@ class TextCell : public Cell {
 // UnicodeCell
 //
 class UnicodeCell final : public TextCell {
-    public: UnicodeCell(
-        const StyleValues*    pStyle,
-        Color           crColor,
-        Color           crBackground,
-        Font*           pFont,
-        float           cx,
-        Posn            lPosn,
-        uint            ofs,
-        uint            cwch ) :
-            TextCell(
-                pStyle,
-                crColor,
-                crBackground,
-                pFont,
-                cx,
-                lPosn,
-                ofs,
-                cwch )
-    {
-        m_cy += 4;
-    } // UnicodeCell
+  public: UnicodeCell(
+      const StyleValues*    pStyle,
+      Color           crColor,
+      Color           crBackground,
+      Font*           pFont,
+      float           cx,
+      Posn            lPosn,
+      uint            ofs,
+      uint            cwch) :
+          TextCell(
+              pStyle,
+              crColor,
+              crBackground,
+              pFont,
+              cx,
+              lPosn,
+              ofs,
+              cwch) {
+      m_cy += 4;
+  }
 
-    public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
-      auto const pCell = new(hHeap) UnicodeCell(*this);
-      pCell->m_pwch = pwch + m_ofs;
-      return pCell;
-    }
+  public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
+    auto const pCell = new(hHeap) UnicodeCell(*this);
+    pCell->m_pwch = pwch + m_ofs;
+    return pCell;
+  }
 
-    public: virtual CellKind GetKind() const {
-      return CellKind_Unicode;
-    }
+  public: virtual CellKind GetKind() const {
+    return CellKind_Unicode;
+  }
 
-    public: virtual void Render(const gfx::Graphics& gfx,
-                                const gfx::RectF& rect) const override {
-      gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
-      gfx.FillRectangle(fill_brush, rect);
+  public: virtual void Render(const gfx::Graphics& gfx,
+                              const gfx::RectF& rect) const override {
+    gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
+    gfx.FillRectangle(fill_brush, rect);
 
-      gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
-      DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
+    gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
+    DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
-      gfx.DrawRectangle(text_brush,
-                        gfx::RectF(rect.left, rect.top,
-                                   rect.right - 1, rect.bottom - 1));
-    }
+    gfx.DrawRectangle(text_brush,
+                      gfx::RectF(rect.left, rect.top,
+                                 rect.right - 1, rect.bottom - 1));
+  }
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -585,109 +566,97 @@ class UnicodeCell final : public TextCell {
 // EnumCI
 //  Enumerator for characters and interval
 //
-class EnumCI
-{
-    private: Posn               m_lBufEnd;
-    private: Posn               m_lBufStart;
-    private: Posn               m_lPosn;
-    private: Edit::Buffer*      m_pBuffer;
-    private: Edit::Interval*    m_pInterval;
-    private: char16             m_rgwch[80];
+class EnumCI {
+  private: Posn m_lBufEnd;
+  private: Posn m_lBufStart;
+  private: Posn m_lPosn;
+  private: Edit::Buffer* m_pBuffer;
+  private: Edit::Interval* m_pInterval;
+  private: char16 m_rgwch[80];
 
-    public: EnumCI(Edit::Buffer *pBuffer, Posn lPosn) :
-        m_pBuffer(pBuffer),
-        m_lPosn(lPosn)
-    {
-        m_pInterval = m_pBuffer->GetIntervalAt(m_lPosn);
-        ASSERT(nullptr != m_pInterval);
-        fill();
-    } // EmitCI
+  public: EnumCI(Edit::Buffer *pBuffer, Posn lPosn)
+      : m_pBuffer(pBuffer),
+        m_lPosn(lPosn) {
+    m_pInterval = m_pBuffer->GetIntervalAt(m_lPosn);
+    ASSERT(nullptr != m_pInterval);
+    fill();
+  }
 
-    public: bool AtEnd() const {
-      return m_lBufStart == m_lBufEnd;
+  public: bool AtEnd() const {
+    return m_lBufStart == m_lBufEnd;
+  }
+
+  private: void fill() {
+    auto const cwch = m_pBuffer->GetText(m_rgwch, m_lPosn,
+                                         m_lPosn + lengthof(m_rgwch));
+
+    m_lBufStart = m_lPosn;
+    m_lBufEnd   = m_lPosn + cwch;
+  }
+
+  public: char16 GetChar() const {
+    if (AtEnd())
+      return 0;
+    ASSERT(m_lPosn >= m_lBufStart);
+    ASSERT(m_lPosn < m_lBufEnd);
+    return m_rgwch[m_lPosn - m_lBufStart];
+  }
+
+  public: Posn GetPosn() const { return m_lPosn; }
+
+  public: const StyleValues* GetStyle() const {
+    if (AtEnd())
+      return m_pBuffer->GetDefaultStyle();
+    ASSERT(nullptr != m_pInterval);
+    return m_pInterval->GetStyle();
+  }
+
+  public: void Next() {
+    if (AtEnd())
+      return;
+    m_lPosn += 1;
+    if (m_lPosn >= m_lBufEnd)
+      fill();
+
+    if (m_lPosn >= m_pInterval->GetEnd()) {
+      Edit::Interval* pNext = m_pInterval->GetNext();
+      if (pNext)
+        m_pInterval = pNext;
     }
-
-    private: void fill() {
-        Count cwch = m_pBuffer->GetText(
-            m_rgwch,
-            m_lPosn,
-            m_lPosn + lengthof(m_rgwch) );
-
-        m_lBufStart = m_lPosn;
-        m_lBufEnd   = m_lPosn + cwch;
-    } // fill
-
-    public: char16 GetChar() const
-    {
-        if (AtEnd()) return 0;
-        ASSERT(m_lPosn >= m_lBufStart);
-        ASSERT(m_lPosn < m_lBufEnd);
-        return m_rgwch[m_lPosn - m_lBufStart];
-    } // GetChar
-
-    public: Posn GetPosn() const
-        { return m_lPosn; }
-
-    public: const StyleValues* GetStyle() const
-    {
-        if (AtEnd()) return m_pBuffer->GetDefaultStyle();
-        ASSERT(nullptr != m_pInterval);
-        return m_pInterval->GetStyle();
-    } // Style
-
-    public: void Next()
-    {
-        if (AtEnd()) return;
-        m_lPosn += 1;
-        if (m_lPosn >= m_lBufEnd)
-        {
-            fill();
-        } // if
-
-        if (m_lPosn >= m_pInterval->GetEnd())
-        {
-            Edit::Interval* pNext = m_pInterval->GetNext();
-            if (pNext != nullptr)
-            {
-                m_pInterval = pNext;
-            } // if
-        } // if
-    } // Next
-}; // EnumCI
-
+  }
+};
 
 //////////////////////////////////////////////////////////////////////
 //
 // Formatter
 //
 class Formatter {
-    const gfx::Graphics& m_gfx;
-    HANDLE const m_hObjHeap;
-    Page*  const m_pPage;
-    LocalCharSink_<> m_oCharSink;
-    EnumCI m_oEnumCI;
+  private: const gfx::Graphics& m_gfx;
+  private: HANDLE const m_hObjHeap;
+  private: Page*  const m_pPage;
+  private: LocalCharSink_<> m_oCharSink;
+  private: EnumCI m_oEnumCI;
 
-    public: Formatter(
-        const gfx::Graphics& gfx,
-        HANDLE          hHeap,
-        Page*           pPage,
-        Posn            lStart ) :
-            m_gfx(gfx),
-            m_hObjHeap(hHeap),
-            m_pPage(pPage),
-            m_oCharSink(hHeap),
-            m_oEnumCI(pPage->GetBuffer(), lStart) {}
+  public: Formatter(const gfx::Graphics& gfx,
+                    HANDLE hHeap,
+                    Page* pPage,
+                    Posn lStart)
+      : m_gfx(gfx),
+        m_hObjHeap(hHeap),
+        m_pPage(pPage),
+        m_oCharSink(hHeap),
+        m_oEnumCI(pPage->GetBuffer(), lStart) {
+  }
 
-    public: void Format();
-    public: bool FormatLine(Page::Line*);
+  public: void Format();
+  public: bool FormatLine(Page::Line*);
 
-    Cell* formatChar(Cell*, float x, char16);
-    Cell* formatMarker(MarkerCell::Kind);
-    Cell* formatTab(int);
+  private: Cell* formatChar(Cell*, float x, char16);
+  private: Cell* formatMarker(MarkerCell::Kind);
+  private: Cell* formatTab(int);
 
-    DISALLOW_COPY_AND_ASSIGN(Formatter);
+  DISALLOW_COPY_AND_ASSIGN(Formatter);
 }; // Formatter
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -731,103 +700,90 @@ void Formatter::Format() {
 //  Returns true if more contents is avaialble, otherwise returns false.
 //
 bool Formatter::FormatLine(Page::Line* pLine) {
-    bool fMoreContents = true;
+  auto fMoreContents = true;
+  pLine->m_lStart = m_oEnumCI.GetPosn();
+  m_oCharSink.Reset();
+  auto ppPrevCell = &pLine->m_pCell;
+  *ppPrevCell = nullptr;
 
-    pLine->m_lStart = m_oEnumCI.GetPosn();
+  auto x = static_cast<float>(m_pPage->m_rc.left);
+  auto iDescent = 0.0f;
+  auto iAscent  = 0.0f;
 
-    m_oCharSink.Reset();
+  Cell* pCell;
 
-    Cell** ppPrevCell = &pLine->m_pCell;
-    *ppPrevCell = nullptr;
+  // Left margin
+  {
+    auto const cyMinHeight = 1.0f;
 
-    float x = static_cast<float>(m_pPage->m_rc.left);
-    float iDescent = 0;
-    float iAscent  = 0;
-
-    Cell* pCell;
-
-    // Left margin
-    {
-        float const cyMinHeight = 1.0f;
-
-        pCell = new(m_hObjHeap)
-            FillerCell(
-                m_pPage->m_crBackground,
-                cxLeftMargin,
-                cyMinHeight );
-
-        *ppPrevCell = pCell;
-        ppPrevCell = &pCell->m_pNext;
-
-        x += cxLeftMargin;
-    }
-
-    for (;;)
-    {
-        if (m_oEnumCI.AtEnd())
-        {
-            pCell = formatMarker(MarkerCell::Kind_Eob);
-            fMoreContents = false;
-            break;
-        }
-
-        auto const wch = m_oEnumCI.GetChar();
-
-        if (wch == 0x0A) {
-          pCell = formatMarker(MarkerCell::Kind_Eol);
-          m_oEnumCI.Next();
-          break;
-        }
-
-        float cx = pCell->m_cx;
-
-        pCell = formatChar(pCell, x, wch);
-        if (!pCell) {
-          pCell = formatMarker(MarkerCell::Kind_Wrap);
-          break;
-        }
-
-        m_oEnumCI.Next();
-
-        if (ppPrevCell == &pCell->m_pNext)
-        {
-            x -= cx;
-        }
-        else
-        {
-            *ppPrevCell = pCell;
-            ppPrevCell = &pCell->m_pNext;
-        }
-
-        x += pCell->m_cx;
-        iDescent = max(pCell->GetDescent(), iDescent);
-        iAscent  = max(pCell->GetHeight() - pCell->GetDescent(),  iAscent);
-    } // for
-
-    // We have at least one cell.
-    //   o end of buffer: End-Of-Buffer MarkerCell
-    //   o end of line:   End-Of-Line MarkerCell
-    //   o wrapped line:  Warp MarkerCEll
-    ASSERT(nullptr != pCell);
-    ASSERT(nullptr == *ppPrevCell);
-    ASSERT(ppPrevCell != &pCell->m_pNext);
+    pCell = new(m_hObjHeap) FillerCell(m_pPage->m_crBackground,
+                                       cxLeftMargin, cyMinHeight);
 
     *ppPrevCell = pCell;
     ppPrevCell = &pCell->m_pNext;
+    x += cxLeftMargin;
+  }
+
+  for (;;) {
+    if (m_oEnumCI.AtEnd()) {
+        pCell = formatMarker(MarkerCell::Kind_Eob);
+        fMoreContents = false;
+        break;
+    }
+
+    auto const wch = m_oEnumCI.GetChar();
+
+    if (wch == 0x0A) {
+      pCell = formatMarker(MarkerCell::Kind_Eol);
+      m_oEnumCI.Next();
+      break;
+    }
+
+    auto const cx = pCell->m_cx;
+
+    pCell = formatChar(pCell, x, wch);
+    if (!pCell) {
+      pCell = formatMarker(MarkerCell::Kind_Wrap);
+      break;
+    }
+
+    m_oEnumCI.Next();
+
+    if (ppPrevCell == &pCell->m_pNext) {
+      x -= cx;
+    } else {
+      *ppPrevCell = pCell;
+      ppPrevCell = &pCell->m_pNext;
+    }
 
     x += pCell->m_cx;
     iDescent = max(pCell->GetDescent(), iDescent);
     iAscent  = max(pCell->GetHeight() - pCell->GetDescent(),  iAscent);
+  }
 
-    pLine->m_iHeight = iAscent + iDescent;
+  // We have at least one cell.
+  //   o end of buffer: End-Of-Buffer MarkerCell
+  //   o end of line:   End-Of-Line MarkerCell
+  //   o wrapped line:  Warp MarkerCEll
+  ASSERT(pCell);
+  ASSERT(!*ppPrevCell);
+  ASSERT(ppPrevCell != &pCell->m_pNext);
 
-    pLine->m_cwch = m_oCharSink.GetLength();
-    pLine->m_pwch = m_oCharSink.Fix();
-    pLine->Fix(iDescent);
+  *ppPrevCell = pCell;
+  ppPrevCell = &pCell->m_pNext;
 
-    return fMoreContents;
-} // Formatter::FormatLine
+  x += pCell->m_cx;
+  iDescent = max(pCell->GetDescent(), iDescent);
+  iAscent  = max(pCell->GetHeight() - pCell->GetDescent(),  iAscent);
 
+  pLine->m_iHeight = iAscent + iDescent;
+
+  pLine->m_cwch = m_oCharSink.GetLength();
+  pLine->m_pwch = m_oCharSink.Fix();
+  pLine->Fix(iDescent);
+
+  return fMoreContents;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -845,7 +801,7 @@ Cell* Formatter::formatChar(
     const StyleValues* pStyle = m_oEnumCI.GetStyle();
 
     if (lPosn >= m_pPage->m_lSelStart &&
-        lPosn <  m_pPage->m_lSelEnd )
+        lPosn <  m_pPage->m_lSelEnd)
     {
         crColor      = m_pPage->m_crSelFg;
         crBackground = m_pPage->m_crSelBg;
@@ -929,7 +885,7 @@ Cell* Formatter::formatChar(
             pFont,
             cx,
             lPosn,
-            m_oCharSink.GetLength() );
+            m_oCharSink.GetLength());
 
         m_oCharSink.Add(wch);
         return pCell;
@@ -953,7 +909,7 @@ Cell* Formatter::formatChar(
             pFont,
             cx,
             lPosn,
-            m_oCharSink.GetLength() );
+            m_oCharSink.GetLength());
 
         m_oCharSink.Add(wch);
         return pCell;
@@ -968,7 +924,7 @@ Cell* Formatter::formatMarker(MarkerCell::Kind  eKind) {
     const StyleValues* pStyle = m_oEnumCI.GetStyle();
 
     if (lPosn >= m_pPage->m_lSelStart &&
-        lPosn <  m_pPage->m_lSelEnd )
+        lPosn <  m_pPage->m_lSelEnd)
     {
         crColor      = m_pPage->m_crSelFg;
         crBackground = m_pPage->m_crSelBg;
@@ -987,14 +943,13 @@ Cell* Formatter::formatMarker(MarkerCell::Kind  eKind) {
         pFont->GetHeight(),
         pFont->GetDescent(),
         m_oEnumCI.GetPosn(),
-        eKind );
+        eKind);
     return pCell;
 } // Formatter::formatMarker
 
 } // PageInternal
 
 using namespace PageInternal;
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1027,7 +982,6 @@ void Page::fillBottom(const gfx::Graphics& gfx, float y) const
     fillRect(gfx, rect, gfx::ColorF::LightGray);
 } // Page::fillBottom
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Page::fillRight
@@ -1043,7 +997,6 @@ void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
     fillRect(gfx, rc, ColorToColorF(m_crBackground));
   }
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1063,7 +1016,6 @@ Page::Line* Page::FindLine(Posn lPosn) const
     // We must not here.
     return nullptr;
 } // Page::FindLine
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1091,7 +1043,6 @@ void Page::formatAux(const gfx::Graphics& gfx, Posn lStart)
     m_lEnd = GetLastLine()->GetEnd();
 } // Page::formatAux
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Page::FormatLine
@@ -1099,7 +1050,7 @@ void Page::formatAux(const gfx::Graphics& gfx, Posn lStart)
 Page::Line* Page::FormatLine(
     const gfx::Graphics&     gfx,
     const Selection&    selection,
-    Posn                lStart ) {
+    Posn                lStart) {
     Prepare(selection);
     m_oFormatBuf.Reset();
 
@@ -1110,7 +1061,6 @@ Page::Line* Page::FormatLine(
     oFormatter.FormatLine(pLine);
     return pLine;
 } // Page::FormatLine
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1258,7 +1208,6 @@ bool Page::IsDirty(RECT rc, const Selection& selection, bool fSelection) const
     return false;
 } // Page::IsDirty
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Page::isPosnVisible
@@ -1278,7 +1227,6 @@ bool Page::isPosnVisible(Posn lPosn) const {
   }
   return false;
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1315,7 +1263,6 @@ Posn Page::MapPointToPosn(const gfx::Graphics& gfx, gfx::PointF pt) const
     } // for each line
     return GetEnd() - 1;
 } // Page::MapPointToPosn
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1367,7 +1314,6 @@ int Page::pageLines(const gfx::Graphics& gfx) const
     return static_cast<int>(m_rc.height() / pFont->GetHeight());
 } // Page::pageLines
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Page::prepare
@@ -1386,7 +1332,7 @@ void Page::Prepare(const Selection& selection) {
   #if DEBUG_FORMAT
     DEBUG_PRINTF("selection: %d...%d 0x%x/0x%x\n",
         m_lSelStart, m_lSelEnd,
-        m_crSelFg, m_crSelBg );
+        m_crSelFg, m_crSelBg);
   #endif // DEBUG_FORMAT
 
   // Page
@@ -1407,7 +1353,7 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
             m_lStart, m_lEnd,
             m_lSelStart, m_lSelEnd,
             m_rc.left, m_rc.top, m_rc.right, m_rc.bottom,
-            rcClip.left, rcClip.top, rcClip.right, rcClip.bottom );
+            rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
     }
     #endif // DEBUG_RENDER
 
@@ -1420,14 +1366,14 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
         ASSERT(y < m_rc.bottom);
 
         if (y < rcClip.bottom &&
-            y + pLine->GetHeight() >= rcClip.top )
+            y + pLine->GetHeight() >= rcClip.top)
         {
             auto x = m_rc.left;
             foreach (EnumCell, oEnum, pLine)
             {
                 auto const pCell = oEnum.Get();
                 if (x < rcClip.right &&
-                    x + pCell->m_cx >= rcClip.left )
+                    x + pCell->m_cx >= rcClip.left)
                 {
                     gfx::RectF rc(x, y, x + pCell->m_cx, y + pCell->m_cy);
                     pCell->Render(gfx, rc);
@@ -1462,7 +1408,6 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
     fillBottom(gfx, y);
 } // Page::Render
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Page::Render
@@ -1488,7 +1433,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
             pCurStart = pCurStart->GetNext();
         } // while
 
-        if (pNewStart == nullptr && pCurStart == nullptr) {
+        if (!pNewStart && !pCurStart) {
             // m_oFormatBuf and m_oScreenBuf are same.
             #if DEBUG_RENDER
                 DEBUG_PRINTF("nothing to do\n");
@@ -1548,7 +1493,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
         for (
             auto pNewLine = pNewStart;
             pNewLine != pNewEnd;
-            pNewLine = pNewLine->GetNext() )
+            pNewLine = pNewLine->GetNext())
         {
             bool fRedraw;
 
@@ -1605,7 +1550,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
                 cRedraws,
                 m_lStart, m_lEnd,
                 m_lSelStart, m_lSelEnd,
-                m_rc.left, m_rc.top, m_rc.right, m_rc.bottom );
+                m_rc.left, m_rc.top, m_rc.right, m_rc.bottom);
         }
         #endif // DEBUG_RENDER
     } // if
@@ -1644,7 +1589,7 @@ Page::Line* Page::TryScroll(
             auto cy = pNewLine->GetHeight();
             auto pNewRunner = pNewLine->GetNext();
             auto pCurRunner = pCurLine->GetNext();
-            while (pNewRunner != nullptr && pCurRunner != nullptr) {
+            while (pNewRunner && pCurRunner) {
               if (!pNewRunner->Equal(pCurRunner))
                 break;
               cy += pNewRunner->GetHeight();
@@ -1826,7 +1771,7 @@ bool Page::ScrollUp(const gfx::Graphics& gfx)
         gfx,
         m_oFormatBuf.GetHeap(),
         this,
-        GetLastLine()->GetEnd() );
+        GetLastLine()->GetEnd());
 
     bool fMore = oFormatter.FormatLine(pLine);
 
@@ -1892,95 +1837,73 @@ void Page::DisplayBuffer::Prepend(Line* pLine) {
 }
 
 // Page::DisplayBuffer::Reset
-HANDLE Page::DisplayBuffer::Reset()
-{
-    #if DEBUG_HEAP
-        DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
-    #endif // DEBUG_HEAP
+HANDLE Page::DisplayBuffer::Reset() {
+  #if DEBUG_HEAP
+    DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
+  #endif // DEBUG_HEAP
 
-    if (nullptr != m_hObjHeap)
-    {
-        ::HeapDestroy(m_hObjHeap);
-    } // if
+  if (nullptr != m_hObjHeap)
+    ::HeapDestroy(m_hObjHeap);
 
-    m_hObjHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-    m_pFirst = nullptr;
-    m_pLast  = nullptr;
-    m_cy = 0;
+  m_hObjHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+  m_pFirst = nullptr;
+  m_pLast  = nullptr;
+  m_cy = 0;
 
-    #if DEBUG_HEAP
-        DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
-    #endif // DEBUG_HEAP
+  #if DEBUG_HEAP
+    DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
+  #endif // DEBUG_HEAP
 
-    return m_hObjHeap;
-} // Page::DisplayBuffer::Reset
+  return m_hObjHeap;
+}
 
-
-// Page::DisplayBuffer::ScrollDown
 Page::Line* Page::DisplayBuffer::ScrollDown() {
-    if (m_pLast == m_pFirst) return nullptr;
+  if (m_pLast == m_pFirst)
+    return nullptr;
 
-    Line* pLine = m_pLast;
-    m_pLast = m_pLast->GetPrev();
-    m_pLast->m_pNext = nullptr;
-    m_cy -= pLine->GetHeight();
-    return pLine;
-} // Page::DisplayBuffer::ScrollDown
+  Line* pLine = m_pLast;
+  m_pLast = m_pLast->GetPrev();
+  m_pLast->m_pNext = nullptr;
+  m_cy -= pLine->GetHeight();
+  return pLine;
+}
 
-
-// Page::DisplayBuffer::ScrollUp
 Page::Line* Page::DisplayBuffer::ScrollUp() {
-    if (m_pLast == m_pFirst) return nullptr;
+  if (m_pLast == m_pFirst)
+    return nullptr;
 
-    Line* pLine = m_pFirst;
-    m_pFirst = m_pFirst->GetNext();
-    m_pFirst->m_pPrev = nullptr;
-    m_cy -= pLine->GetHeight();
-    return pLine;
-} // Page::DisplayBuffer::ScrollUp
+  auto const pLine = m_pFirst;
+  m_pFirst = m_pFirst->GetNext();
+  m_pFirst->m_pPrev = nullptr;
+  m_cy -= pLine->GetHeight();
+  return pLine;
+}
 
+Page::Line* Page::Line::Copy(HANDLE hHeap) const {
+  auto const pLine = new(hHeap) Line(*this);
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Line::Copy
-//
-Page::Line* Page::Line::Copy(HANDLE hHeap) const
-{
-    Line* pLine = new(hHeap) Line(*this);
+  pLine->m_pwch = reinterpret_cast<char16*>(
+      ::HeapAlloc(hHeap, 0, sizeof(char16) * m_cwch));
 
-    pLine->m_pwch = reinterpret_cast<char16*>(
-        ::HeapAlloc(hHeap, 0, sizeof(char16) * m_cwch) );
+  myCopyMemory(pLine->m_pwch, m_pwch, sizeof(char16) * m_cwch);
 
-    myCopyMemory(pLine->m_pwch, m_pwch, sizeof(char16) * m_cwch);
+  auto ppPrev = &pLine->m_pCell;
+  auto const pwch = pLine->m_pwch;
+  foreach (EnumCell, oEnum, this) {
+    const auto* const pCell = oEnum.Get();
+    auto const pCopy = pCell->Copy(hHeap, pwch);
+    *ppPrev = pCopy;
+    ppPrev = &pCopy->m_pNext;
+  }
+  return pLine;
+}
 
-    Cell** ppPrev = &pLine->m_pCell;
+void Page::Line::Discard() {
+  if (m_pwch)
+    ::HeapFree(m_hObjHeap, 0, m_pwch);
+  ::HeapFree(m_hObjHeap, 0, this);
+}
 
-    char16* pwch = pLine->m_pwch;
-
-    foreach (EnumCell, oEnum, this)
-    {
-        Cell* pCell = oEnum.Get();
-        Cell* pCopy = pCell->Copy(hHeap, pwch);
-        *ppPrev = pCopy;
-        ppPrev = &pCopy->m_pNext;
-    } // for each cell
-
-    return pLine;
-} // Page::Line::Copy
-
-
-// Page::Line::Discard
-void Page::Line::Discard()
-{
-    if (m_pwch != nullptr) ::HeapFree(m_hObjHeap, 0, m_pwch);
-    ::HeapFree(m_hObjHeap, 0, this);
-} // Page::Line::Discard
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Line::Equal
-//
 bool Page::Line::Equal(const Line* pLine2) const
 {
     if (Hash() != pLine2->Hash()) return false;
@@ -1995,7 +1918,6 @@ bool Page::Line::Equal(const Line* pLine2) const
     } // for each cell
     return oEnum2.AtEnd();
 } // Page::Line::Equal
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2013,25 +1935,20 @@ void Page::Line::Fix(float iDescent) {
     if (lEnd >= 0) 
       m_lEnd = lEnd;
     cx += pCell->GetWidth();
-  } // for each cell
+  }
   m_iWidth  = cx;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Line::Hash
-//
-uint Page::Line::Hash() const
-{
-    if (0 != m_nHash) return m_nHash;
-    foreach (EnumCell, oEnum, this)
-    {
-        Cell* pCell = oEnum.Get();
-        m_nHash <<= 5;
-        m_nHash ^= pCell->Hash();
-        m_nHash >>= 3;
-    } // for each cell
+uint Page::Line::Hash() const {
+  if (m_nHash)
     return m_nHash;
+  foreach (EnumCell, oEnum, this) {
+    auto const pCell = oEnum.Get();
+    m_nHash <<= 5;
+    m_nHash ^= pCell->Hash();
+    m_nHash >>= 3;
+  }
+  return m_nHash;
 }
 
 Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
@@ -2044,7 +1961,7 @@ Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
     auto const lMap = pCell->MapXToPosn(gfx, x);
     if (lMap >= 0) 
       lPosn = lMap;
-    if (x >= 0 && x < pCell->m_cx) 
+    if (x >= 0 && x < pCell->m_cx)
       break;
   }
   return lPosn;
@@ -2064,17 +1981,17 @@ void Page::Line::Render(const gfx::Graphics& gfx,
 }
 
 // Page::Line::Reset
-void Page::Line::Reset()
-{
-    m_iHeight = 0;
-    m_iWidth  = 0;
-    m_nHash   = 0;
-    m_lStart  = -1;
-    m_lEnd    = -1;
-    m_pCell   = nullptr;
-    m_pNext   = nullptr;
-    m_pPrev   = nullptr;
-    m_cwch    = 0;
-    if (m_pwch != nullptr) ::HeapFree(m_hObjHeap, 0, m_pwch);
-    m_pwch = nullptr;
-} // Page::Line::Reset
+void Page::Line::Reset() {
+  m_iHeight = 0;
+  m_iWidth  = 0;
+  m_nHash   = 0;
+  m_lStart  = -1;
+  m_lEnd    = -1;
+  m_pCell   = nullptr;
+  m_pNext   = nullptr;
+  m_pPrev   = nullptr;
+  m_cwch    = 0;
+  if (m_pwch)
+    ::HeapFree(m_hObjHeap, 0, m_pwch);
+  m_pwch = nullptr;
+}
