@@ -667,6 +667,12 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       }
       return 0;
 
+    case WM_VSCROLL:
+      if (auto const pane = GetActivePane())
+        pane->OnDeprecatedVScroll(LOWORD(wParam),
+                                  reinterpret_cast<HWND>(lParam));
+      return 0;
+
     case WM_WINDOWPOSCHANGED: {
       // DefWindowProc sents WM_SIZE and WM_MOVE, so handling
       // WM_WINDPOSCHANGED is faster than DefWindowProc.

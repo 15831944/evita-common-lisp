@@ -61,6 +61,9 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   public: static bool Is_(const CommandWindow* p) { return p->IsPane(); }
 
   // [O]
+  // TODO: Once we have scroll bar widget, we don't use
+  // |OnDeprecatedVScroll()|.
+  public: virtual void OnDeprecatedVScroll(uint, HWND) {}
   public: virtual void OnLeftButtonDown(uint, const Point&) {}
   public: virtual void OnLeftButtonUp(uint, const Point&) {}
   protected: LRESULT onMessage(uint, WPARAM, LPARAM);

@@ -1355,6 +1355,13 @@ Command::KeyBindEntry* EditPane::MapKey(uint nKey) {
   return GetActiveWindow()->MapKey(nKey);
 }
 
+void EditPane::OnDeprecatedVScroll(uint code, HWND hwnd) {
+  auto const box = reinterpret_cast<LeafBox*>(
+      ::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+  if (auto const window = box ->GetWindow())
+    window->SendMessage(WM_VSCROLL, code);
+}
+
 bool EditPane::OnIdle(uint count) {
   return root_box_->OnIdle(count);
 }
