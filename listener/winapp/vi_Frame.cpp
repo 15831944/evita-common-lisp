@@ -520,6 +520,27 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       return 0;
     }
 
+    case WM_LBUTTONDOWN:
+      if (auto const pane = GetActivePane()) {
+        Point pt(MAKEPOINTS(lParam));
+        pane->OnLeftButtonDown(static_cast<uint>(wParam), pt);
+      }
+      return 0;
+
+    case WM_LBUTTONUP:
+      if (auto const pane = GetActivePane()) {
+        Point pt(MAKEPOINTS(lParam));
+        pane->OnLeftButtonUp(static_cast<uint>(wParam), pt);
+      }
+      return 0;
+
+    case WM_MOUSEMOVE:
+      if (auto const pane = GetActivePane()) {
+        Point pt(MAKEPOINTS(lParam));
+        pane->OnMouseMove(static_cast<uint>(wParam), pt);
+      }
+      return 0;
+
     case WM_NCDESTROY:
       delete this;
       break;

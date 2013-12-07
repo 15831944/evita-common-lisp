@@ -235,6 +235,7 @@ class EditPane::SplitterController {
   public: void Move(const Point&);
   public: void Start(HWND, State, Box&);
   public: void Stop();
+  DISALLOW_COPY_AND_ASSIGN(SplitterController);
 };
 
 namespace {
@@ -1358,38 +1359,35 @@ bool EditPane::OnIdle(uint count) {
   return root_box_->OnIdle(count);
 }
 
+void EditPane::OnLeftButtonDown(uint, const Point& point) {
+  auto const result = root_box_->HitTest(point);
+  switch (result.type) {
+    case HitTestResult::HSplitter:
+    case HitTestResult::VSplitter:
+      splitter_controller_->Start(*frame_, SplitterController::State_Drag,
+                                  *result.box);
+      break;
+
+    case HitTestResult::VSplitterBig:
+      splitter_controller_->Start(*frame_, SplitterController::State_DragSingle,
+                                  *result.box);
+      break;
+  }
+}
+
+void EditPane::OnLeftButtonUp(uint, const Point& point) {
+  splitter_controller_->End(point);
+}
+
+void EditPane::OnMouseMove(uint, const Point& point) {
+  splitter_controller_->Move(point);
+}
+
 LRESULT EditPane::onMessage(
     UINT uMsg,
     WPARAM wParam,
     LPARAM lParam) {
   switch (uMsg) {
-    case WM_LBUTTONDOWN: {
-      Point pt(MAKEPOINTS(lParam));
-      auto const result = root_box_->HitTest(pt);
-      switch (result.type) {
-        case HitTestResult::HSplitter:
-        case HitTestResult::VSplitter:
-          splitter_controller_->Start(m_hwnd, SplitterController::State_Drag, *result.box);
-          break;
-
-        case HitTestResult::VSplitterBig:
-          splitter_controller_->Start(
-              m_hwnd,
-              SplitterController::State_DragSingle,
-              *result.box);
-          break;
-        }
-        return 0;
-    }
-
-    case WM_LBUTTONUP:
-      splitter_controller_->End(MAKEPOINTS(lParam));
-      return 0;
-
-    case WM_MOUSEMOVE:
-      splitter_controller_->Move(MAKEPOINTS(lParam));
-      return 0;
-
     case WM_VSCROLL: {
       auto const pBox = reinterpret_cast<LeafBox*>(
           ::GetWindowLongPtr(
