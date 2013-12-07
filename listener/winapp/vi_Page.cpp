@@ -969,15 +969,15 @@ void Page::fillBottom(const gfx::Graphics& gfx, float y) const
     Font* pFont = FontSet::Get(gfx, m_pBuffer->GetDefaultStyle())->
         FindFont(gfx, 'x');
 
-    gfx::RectF rect;
     // FIXME 2007-08-05 yosi@msn.com We should expose rule position to
     // user.
-    rect.left  = m_rc.left + pFont->GetCharWidth('M') * 80;
-    rect.top = static_cast<float>(m_rc.top);
-    rect.right =  rect.left + 1;
-    rect.bottom = static_cast<float>(m_rc.bottom);
-    fillRect(gfx, rect, gfx::ColorF::LightGray);
-} // Page::fillBottom
+    auto const num_columns = 80;
+    
+    drawVLine(gfx, gfx::Brush(gfx, gfx::ColorF::LightGray),
+              m_rc.left + pFont->GetCharWidth('M') * num_columns,
+              m_rc.top,
+              m_rc.bottom);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
