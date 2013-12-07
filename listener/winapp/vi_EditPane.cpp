@@ -22,12 +22,28 @@
 #include "./vi_TextEditWindow.h"
 #include "./vi_util.h"
 
-const char16* const
-k_rgwszNewline[4] = {
-  L"--",
-  L"LF",
-  L"CR",
-  L"CRLF",
+struct EditPane::HitTestResult {
+  enum Type {
+    None,
+    HScrollBar,
+    HSplitter,
+    HSplitterBig,
+    VScrollBar,
+    VSplitter,
+    VSplitterBig,
+    Window,
+  };
+
+  Box* box;
+  Type type;
+
+  HitTestResult() : box(nullptr), type(None) {
+  }
+
+  HitTestResult(Type type, const Box& box)
+      : box(const_cast<Box*>(&box)), type(type) {
+    ASSERT(type != None);
+  }
 };
 
 class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
@@ -203,47 +219,23 @@ class EditPane::VerticalLayoutBox final : public LayoutBox {
   public: virtual void StopSplitter(const Point&, Box&) override;
 };
 
-#if 0
-class EditPane::BoxWalker final {
-  public: class Iterator final {
-    private: const EditPane* tree_owner_;
-    private: Box* runner_;
-    public: Iterator(const EditPane& tree_owner, Box* runner)
-        : tree_owner_(&tree_owner),
-          runner_(runner) {
-    }
-    public: bool operator==(const Iterator& other) const {
-      ASSERT(tree_owner_ == other.tree_owner_);
-      return runner_ == other.runner_;
-    }
-    public: bool operator!=(const Iterator& other) const {
-      ASSERT(tree_owner_ == other.tree_owner_);
-      return runner_ != other.runner_;
-    }
-    public: Box& operator*() const {
-      ASSERT(runner_);
-      return *runner_;
-    }
-    public: BoxWalker& operator++() {
-      ASSERT(runner_);
-      if (auto const child = runner_->first_child())
-        runner_= child;
-      else if (auto const next_sibling = runner_->next_sibling())
-        runner_ = next_sibling;
-      else
-        runner_ = runner_->outer();
-    }
+class EditPane::SplitterController {
+  public: enum State {
+    State_None,
+    State_Drag,
+    State_DragSingle,
   };
-  private: const EditPane* tree_owner_;
-  public: BoxWalker(const EditPane& tree_owner) : tree_owner_(&tree_owner) {}
-  public: Iterator begin() const {
-    return Iterator(*tree_owner_, &tree_owner_->root_box());
-  }
-  public: Iterator end() const {
-    return Iterator(*tree_owner_, nullptr);
-  }
+
+  private: Box* m_pBox;
+  private: State m_eState;
+
+  public: SplitterController();
+  public: ~SplitterController();
+  public: void End(const Point&);
+  public: void Move(const Point&);
+  public: void Start(HWND, State, Box&);
+  public: void Stop();
 };
-#endif
 
 namespace {
 class StockCursor {
@@ -282,14 +274,6 @@ void DrawSplitter(const gfx::Graphics& gfx, RECT* prc,
 //
 // EditPane
 //
-
-EditPane::HitTestResult::HitTestResult()
-    : box(nullptr), type(None) {}
-
-EditPane::HitTestResult::HitTestResult(Type type, const Box& box)
-    : box(const_cast<Box*>(&box)), type(type) {
-  ASSERT(type != None);
-}
 
 EditPane::Box::Box(EditPane* edit_pane, LayoutBox* outer)
     : edit_pane_(edit_pane),
@@ -1165,35 +1149,35 @@ void EditPane::VerticalLayoutBox::StopSplitter(
   }
 }
 
-// EditPane::SplitterDrag
-EditPane::SplitterDrag::SplitterDrag()
+// EditPane::SplitterController
+EditPane::SplitterController::SplitterController()
     : m_eState(State_None),
       m_pBox(nullptr) {}
 
-EditPane::SplitterDrag::~SplitterDrag() {
+EditPane::SplitterController::~SplitterController() {
   ASSERT(!m_pBox);
 }
 
-void EditPane::SplitterDrag::End(const Point& point) {
+void EditPane::SplitterController::End(const Point& point) {
   switch (m_eState) {
-    case SplitterDrag::State_Drag:
-    case SplitterDrag::State_DragSingle:
+    case SplitterController::State_Drag:
+    case SplitterController::State_DragSingle:
       m_pBox->outer()->StopSplitter(point, *m_pBox);
       Stop();
       break;
   }
 }
 
-void EditPane::SplitterDrag::Move(const Point& point) {
+void EditPane::SplitterController::Move(const Point& point) {
   switch (m_eState) {
-    case SplitterDrag::State_Drag:
-    case SplitterDrag::State_DragSingle:
+    case SplitterController::State_Drag:
+    case SplitterController::State_DragSingle:
       m_pBox->outer()->MoveSplitter(point, *m_pBox);
       break;
   }
 }
 
-void EditPane::SplitterDrag::Start(HWND hwnd, State eState, Box& box) {
+void EditPane::SplitterController::Start(HWND hwnd, State eState, Box& box) {
   ASSERT(!!box.outer());
   ::SetCapture(hwnd);
   m_eState = eState;
@@ -1201,7 +1185,7 @@ void EditPane::SplitterDrag::Start(HWND hwnd, State eState, Box& box) {
   box.AddRef();
 }
 
-void EditPane::SplitterDrag::Stop() {
+void EditPane::SplitterController::Stop() {
   if (m_eState != State_None) {
     ASSERT(!!m_pBox);
     ::ReleaseCapture();
@@ -1216,6 +1200,7 @@ EditPane::EditPane(Frame* frame, Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
       frame_(frame),
       root_box_(*new VerticalLayoutBox(this, nullptr)),
+      splitter_controller_(new SplitterController()),
       showed_(false) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
@@ -1384,13 +1369,13 @@ LRESULT EditPane::onMessage(
       switch (result.type) {
         case HitTestResult::HSplitter:
         case HitTestResult::VSplitter:
-          m_oSplitterDrag.Start(m_hwnd, SplitterDrag::State_Drag, *result.box);
+          splitter_controller_->Start(m_hwnd, SplitterController::State_Drag, *result.box);
           break;
 
         case HitTestResult::VSplitterBig:
-          m_oSplitterDrag.Start(
+          splitter_controller_->Start(
               m_hwnd,
-              SplitterDrag::State_DragSingle,
+              SplitterController::State_DragSingle,
               *result.box);
           break;
         }
@@ -1398,11 +1383,11 @@ LRESULT EditPane::onMessage(
     }
 
     case WM_LBUTTONUP:
-      m_oSplitterDrag.End(MAKEPOINTS(lParam));
+      splitter_controller_->End(MAKEPOINTS(lParam));
       return 0;
 
     case WM_MOUSEMOVE:
-      m_oSplitterDrag.Move(MAKEPOINTS(lParam));
+      splitter_controller_->Move(MAKEPOINTS(lParam));
       return 0;
 
     case WM_VSCROLL: {
@@ -1514,6 +1499,13 @@ EditPane::Window* EditPane::SplitVertically() {
 }
 
 void EditPane::UpdateStatusBar() {
+  static const char16* const k_rgwszNewline[4] = {
+    L"--",
+    L"LF",
+    L"CR",
+    L"CRLF",
+  };
+
   setupStatusBar();
 
   auto const pBuffer = GetActiveWindow()->GetBuffer();

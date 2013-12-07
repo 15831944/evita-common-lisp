@@ -41,31 +41,6 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
     StatusBarPart_Insert,
   };
 
-  private: class Box;
-  private: class LayoutBox;
-  private: class LeafBox;
-
-  private: struct HitTestResult;
-
-  private: struct HitTestResult {
-    enum Type {
-      None,
-      HScrollBar,
-      HSplitter,
-      HSplitterBig,
-      VScrollBar,
-      VSplitter,
-      VSplitterBig,
-      Window,
-    };
-
-    Box* box;
-    Type type;
-
-    HitTestResult();
-    HitTestResult(Type type, const Box& box);
-  };
-
   private: typedef TextEditWindow Window;
   private: typedef DoubleLinkedList_<Window> Windows;
 
@@ -74,25 +49,8 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: class LeafBox;
   private: class HorizontalLayoutBox;
   private: class VerticalLayoutBox;
-  private: class BoxWalker;
-
-  private: class SplitterDrag {
-    public: enum State {
-      State_None,
-      State_Drag,
-      State_DragSingle,
-    };
-
-    private: Box* m_pBox;
-    private: State m_eState;
-
-    public: SplitterDrag();
-    public: ~SplitterDrag();
-    public: void End(const Point&);
-    public: void Move(const Point&);
-    public: void Start(HWND, State, Box&);
-    public: void Stop();
-  };
+  private: struct HitTestResult;
+  private: class SplitterController;
 
   private: enum State {
     State_NotRealized,
@@ -103,7 +61,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: State m_eState;
   private: Frame* frame_;
   private: ScopedRefCount_<LayoutBox> root_box_;
-  private: SplitterDrag m_oSplitterDrag;
+  private: const base::OwnPtr<SplitterController> splitter_controller_;
   private: Windows m_oWindows;
   private: RECT m_rc;
   private: bool showed_;
