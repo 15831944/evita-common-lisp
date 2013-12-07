@@ -238,7 +238,7 @@ void Graphics::Init(HWND hwnd) {
 
 void Graphics::Resize(const RECT& rc) const {
   auto size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
-  render_target().Resize(size);
+  COM_VERIFY(render_target().Resize(size));
 }
 
 // TextFormat
