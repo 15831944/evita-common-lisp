@@ -128,6 +128,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   // [G]
   private: LeafBox* GetActiveLeafBox() const;
+  public: virtual HCURSOR GetCursorAt(const Point&) const override;
   public: Window* GetActiveWindow() const;
   public: Buffer* GetBuffer() const;
 

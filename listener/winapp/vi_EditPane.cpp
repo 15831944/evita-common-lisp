@@ -30,9 +30,6 @@ k_rgwszNewline[4] = {
   L"CRLF",
 };
 
-static HCURSOR s_hHSplitCursor;
-static HCURSOR s_hVSplitCursor;
-
 class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
                       public RefCounted_<EditPane::Box> {
     protected: EditPane* edit_pane_;
@@ -249,6 +246,29 @@ class EditPane::BoxWalker final {
 #endif
 
 namespace {
+class StockCursor {
+  private: HCURSOR hCursor_;
+  private: HINSTANCE hInstance_;
+  private: const char16* id_;
+  public: explicit StockCursor(int id)
+    : StockCursor(g_hInstance, MAKEINTRESOURCE(id)) {
+  }
+  public: explicit StockCursor(const char16* id)
+    : StockCursor(nullptr, MAKEINTRESOURCE(id)) {
+  }
+  private: StockCursor(HINSTANCE instance, const char16* id)
+      : hCursor_(nullptr), hInstance_(instance), id_(id) {
+  }
+  public: operator HCURSOR() {
+    if (!hCursor_) {
+      hCursor_ = ::LoadCursor(hInstance_, id_);
+      ASSERT(hCursor_);
+    }
+    return hCursor_;
+  }
+  DISALLOW_COPY_AND_ASSIGN(StockCursor);
+};
+
 void DrawSplitter(const gfx::Graphics& gfx, RECT* prc,
                          uint /*grfFlag*/) {
   auto rc = *prc;
@@ -1277,6 +1297,30 @@ Buffer* EditPane::GetBuffer() const {
   return GetActiveWindow()->GetBuffer();
 }
 
+HCURSOR EditPane::GetCursorAt(const Point& point) const {
+  switch (root_box_->HitTest(point).type) {
+    case HitTestResult::HSplitter:
+    case HitTestResult::HSplitterBig: {
+      static StockCursor hsplit_cursor(IDC_HSPLIT);
+      return hsplit_cursor;
+    }
+
+    case HitTestResult::VSplitter:
+    case HitTestResult::VSplitterBig: {
+      static StockCursor vsplit_cursor(IDC_VSPLIT);
+      return vsplit_cursor;
+    }
+
+    case HitTestResult::None:
+      return nullptr;
+
+    default: {
+      static StockCursor arrow_cursor(IDC_ARROW);
+      return arrow_cursor;
+    }
+  }
+}
+
 int EditPane::GetTitle(char16* out_wszTitle, int cchTitle) {
   auto const pBuffer = GetActiveWindow()->GetBuffer();
   auto const pwszName = pBuffer->GetName();
@@ -1362,41 +1406,6 @@ LRESULT EditPane::onMessage(
       return 0;
 
     case WM_SETCURSOR: {
-      Point pt;
-      if (!::GetCursorPos(&pt)) {
-        return FALSE;
-      }
-
-      if (!::ScreenToClient(m_hwnd, &pt)) {
-        return FALSE;
-      }
-
-      switch (root_box_->HitTest(pt).type) {
-        case HitTestResult::HSplitter:
-        case HitTestResult::HSplitterBig:
-          if (!s_hHSplitCursor) {
-            s_hHSplitCursor = ::LoadCursor(
-                g_hInstance,
-                MAKEINTRESOURCE(IDC_HSPLIT));
-          }
-          ::SetCursor(s_hHSplitCursor);
-          break;
-
-        case HitTestResult::VSplitter:
-        case HitTestResult::VSplitterBig:
-          if (!s_hVSplitCursor) {
-            s_hVSplitCursor = ::LoadCursor(
-                g_hInstance,
-                MAKEINTRESOURCE(IDC_VSPLIT));
-          }
-          ::SetCursor(s_hVSplitCursor);
-          break;
-
-        default:
-          ::SetCursor(::LoadCursor(nullptr, IDC_ARROW));
-          break;
-      }
-      return TRUE;
     }
 
     case WM_VSCROLL: {

@@ -17,6 +17,8 @@ namespace gfx {
 class Graphics;
 }
 
+struct Point;
+
 class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   protected: uint             m_nActiveTick;
   protected: const char16*    m_pwszName;
@@ -43,6 +45,7 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
 
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
+  public: virtual HCURSOR GetCursorAt(const Point&) const { return nullptr; }
 
   public: Frame*   GetFrame() const { return m_pParent; }
   public: const char16*  GetName()  const { return m_pwszName; }

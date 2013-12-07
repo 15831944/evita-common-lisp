@@ -658,6 +658,17 @@ LRESULT Frame::onMessage(
       }
       return 0;
 
+    case WM_SETCURSOR:
+      if (auto const pane = GetActivePane()) {
+        Point point;
+        if (::GetCursorPos(&point) && ScreenToClient(m_hwnd, &point))
+          if (auto const hCursor = pane->GetCursorAt(point)) {
+            ::SetCursor(hCursor);
+            return true;
+          }
+      }
+      break;
+
     case WM_SETFOCUS:
       if (auto const pPane = GetActivePane()) {
         #if DEBUG_FOCUS
