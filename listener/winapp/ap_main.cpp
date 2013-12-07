@@ -30,7 +30,6 @@
 #include "./vi_Style.h"
 
 #pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "gdiplus.lib")
 
 #if _WIN64
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -40,13 +39,11 @@
 
 const char16* k_pwszTitle = L"Evita Common Lisp Listner";
 
-void Application::InternalAddBuffer(Buffer* pBuffer)
-{
-    m_oBuffers.Append(pBuffer);
-} // Application::InternalAddBuffer
+void Application::InternalAddBuffer(Buffer* pBuffer) {
+  m_oBuffers.Append(pBuffer);
+}
 
-namespace
-{
+namespace {
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -56,66 +53,52 @@ namespace
 // FIXME 2007-08-07 yosi@msn.com We should share EnumArg with console
 // and listener.
 //
-class EnumArg
-{
-    enum { MAX_WORD_LEN = MAX_PATH };
+class EnumArg {
+  private: enum { MAX_WORD_LEN = MAX_PATH };
+  private: const char16* runner_;
+  private: char16 m_wsz[MAX_WORD_LEN];
 
-    enum State
-    {
-        State_Start,
-    }; // State
+    public: EnumArg(const char16* pwsz)
+      : runner_(pwsz) {
+    // skip command name
+    next();
+    if (!AtEnd())
+      next();
+  }
 
-    LPCWSTR m_pwszRunner;
-    char16 m_wsz[MAX_WORD_LEN];
+  public: bool AtEnd() const {
+    return !*runner_ && !*m_wsz;
+  }
 
-    public: EnumArg(LPCWSTR pwsz) :
-        m_pwszRunner(pwsz)
-    {
-        // skip command name
-        next();
-        unless (AtEnd()) next();
-    } // EnumArg
+  public: LPCWSTR Get() const { ASSERT(!AtEnd()); return m_wsz; }
+  public: void Next() { ASSERT(!AtEnd()); next(); }
+  static bool isspace(char16 wch) { return ' ' == wch || '\t' == wch; }
 
-    public: bool AtEnd() const
-        { return 0 == *m_pwszRunner && 0 == *m_wsz; }
-
-    public: LPCWSTR Get() const
-        { ASSERT(!AtEnd()); return m_wsz; }
-
-    public: void Next()
-        { ASSERT(!AtEnd()); next(); }
-
-    static bool isspace(char16 wch)
-        { return ' ' == wch || '\t' == wch; }
-
-    void next()
-    {
-        while (isspace(*m_pwszRunner)) m_pwszRunner++;
-        char16* pwsz = m_wsz;
-        if (0x22 != *m_pwszRunner)
-        {
-            while (0 != *m_pwszRunner)
-            {
-                if (isspace(*m_pwszRunner)) break;
-                *pwsz++ = *m_pwszRunner++;
-            } // while
-        }
-        else
-        {
-            m_pwszRunner++;
-            while (0 != *m_pwszRunner)
-            {
-                if (0x22 == *m_pwszRunner)
-                {
-                    m_pwszRunner++;
-                    break;
-                }
-                *pwsz++ = *m_pwszRunner++;
-            } // while
-        } // if
-        *pwsz = 0;
-    } // next
-}; // EnumArg
+    void next() {
+      while (isspace(*runner_)) {
+        ++runner_;
+      }
+      auto pwsz = m_wsz;
+      if (*runner_ != 0x22) {
+          while (*runner_) {
+            if (isspace(*runner_))
+              break;
+            *pwsz++ = *runner_;
+            ++runner_;
+          }
+      } else {
+          ++runner_;
+          while (*runner_) {
+            if (*runner_ == 0x22) {
+              ++runner_;
+              break;
+            }
+            *pwsz++ = *++runner_;
+          }
+      }
+      *pwsz = 0;
+  }
+};
 
 } // namespace
 
@@ -129,76 +112,49 @@ extern StyleValues g_DefaultStyle;
 static void NoReturn fatalExit(const char16*);
 
 
-//////////////////////////////////////////////////////////////////////
-//
-// callRunningApp
-//
-static int callRunningApp(EnumArg* pEnumArg)
-{
-    Handle shShared = ::OpenFileMapping(
-        FILE_MAP_READ | FILE_MAP_WRITE,
-        FALSE,
-        k_wszFileMapping );
-    if (NULL == shShared)
-    {
-        fatalExit(L"OpenFileMapping");
-    }
+static int callRunningApp(EnumArg* pEnumArg) {
+  Handle shShared = ::OpenFileMapping(
+      FILE_MAP_READ | FILE_MAP_WRITE,
+      FALSE,
+      k_wszFileMapping);
+  if (!shShared)
+      fatalExit(L"OpenFileMapping");
 
-    SharedArea* p = reinterpret_cast<SharedArea*>(::MapViewOfFile(
-        shShared,
-        FILE_MAP_READ | FILE_MAP_WRITE,
-        0,      // dwFileOffsetHigh
-        0,      // dwFileOffsetLow
-        k_cbFileMapping ) );
-    if (NULL == p)
-    {
-        fatalExit(L"MapViewOfFile");
-    }
+  auto const * p = reinterpret_cast<SharedArea*>(
+      ::MapViewOfFile(shShared,
+                      FILE_MAP_READ | FILE_MAP_WRITE,
+                      0,      // dwFileOffsetHigh
+                      0,      // dwFileOffsetLow
+                      k_cbFileMapping));
+  if (!p)
+    fatalExit(L"MapViewOfFile");
 
-    while (!pEnumArg->AtEnd()) {
-        const char16* pwszArg = pEnumArg->Get();
+  while (!pEnumArg->AtEnd()) {
+    auto const pwszArg = pEnumArg->Get();
+    char16 wsz[MAX_PATH];
+    char16* pwszFile;
+    auto const cwch = ::GetFullPathName(pwszArg, lengthof(wsz), wsz,
+                                        &pwszFile);
+    pEnumArg->Next();
+    if (!cwch || cwch > lengthof(wsz))
+     continue;
 
-        char16 wsz[MAX_PATH];
-        char16* pwszFile;
-        uint cwch = ::GetFullPathName(
-            pwszArg,
-            lengthof(wsz),
-            wsz,
-            &pwszFile );
+    COPYDATASTRUCT oData;
+    oData.dwData = 1;
+    oData.cbData = sizeof(char16) * (cwch + 1);
+    oData.lpData = wsz;
 
-        pEnumArg->Next();
+    ::SendMessage(p->m_hwnd, WM_COPYDATA, 0,
+                  reinterpret_cast<LPARAM>(&oData));
+  }
+  return 0;
+}
 
-        if (0 == cwch || cwch > lengthof(wsz))
-        {
-            continue;
-        }
-
-        COPYDATASTRUCT oData;
-        oData.dwData = 1;
-        oData.cbData = sizeof(char16) * (cwch + 1);
-        oData.lpData = wsz;
-
-        ::SendMessage(
-            p->m_hwnd,
-            WM_COPYDATA,
-            NULL,
-            reinterpret_cast<LPARAM>(&oData) );
-    } // for each arg
-
-    return 0;
-} // callRunningApp
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// fatalExit
-//
-static void NoReturn fatalExit(const char16* pwsz)
-{
-    char16 wsz[100];
-    ::wsprintf(wsz, L"Evita Text Editor can't start (%s).", pwsz);
-    ::FatalAppExit(0, wsz);
-} // fatalExit
+static void NoReturn fatalExit(const char16* pwsz) {
+  char16 wsz[100];
+  ::wsprintf(wsz, L"Evita Text Editor can't start (%s).", pwsz);
+  ::FatalAppExit(0, wsz);
+}
 
 static int MainLoop(EnumArg* pEnumArg) {
   // Initialize Default Style
@@ -239,71 +195,63 @@ static int MainLoop(EnumArg* pEnumArg) {
       }
   }
 
-    Application::Init();
+  Application::Init();
+  auto& frame = *Application::Get()->CreateFrame();
+  while (!pEnumArg->AtEnd()) {
+    auto const  pwszArg = pEnumArg->Get();
+    auto const buffer = Application::Get()->Load(pwszArg);
+    auto const pane = new EditPane(&frame, buffer);
+    frame.AddPane(pane);
+    pEnumArg->Next();
+  }
 
-    Frame* pFrame = Application::Get()->CreateFrame();
+  // When there is no filename argument, we start lisp.
+  if (!frame.GetFirstPane()) {
+    #if USE_LISTENER
+      auto const buffer = new ListenerBuffer();
+      buffer->Start();
+    #else // USE_LISTENER
+      auto const buffer = new Buffer(L"*scratch*");
+    #endif // USE_LISTENER
 
-    while (!pEnumArg->AtEnd())
-  {
-      const char16* pwszArg = pEnumArg->Get();
-      Buffer* pBuffer = Application::Get()->Load(pwszArg);
-      EditPane* pPane = new EditPane(pFrame, pBuffer);
-      pFrame->AddPane(pPane);
-
-        pEnumArg->Next();
-  } // for each arg
-
-    // When there is no filename argument, we start lisp.
-  if (!pFrame->GetFirstPane()) {
-      #if USE_LISTENER
-          ListenerBuffer* pBuffer = new ListenerBuffer;
-          pBuffer->Start();
-
-        #else // USE_LISTENER
-          Buffer* pBuffer = new Buffer(L"*scratch*");
-      #endif // USE_LISTENER
-
-        Application::Get()->InternalAddBuffer(pBuffer);
-      EditPane* pPane = new EditPane(pFrame, pBuffer);
-      pFrame->AddPane(pPane);
-  } // if
-
-    pFrame->Realize();
+    Application::Get()->InternalAddBuffer(buffer);
+    auto const pane = new EditPane(&frame, buffer);
+    frame.AddPane(pane);
+  }
+  frame.Realize();
 
   int iIdle = 1;
   MSG oMsg;
   for (;;) {
-    if (!::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE)) {
+    if (!::PeekMessage(&oMsg, nullptr, 0, 0, PM_REMOVE)) {
       bool fGotMessage = false;
       if (iIdle) {
-          #if DEBUG_IDLE
-            DEBUG_PRINTF("idle %d msg=0x%04X qs=0x%0x\n", 
-                         iIdle, oMsg.message,
-                         ::GetQueueStatus(QS_ALLEVENTS) );
-          #endif // DEBUG_IDLE
+        #if DEBUG_IDLE
+          DEBUG_PRINTF("idle %d msg=0x%04X qs=0x%0x\n", 
+                       iIdle, oMsg.message,
+                       ::GetQueueStatus(QS_ALLEVENTS));
+        #endif // DEBUG_IDLE
 
-          uint nCount = 0;
-          while (Application::Get()->OnIdle(nCount)) {
-            if (::PeekMessage(&oMsg, NULL, 0, 0, PM_REMOVE)) {
-              fGotMessage = true;
-              break;
-            }
-            nCount += 1;
-         }
+        uint nCount = 0;
+        while (Application::Get()->OnIdle(nCount)) {
+          if (::PeekMessage(&oMsg, nullptr, 0, 0, PM_REMOVE)) {
+            fGotMessage = true;
+            break;
+          }
+          nCount += 1;
+        }
       }
 
       iIdle = 0;
       if (!fGotMessage)
-        ::GetMessage(&oMsg, NULL, 0, 0);
-    } // if
+        ::GetMessage(&oMsg, nullptr, 0, 0);
+    }
 
     if (WM_QUIT == oMsg.message)
       return static_cast<int>(oMsg.wParam);
 
-    if (g_hwndActiveDialog) {
-      if (::IsDialogMessage(g_hwndActiveDialog, &oMsg))
-        continue;
-    }
+    if (g_hwndActiveDialog && ::IsDialogMessage(g_hwndActiveDialog, &oMsg))
+      continue;
 
     ::TranslateMessage(&oMsg);
     ::DispatchMessage(&oMsg);
@@ -317,100 +265,74 @@ static int MainLoop(EnumArg* pEnumArg) {
   }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// WinMain
-//
-int WINAPI WinMain(
-    HINSTANCE hInstance,
-    HINSTANCE,
-    LPSTR,
-    int )
-{
-    g_hInstance = hInstance;
-    g_hResource = hInstance;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+  g_hInstance = hInstance;
+  g_hResource = hInstance;
 
     EnumArg oEnumArg(::GetCommandLine());
-    while (!oEnumArg.AtEnd())
-    {
-        const char16* pwszArg = oEnumArg.Get();
+  while (!oEnumArg.AtEnd()) {
+    auto const pwszArg = oEnumArg.Get();
+    if (*pwszArg != '-')
+      break;
 
-        if ('-' != *pwszArg)
-        {
-            break;
-        }
-        if (0 == ::lstrcmpW(pwszArg, L"-multiple"))
-        {
-            g_fMultiple = true;
-        }
-        else if (0 == ::lstrcmpW(pwszArg, L"-dll"))
-        {
-            oEnumArg.Next();
-            when (oEnumArg.AtEnd()) break;
-        }
-        else if (0 == ::lstrcmpW(pwszArg, L"-image"))
-        {
-            oEnumArg.Next();
-            when (oEnumArg.AtEnd()) break;
-        }
+      if (!::lstrcmpW(pwszArg, L"-multiple")) {
+      g_fMultiple = true;
+    } else if (!::lstrcmpW(pwszArg, L"-dll")) {
+      oEnumArg.Next();
+      if (oEnumArg.AtEnd())
+        break;
+    } else if (!::lstrcmpW(pwszArg, L"-image")) {
+      oEnumArg.Next();
+      if (oEnumArg.AtEnd())
+        break;
+    }
 
-        oEnumArg.Next();
-    } // for each arg
+      oEnumArg.Next();
+  }
 
-    if (!g_fMultiple)
-    {
-        g_hEvent = ::CreateEventW(
-            NULL,   // lpEventAttrs
-            TRUE,   // fManualReset
-            FALSE,  // fInitialState
-            L"Local\\" SINGLE_INSTANCE_NAME );
+    if (!g_fMultiple) {
+    g_hEvent = ::CreateEventW(nullptr,   // lpEventAttrs
+                              TRUE,   // fManualReset
+                              FALSE,  // fInitialState
+                              L"Local\\" SINGLE_INSTANCE_NAME);
 
-        if (NULL == g_hEvent)
-        {
-            fatalExit(L"CreateEvent");
-        }
+      if (!g_hEvent)
+      fatalExit(L"CreateEvent");
 
-        if (ERROR_ALREADY_EXISTS == ::GetLastError())
-        {
-            uint nWait = ::WaitForSingleObject(g_hEvent, 30 * 100);
-            switch (nWait)
-            {
-            case WAIT_OBJECT_0:
-                return callRunningApp(&oEnumArg);
+      if (::GetLastError() == ERROR_ALREADY_EXISTS) {
+      auto const nWait = ::WaitForSingleObject(g_hEvent, 30 * 100);
+      switch (nWait) {
+        case WAIT_OBJECT_0:
+          return callRunningApp(&oEnumArg);
 
-            default:
-                ::MessageBox(
-                    NULL,
-                    L"WaitForSignleObject",
-                    k_pwszTitle,
-                    MB_APPLMODAL | MB_ICONERROR );
-            } // switch
-        }
-    } // if !g_fSingle
+          default:
+          ::MessageBox(nullptr, L"WaitForSignleObject", k_pwszTitle,
+                       MB_APPLMODAL | MB_ICONERROR);
+          break;
+      }
+    }
+  }
 
     // Common Control
-    {
-        INITCOMMONCONTROLSEX oInit;
-        oInit.dwSize = sizeof(oInit);
-        oInit.dwICC  = ICC_BAR_CLASSES;
-        if (!::InitCommonControlsEx(&oInit))
-        {
-            ::MessageBox(
-                NULL,
-                L"InitCommonControlsEx",
-                k_pwszTitle,
-                MB_APPLMODAL | MB_ICONERROR );
-            return 1;
-        }
-    }
+  {
+      INITCOMMONCONTROLSEX oInit;
+      oInit.dwSize = sizeof(oInit);
+      oInit.dwICC  = ICC_BAR_CLASSES;
+      if (!::InitCommonControlsEx(&oInit)) {
+          ::MessageBox(
+              nullptr,
+              L"InitCommonControlsEx",
+              k_pwszTitle,
+              MB_APPLMODAL | MB_ICONERROR);
+          return 1;
+      }
+  }
 
     ::TabBand__Init(g_hInstance);
 
     g_TabBand__TabDragMsg = ::RegisterWindowMessage(TabBand__TabDragMsgStr);
 
-    int iExit = BaseWindow::Init();
-    if (0 != iExit) return iExit;
-    int iRet = MainLoop(&oEnumArg);
-
-    return iRet;
-} // WinMain
+    if (auto const exit_code = BaseWindow::Init())
+    return exit_code;
+  return MainLoop(&oEnumArg);
+}
