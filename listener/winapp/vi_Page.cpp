@@ -137,9 +137,9 @@ class Cell : public ObjectInHeap {
   }
 
   public: virtual float GetDescent() const { return 0; }
-  public: virtual float GetHeight()  const = 0;
-  public: virtual CellKind GetKind()    const = 0;
-  public: float GetWidth()   const { return m_cx; }
+  public: virtual float GetHeight() const = 0;
+  public: virtual CellKind GetKind() const = 0;
+  public: float GetWidth() const { return m_cx; }
 
   public: virtual uint Hash() const {
     uint nHash = static_cast<uint>(m_cx);
@@ -162,7 +162,7 @@ class Cell : public ObjectInHeap {
   }
 
   public: virtual void Render(const gfx::Graphics& gfx,
-                              const gfx::RectF& rect) const {
+                               const gfx::RectF& rect) const {
     fillRect(gfx, rect, ColorToColorF(m_crBackground));
   }
 };
@@ -478,10 +478,10 @@ class TextCell : public Cell {
     auto const y = rect.bottom - m_iDescent -
                    (m_eDecoration != TextDecoration_None ? 1 : 0);
 
-      gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
+    gfx::Brush fill_brush(gfx, ColorToColorF(m_crBackground));
     gfx.FillRectangle(fill_brush, rect);
 
-      gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
+    gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
     DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
 
       #if SUPPORT_IME
@@ -948,46 +948,35 @@ Cell* Formatter::formatMarker(MarkerCell::Kind  eKind) {
 
 using namespace PageInternal;
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::fillBottom - Fill page bottom
-//
-void Page::fillBottom(const gfx::Graphics& gfx, float y) const
-{
-    if (y < m_rc.bottom) {
-        gfx::RectF rc(static_cast<float>(m_rc.left), 
-                      y, 
-                      static_cast<float>(m_rc.right), 
-                      static_cast<float>(m_rc.bottom));
-        fillRect(gfx, rc, ColorToColorF(m_crBackground));
-    }
+void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
+  if (y < m_rc.bottom) {
+      gfx::RectF rc(static_cast<float>(m_rc.left), 
+                    y, 
+                    static_cast<float>(m_rc.right), 
+                    static_cast<float>(m_rc.bottom));
+      fillRect(gfx, rc, ColorToColorF(m_crBackground));
+  }
 
-    // FIXME 2007-08-05 yosi@msn.com We should expose show/hide
-    // ruler settings to both script and UI.
+  // FIXME 2007-08-05 yosi@msn.com We should expose show/hide
+  // ruler settings to both script and UI.
 
-    // Ruler
-    Font* pFont = FontSet::Get(gfx, m_pBuffer->GetDefaultStyle())->
-        FindFont(gfx, 'x');
+  // Ruler
+  auto const pFont = FontSet::Get(gfx, m_pBuffer->GetDefaultStyle())->
+    FindFont(gfx, 'x');
 
-    // FIXME 2007-08-05 yosi@msn.com We should expose rule position to
-    // user.
-    auto const num_columns = 80;
-    
-    drawVLine(gfx, gfx::Brush(gfx, gfx::ColorF::LightGray),
-              m_rc.left + pFont->GetCharWidth('M') * num_columns,
-              m_rc.top,
-              m_rc.bottom);
+  // FIXME 2007-08-05 yosi@msn.com We should expose rule position to
+  // user.
+  auto const num_columns = 80;
+  drawVLine(gfx, gfx::Brush(gfx, gfx::ColorF::LightGray),
+            m_rc.left + pFont->GetCharWidth('M') * num_columns,
+            m_rc.top, m_rc.bottom);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::fillRight
-//
 void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine, 
                      float y) const {
   gfx::RectF rc;
   rc.left  = pLine->GetWidth();
-  rc.right = static_cast<float>(m_rc.right);
+  rc.right = m_rc.right;
   if (rc.left < rc.right) {
     rc.top = y;
     rc.bottom = y + pLine->GetHeight();
@@ -995,29 +984,22 @@ void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
   }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::FindLine
-//
-Page::Line* Page::FindLine(Posn lPosn) const
-{
-    if (lPosn < m_lStart) return nullptr;
-    if (lPosn > m_lEnd)   return nullptr;
-
-    foreach (EnumLine, oEnum, m_oFormatBuf)
-    {
-        Line* pLine = oEnum.Get();
-        if (lPosn < pLine->m_lEnd) return pLine;
-    } // for each line
-
-    // We must not here.
+Page::Line* Page::FindLine(Posn lPosn) const {
+  if (lPosn < m_lStart)
     return nullptr;
-} // Page::FindLine
+  if (lPosn > m_lEnd)
+    return nullptr;
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Format
-//
+  foreach (EnumLine, oEnum, m_oFormatBuf) {
+    auto & line = *oEnum.Get();
+    if (lPosn < line.m_lEnd)
+      return &line;
+  }
+
+  // We must not here.
+  return nullptr;
+}
+
 void Page::Format(const gfx::Graphics& gfx, gfx::RectF rect, 
                   const Selection& selection, Posn lStart) {
   Prepare(selection);
@@ -1025,39 +1007,28 @@ void Page::Format(const gfx::Graphics& gfx, gfx::RectF rect,
   formatAux(gfx, lStart);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::formatAux
-//
-void Page::formatAux(const gfx::Graphics& gfx, Posn lStart)
-{
-    m_oFormatBuf.Reset();
-    m_lStart = lStart;
+void Page::formatAux(const gfx::Graphics& gfx, Posn lStart) {
+  m_oFormatBuf.Reset();
+  m_lStart = lStart;
 
-    Formatter oFormatter(gfx, m_oFormatBuf.GetHeap(), this, lStart);
-    oFormatter.Format();
+  Formatter oFormatter(gfx, m_oFormatBuf.GetHeap(), this, lStart);
+  oFormatter.Format();
+  m_lEnd = GetLastLine()->GetEnd();
+}
 
-    m_lEnd = GetLastLine()->GetEnd();
-} // Page::formatAux
+Page::Line* Page::FormatLine(const gfx::Graphics& gfx,
+                             const Selection& selection,
+                             Posn lStart) {
+  Prepare(selection);
+  m_oFormatBuf.Reset();
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::FormatLine
-//
-Page::Line* Page::FormatLine(
-    const gfx::Graphics&     gfx,
-    const Selection&    selection,
-    Posn                lStart) {
-    Prepare(selection);
-    m_oFormatBuf.Reset();
+  auto const hHeap = m_oFormatBuf.GetHeap();
+  Formatter oFormatter(gfx, hHeap, this, lStart);
 
-    HANDLE hHeap = m_oFormatBuf.GetHeap();
-    Formatter oFormatter(gfx, hHeap, this, lStart);
-
-    Line* pLine = m_oFormatBuf.NewLine();
-    oFormatter.FormatLine(pLine);
-    return pLine;
-} // Page::FormatLine
+  auto& line = *m_oFormatBuf.NewLine();
+  oFormatter.FormatLine(&line);
+  return &line;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1066,10 +1037,9 @@ Page::Line* Page::FormatLine(
 //  fSelection
 //    True if caller wants to show selection.
 //
-bool Page::IsDirty(RECT rc, const Selection& selection, bool fSelection) const
-{
-    if (nullptr == m_pBuffer)
-    {
+bool Page::IsDirty(RECT rc, const Selection& selection,
+                   bool fSelection) const {
+    if (!m_pBuffer) {
         #if DEBUG_DIRTY
             DEBUG_PRINTF("%p: No buffer.\n", this);
         #endif // DEBUG_DIRTY
@@ -1309,12 +1279,8 @@ int Page::pageLines(const gfx::Graphics& gfx) const
         FindFont(gfx, 'x');
 
     return static_cast<int>(m_rc.height() / pFont->GetHeight());
-} // Page::pageLines
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::prepare
-//
 void Page::Prepare(const Selection& selection) {
   auto& buffer = *selection.GetBuffer();
   m_pBuffer = &buffer;
@@ -1336,74 +1302,61 @@ void Page::Prepare(const Selection& selection) {
   m_crBackground = buffer.GetDefaultStyle()->GetBackground();
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Render
-//
 void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
-    #if DEBUG_RENDER
-    {
-        DEBUG_PRINTF("%p"
-            " range:(%d, %d) sel=(%d, %d)"
-            " rc=(%d,%d)-(%d,%d) clip=(%d,%d)-(%d,%d)\r\n",
-            this,
-            m_lStart, m_lEnd,
-            m_lSelStart, m_lSelEnd,
-            m_rc.left, m_rc.top, m_rc.right, m_rc.bottom,
-            rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
-    }
-    #endif // DEBUG_RENDER
+  #if DEBUG_RENDER
+  {
+    DEBUG_PRINTF("%p"
+                 " range:(%d, %d) sel=(%d, %d)"
+                 " rc=(%d,%d)-(%d,%d) clip=(%d,%d)-(%d,%d)\r\n",
+      this,
+      m_lStart, m_lEnd,
+      m_lSelStart, m_lSelEnd,
+      m_rc.left, m_rc.top, m_rc.right, m_rc.bottom,
+      rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
+  }
+  #endif // DEBUG_RENDER
 
-    //::SetTextAlign(gfx, TA_BASELINE | TA_NOUPDATECP);
-
-    auto y = m_rc.top;
-    foreach (EnumLine, oEnum, m_oFormatBuf) {
-        auto const pLine = oEnum.Get();
-
-        ASSERT(y < m_rc.bottom);
-
-        if (y < rcClip.bottom &&
-            y + pLine->GetHeight() >= rcClip.top)
-        {
-            auto x = m_rc.left;
-            foreach (EnumCell, oEnum, pLine)
-            {
-                auto const pCell = oEnum.Get();
-                if (x < rcClip.right &&
-                    x + pCell->m_cx >= rcClip.left)
-                {
-                    gfx::RectF rc(x, y, x + pCell->m_cx, y + pCell->m_cy);
-                    pCell->Render(gfx, rc);
-                }
-                x += pCell->m_cx;
-            } // for each cell
-
-            // Fill right
-            {
-                gfx::RectF rc;
-                rc.left  = pLine->GetWidth();
-                rc.right = m_rc.right;
-
-                rc.left  = max(rc.left,  rcClip.left);
-                rc.right = min(rc.right, rcClip.right);
-
-                if (rc.left < rc.right) {
-                  rc.top = y;
-                  rc.bottom = y + pLine->GetHeight();
-
-                  rc.top    = max(rc.top,    rcClip.top);
-                  rc.bottom = min(rc.bottom, rcClip.bottom);
-
-                  if (rc.top < rc.bottom)
-                    fillRect(gfx, rc, ColorToColorF(m_crBackground));
-                }
-            }
+  auto y = m_rc.top;
+  foreach (EnumLine, oEnum, m_oFormatBuf) {
+    auto const pLine = oEnum.Get();
+    ASSERT(y < m_rc.bottom);
+    if (y < rcClip.bottom && y + pLine->GetHeight() >= rcClip.top) {
+      auto x = m_rc.left;
+      foreach (EnumCell, oEnum, pLine) {
+        auto const pCell = oEnum.Get();
+        if (x < rcClip.right && x + pCell->m_cx >= rcClip.left) {
+            gfx::RectF rc(x, y, ::ceilf(x + pCell->m_cx),
+                          ::ceilf(y + pCell->m_cy));
+            pCell->Render(gfx, rc);
         }
-        y += pLine->m_iHeight;
-    } // for each line
+        x += pCell->m_cx;
+      }
 
-    fillBottom(gfx, y);
-} // Page::Render
+      // Fill right
+      {
+        gfx::RectF rc;
+        rc.left  = pLine->GetWidth();
+        rc.right = m_rc.right;
+
+        rc.left  = max(rc.left,  rcClip.left);
+        rc.right = min(rc.right, rcClip.right);
+
+        if (rc.left < rc.right) {
+          rc.top = y;
+          rc.bottom = y + pLine->GetHeight();
+
+          rc.top    = max(rc.top,    rcClip.top);
+          rc.bottom = min(rc.bottom, rcClip.bottom);
+
+          if (rc.top < rc.bottom)
+            fillRect(gfx, rc, ColorToColorF(m_crBackground));
+        }
+      }
+    }
+    y += pLine->m_iHeight;
+  }
+  fillBottom(gfx, y);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
