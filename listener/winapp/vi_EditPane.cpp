@@ -1405,9 +1405,6 @@ LRESULT EditPane::onMessage(
       m_oSplitterDrag.Move(MAKEPOINTS(lParam));
       return 0;
 
-    case WM_SETCURSOR: {
-    }
-
     case WM_VSCROLL: {
       auto const pBox = reinterpret_cast<LeafBox*>(
           ::GetWindowLongPtr(
@@ -1437,11 +1434,10 @@ LRESULT EditPane::onMessage(
   return Pane::onMessage(uMsg, wParam, lParam);
 }
 
-
 void EditPane::Realize() {
   ASSERT(!IsRealized());
   m_eState = State_Realized;
-  frame_->GetPaneRect(&m_rc);
+  m_rc = frame_->GetPaneRect();
   root_box_->Realize(this, m_rc);
 }
 

@@ -141,6 +141,7 @@ bool Font::HasCharacter(char16 wch) const {
   return glyph_index;
 }
 
+// Convert pt(1/72in) to dip(1/96in)
 float Font::Scale(int design_unit) const {
   auto const pt = static_cast<float>(m_oLogFont.lfHeight * design_unit) /
       font_face_->metrics().designUnitsPerEm;

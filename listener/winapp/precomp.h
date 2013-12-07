@@ -72,7 +72,7 @@
 #define WM_SYSTIMER 0x118
 
 // warning C4481: nonstandard extension used: override specifier 'override'
-#pragma warning(disable:4481)
+//#pragma warning(disable:4481)
 
 // warning C4373: previous versions of the compiler did not override when
 // parameters only differed by const/volatile qualifiers
@@ -116,10 +116,12 @@ typedef wchar_t char16;
   public: mp_type(const mp_type&) = delete; \
   public: void operator=(const mp_type&) = delete
 
-// warning C6400: Using 'lstrcmpiW' to perform a case-insensitive compare to constant string 
+// warning C6400: Using 'lstrcmpiW' to perform a case-insensitive compare to
+// constant string 
 #pragma warning(disable: 6246)
 
-// warning C6246: Local declaration of 'oEnum' hides declaration of the same name in outer scope
+// warning C6246: Local declaration of 'oEnum' hides declaration of the same
+// name in outer scope
 #pragma warning(disable: 6400)
 
 // ObjectInHeap

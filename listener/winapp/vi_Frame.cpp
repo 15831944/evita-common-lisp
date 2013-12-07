@@ -86,18 +86,12 @@ class CompositionState {
 #define USE_TABBAND_EDGE 0
 extern uint g_TabBand__TabDragMsg;
 
-/// <summary>
-///   Construct this frame.
-/// </summary>
 Frame::Frame()
     : gfx_(new gfx::Graphics()),
       m_pActivePane(nullptr) {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
 }
 
-/// <summary>
-///   Destruct this frame.
-/// </summary>
 Frame::~Frame() {
   Application::Get()->DeleteFrame(this);
 
@@ -106,18 +100,10 @@ Frame::~Frame() {
   }
 }
 
-/// <summary>
-///   Activate this frame.
-/// </summary>
 bool Frame::Activate() {
   return ::SetForegroundWindow(*this);
 }
 
-/// <summary>
-///   Add specified pane to this frame.
-/// </summary>
-/// <param name="pPane">A pane to be added.</param>
-/// <returns>A pane parameter.</returns>
 Pane* Frame::AddPane(Pane* const pane) {
   ASSERT(!!pane);
 
@@ -129,7 +115,7 @@ Pane* Frame::AddPane(Pane* const pane) {
     auto const pFrame = pane->GetFrame();
     if (pane->IsRealized()) {
       ::SetParent(*pane, m_hwnd);
-      pFrame->detachPane(pane);
+      pFrame->DetachPane(pane);
     } else {
       pFrame->m_oPanes.Delete(pane);
     }
@@ -141,8 +127,7 @@ Pane* Frame::AddPane(Pane* const pane) {
     if (!pane->IsRealized()) {
       pane->Realize();
     } else {
-      RECT rc;
-      GetPaneRect(&rc);
+      const auto rc = GetPaneRect();
       ::SetWindowPos(
           *pane,
           nullptr,
@@ -153,13 +138,13 @@ Pane* Frame::AddPane(Pane* const pane) {
           SWP_NOZORDER);
     }
 
-    addTab(pane);
+    AddTab(pane);
   }
 
   return pane;
 }
 
-void Frame::addTab(Pane* const pane) {
+void Frame::AddTab(Pane* const pane) {
   TCITEM tab_item;
   tab_item.mask = TCIF_TEXT | TCIF_PARAM;
   tab_item.pszText = const_cast<char16*>(pane->GetName());
@@ -190,7 +175,7 @@ bool Frame::canClose() {
 //  Detach pPane from this frame and
 //    o Change active pane to MRU pane
 //    o If no pane in frame, destory this frame.
-void Frame::detachPane(Pane* const pPane) {
+void Frame::DetachPane(Pane* const pPane) {
   auto const iItem = getTabFromPane(pPane);
   m_oPanes.Delete(pPane);
   TabCtrl_DeleteItem(m_hwndTabBand, iItem);
@@ -202,13 +187,9 @@ void Frame::detachPane(Pane* const pPane) {
   ASSERT(m_pActivePane != pPane);
 }
 
-/// <summary>
-///   Get active pane of this frame.
-/// </summary>
 Pane* Frame::GetActivePane() {
-  if (m_pActivePane && m_pActivePane->GetActiveTick()) {
+  if (m_pActivePane && m_pActivePane->GetActiveTick())
     return m_pActivePane;
-  }
 
   auto pActive = m_oPanes.GetFirst();
   for (auto& pane: m_oPanes) {
@@ -219,15 +200,10 @@ Pane* Frame::GetActivePane() {
   return pActive;
 }
 
-/// <summary>
-///   Get width of status bar.
-/// </summary>
 int Frame::GetCxStatusBar() const {
-    auto const cx =
-        m_rc.right
-        - m_rc.left
-        - ::GetSystemMetrics(SM_CXVSCROLL);  // remove size grip
-    return cx;
+  auto const cx = m_rc.right - m_rc.left -
+      ::GetSystemMetrics(SM_CXVSCROLL);  // remove size grip
+  return cx;
 }
 
 static Pane* getPaneAt(HWND hwnd, int const index) {
@@ -261,31 +237,22 @@ int Frame::getTabFromPane(Pane* const pane) const {
   CAN_NOT_HAPPEN();
 }
 
-/// <summary>
-///   Get pane rectangle.
-/// </summary>
-void Frame::GetPaneRect(RECT* const out_rc) {
-  *out_rc = m_rc;
-  out_rc->left += k_edge_size + kPaddingLeft;
-  #if USE_TABBAND_EDGE
-    out_rc->top += m_cyTabBand + k_edge_size + k_edge_size + kPaddingLeft;
-  #else
-    out_rc->top += m_cyTabBand + kPaddingTop;
-  #endif
-  out_rc->right -= k_edge_size + kPaddingRight;
-  out_rc->bottom -= m_oStatusBar.GetCy() + k_edge_size + kPaddingBottom;
+Rect Frame::GetPaneRect() const {
+  return Rect(m_rc.left + k_edge_size + kPaddingLeft,
+              m_rc.top + m_cyTabBand + k_edge_size * 2 + kPaddingLeft,
+              m_rc.right - k_edge_size + kPaddingRight,
+              m_rc.bottom - m_oStatusBar.GetCy() + k_edge_size +
+                  kPaddingBottom);
 }
 
 const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
   auto const pPane = getPaneFromTab(static_cast<int>(pDisp->hdr.idFrom));
-  if (!pPane) {
+  if (!pPane)
     return L"";
-  }
 
   auto const pEdit = pPane->DynamicCast<EditPane>();
-  if (!pEdit) {
+  if (!pEdit)
     return pPane->GetName();
-  }
 
   auto const pBuffer = pEdit->GetBuffer();
 
@@ -475,10 +442,8 @@ bool Frame::OnIdle(uint const nCount) {
   return fMore;
 }
 
-LRESULT Frame::onMessage(
-    uint const uMsg,
-    WPARAM const wParam,
-    LPARAM const lParam) {
+LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
+                         LPARAM const lParam) {
   switch (uMsg) {
     case WM_DWMCOMPOSITIONCHANGED:
       CompositionState::Update(m_hwnd);
@@ -534,7 +499,7 @@ LRESULT Frame::onMessage(
 
       for (auto& pane: m_oPanes) {
         pane.Realize();
-        addTab(&pane);
+        AddTab(&pane);
       }
 
       if (m_oPanes.GetFirst()) {
@@ -667,6 +632,7 @@ LRESULT Frame::onMessage(
             return true;
           }
       }
+      // Ask Windows set cursor for non-client area.
       break;
 
     case WM_SETFOCUS:
@@ -777,8 +743,7 @@ LRESULT Frame::onMessage(
       }
 
       gfx_->Resize(m_rc);
-      RECT rc;
-      GetPaneRect(&rc);
+      const auto rc = GetPaneRect();
       {
         gfx::Graphics::DrawingScope drawing_scope(*gfx_);
         (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Green));
@@ -804,9 +769,8 @@ LRESULT Frame::onMessage(
   return BaseWindow::onMessage(uMsg, wParam, lParam);
 }
 
-bool Frame::onTabDrag(
-    TabBandDragAndDrop const eAction,
-    HWND const hwndTabBand) {
+bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
+                      HWND const hwndTabBand) {
   auto const pFrom = Application::Get()->FindFrame(::GetParent(hwndTabBand));
 
   if (!pFrom) {
@@ -1036,5 +1000,5 @@ void Frame::updateTitleBar() {
 }
 
 void Frame::WillDestroyPane(Pane* edit_pane) {
-  detachPane(edit_pane);
+  DetachPane(edit_pane);
 }

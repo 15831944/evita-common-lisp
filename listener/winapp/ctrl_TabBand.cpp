@@ -19,9 +19,6 @@
 
 #include <dwmapi.h>
 
-// C4355: 'this' : used in base member initializer list
-#pragma warning(disable:4355) 
-
 namespace {
 
 #define WC_TABBANDCLASS  L"TabBandClass"

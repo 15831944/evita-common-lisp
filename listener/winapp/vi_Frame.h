@@ -21,6 +21,8 @@ namespace gfx {
 class Graphics;
 }
 
+struct Rect;
+
 /// <summary>
 ///   Sevirity of message.
 /// </summary>
@@ -42,97 +44,90 @@ class Buffer;
 ///   Represents a frame window aka toplevel window. This window communicates
 ///   with window manager.
 /// </summary>
-class Frame :
-    public BaseWindow,
-    public DoubleLinkedNode_<Frame>
-{
-    protected: enum CtrlId
-    {
-        CtrlId_TabBand  = 1,
-        CtrlId_StatusBar,
-    }; // CtrlId
+class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
+  private: enum CtrlId {
+    CtrlId_TabBand  = 1,
+    CtrlId_StatusBar,
+  };
 
-    protected: typedef ChildList_<Frame, Pane> Panes;
+  private: typedef ChildList_<Frame, Pane> Panes;
 
-    private: base::OwnPtr<gfx::Graphics> gfx_;
-    protected: int              m_cyTabBand;
-    protected: HWND             m_hwndTabBand;
-    protected: Panes            m_oPanes;
-    protected: StatusBar        m_oStatusBar;
-    protected: TitleBar         m_oTitleBar;
-    protected: Pane*            m_pActivePane;
-    protected: RECT             m_rc;   // client rect
-    protected: char16*          m_rgpwszMessage[MessageLevel_Limit];
-    protected: mutable char16   m_wszToolTip[1024];
+  private: base::OwnPtr<gfx::Graphics> gfx_;
+  private: int m_cyTabBand;
+  private: HWND m_hwndTabBand;
+  private: Panes m_oPanes;
+  private: StatusBar m_oStatusBar;
+  private: TitleBar m_oTitleBar;
+  private: Pane* m_pActivePane;
+  private: RECT m_rc;   // client rect
+  private: char16* m_rgpwszMessage[MessageLevel_Limit];
+  private: mutable char16 m_wszToolTip[1024];
 
-    public:     Frame();
-    protected: ~Frame();
+  public: Frame();
+  private: virtual ~Frame();
 
-    public: gfx::Graphics& gfx() const { return *gfx_; }
-    public: const Panes& panes() const { return m_oPanes; }
-    public: Panes& panes() { return m_oPanes; }
+  public: gfx::Graphics& gfx() const { return *gfx_; }
+  public: const Panes& panes() const { return m_oPanes; }
+  public: Panes& panes() { return m_oPanes; }
 
-    // [A]
-    public: bool  Activate();
-    public: Pane* AddPane(Pane*);
-    private: void addTab(Pane*);
+  // [A]
+  public: bool  Activate();
+  public: Pane* AddPane(Pane*);
+  private: void AddTab(Pane*);
 
-    // [C]
-    private: bool canClose();
+  // [C]
+  private: bool canClose();
 
-    // [D]
-    private: void detachPane(Pane*);
+  // [D]
+  private: void DetachPane(Pane*);
 
-    // [G]
-    public:  Pane* GetActivePane();
-    public:  int   GetCxStatusBar() const;
+  // [G]
+  public: Pane* GetActivePane();
+  public: int GetCxStatusBar() const;
 
-    public:  Pane* GetFirstPane() const
-        { return m_oPanes.GetFirst(); }
+  public: Pane* GetFirstPane() const { return m_oPanes.GetFirst(); }
+  public: Pane* GetLastPane() const { return m_oPanes.GetLast(); }
 
-    public:  Pane* GetLastPane() const
-        { return m_oPanes.GetLast(); }
+  private: Pane* getPaneFromTab(int) const;
+  public: Rect GetPaneRect() const;
+  private: int getTabFromPane(Pane*) const;
+  private: const char16* getToolTip(NMTTDISPINFO*) const;
 
-    private: Pane*         getPaneFromTab(int) const;
-    public:  void          GetPaneRect(RECT* out_rc);
-    private: int           getTabFromPane(Pane*) const;
-    private: const char16* getToolTip(NMTTDISPINFO*) const;
+  // [H]
+  private: bool hasFocus() const;
 
-    // [H]
-    private: bool hasFocus() const;
+  public: bool HasMultiplePanes() const {
+    return GetFirstPane() != GetLastPane();
+  }
 
-    public: bool HasMultiplePanes() const
-        { return GetFirstPane() != GetLastPane(); }
+  // [O]
+  private: void onDropFiles(HDROP);
+  public: virtual bool OnIdle(uint) override;
+  private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
+  private: bool onTabDrag(TabBandDragAndDrop, HWND);
 
-    // [O]
-    private:         void    onDropFiles(HDROP);
-    public:  virtual bool    OnIdle(uint);
-    private: virtual LRESULT onMessage(uint, WPARAM, LPARAM);
-    private: virtual bool    onTabDrag(TabBandDragAndDrop, HWND);
+  // [P]
+  private: void Paint();
 
-    // [P]
-    private: void Paint();
+  // [R]
+  public: void Realize();
+  public: void ResetMessages();
 
-    // [R]
-    public: virtual void Realize();
-    public: void ResetMessages();
-    private: void xRemovePane(Pane*);
+  // [S]
+  private: void SetActivePane(Pane*);
+  public: void SetStatusBar(int, const char16*);
+  public: void SetStatusBarf(int, const char16*, ...);
+  public: void SetStatusBarParts(const int*, int);
+  public: bool ShowBuffer(Buffer*);
+  public: void ShowMessage(MessageLevel, uint = 0, ...);
 
-    // [S]
-    private: void SetActivePane(Pane*);
-    public: void SetStatusBar(int, const char16*);
-    public: void SetStatusBarf(int, const char16*, ...);
-    public: void SetStatusBarParts(const int*, int);
-    public: bool ShowBuffer(Buffer*);
-    public: void ShowMessage(MessageLevel, uint = 0, ...);
+  // [U]
+  public: void updateTitleBar();
 
-    // [U]
-    public: void updateTitleBar();
+  // [W]
+  public: void WillDestroyPane(Pane*);
 
-    // [W]
-    public: void WillDestroyPane(Pane*);
-
-    DISALLOW_COPY_AND_ASSIGN(Frame);
-}; // Frame
+  DISALLOW_COPY_AND_ASSIGN(Frame);
+};
 
 #endif //!defined(INCLUDE_visual_Frame_h)
