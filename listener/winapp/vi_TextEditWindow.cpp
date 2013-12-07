@@ -627,17 +627,6 @@ LRESULT TextEditWindow::onMessage(
         break;
     } // WM_CAHR
 
-    case WM_CLOSE:
-    {
-        LRESULT lContinue = ::SendMessage(
-            ::GetParent(m_hwnd),
-            WN_QueryClose,
-            0,
-            0 );
-        if (! lContinue) return 0;
-        break;
-    } // WM_CLOSE
-
     case WM_DESTROY:
         #if DEBUG_DESTROY
             DEBUG_PRINTF("WM_DESTROY %p\n", this);

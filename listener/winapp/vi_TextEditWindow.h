@@ -50,11 +50,6 @@ class TextEditWindow :
 {
     private: typedef DoubleLinkedNode_<TextEditWindow> WindowItem;
 
-    public: enum WindowMessage
-    {
-        WN_QueryClose = WM_USER,
-    }; // Message
-
     protected: typedef Edit::Range  Range;
 
     protected: struct AutoScroll

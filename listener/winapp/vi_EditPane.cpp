@@ -1390,29 +1390,6 @@ void EditPane::OnMouseMove(uint, const Point& point) {
   splitter_controller_->Move(point);
 }
 
-LRESULT EditPane::onMessage(
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam) {
-  switch (uMsg) {
-    case TextEditWindow::WN_QueryClose:
-      // Do we have multiple frame?
-      if (Application::Get()->HasMultipleFrames()) {
-        // We have mutliple frame. So, we have at least one frame even if
-        // we destroy frame contains this pane.
-        return TRUE;
-      }
-
-      if (root_box_->CountLeafBox() > 1) {
-        // This pane won't be closed when close specified window.
-        return TRUE;
-      }
-      return Application::Get()->CanExit();
-  }
-
-  return Pane::onMessage(uMsg, wParam, lParam);
-}
-
 void EditPane::Realize() {
   ASSERT(!IsRealized());
   m_eState = State_Realized;
