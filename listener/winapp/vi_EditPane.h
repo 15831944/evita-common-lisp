@@ -105,7 +105,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   // [O]
   public: virtual void OnDeprecatedVScroll(uint code, HWND hwnd) override;
-  public:  virtual bool OnIdle(uint) override;
+  public: virtual bool OnIdle(uint) override;
   public: virtual void OnLeftButtonDown(uint flags, const Point&) override;
   public: virtual void OnLeftButtonUp(uint flags, const Point&) override;
   private: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;

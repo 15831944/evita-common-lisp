@@ -1395,17 +1395,6 @@ LRESULT EditPane::onMessage(
     WPARAM wParam,
     LPARAM lParam) {
   switch (uMsg) {
-    case WM_VSCROLL: {
-      auto const pBox = reinterpret_cast<LeafBox*>(
-          ::GetWindowLongPtr(
-              reinterpret_cast<HWND>(lParam),
-              GWLP_USERDATA));
-      if (auto const pWindow = pBox->GetWindow()) {
-        pWindow->SendMessage(WM_VSCROLL, wParam, lParam);
-      }
-      return 0;
-    }
-
     case TextEditWindow::WN_QueryClose:
       // Do we have multiple frame?
       if (Application::Get()->HasMultipleFrames()) {
