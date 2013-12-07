@@ -115,6 +115,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: virtual void Resize(const RECT& rc) override;
 
   // [S]
+  public: virtual void SetFocus() override;
   private: void setupStatusBar();
   public: virtual void Show() override;
   public: Window* SplitHorizontally();

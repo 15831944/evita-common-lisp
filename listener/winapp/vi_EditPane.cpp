@@ -1406,6 +1406,13 @@ void EditPane::Resize(const RECT& rc) {
     root_box_->DrawSplitters(frame().gfx());
 }
 
+void EditPane::SetFocus() {
+  auto const box = GetActiveLeafBox();
+  if (!box)
+    return;
+  ::SetFocus(*box->GetWindow());
+}
+
 void EditPane::setupStatusBar() {
   static const int rgiWidth[] = {
       25, // ins/ovf

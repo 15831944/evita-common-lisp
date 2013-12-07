@@ -663,7 +663,7 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
                 this, pPane, pPane->GetName());
         #endif
         Application::Get()->SetActiveFrame(this);
-        SetActivePane(pPane);
+        pPane->Activate();
       }
       return 0;
 
@@ -888,30 +888,29 @@ void Frame::ResetMessages() {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
 }
 
-void Frame::SetActivePane(Pane* const pPane) {
+void Frame::SetActivePane(Pane* const pane) {
   #if DEBUG_FOCUS
-   DEBUG_PRINTF("%p new=%p cur=%p\n", this, pPane, m_pActivePane);
+   DEBUG_PRINTF("%p new=%p cur=%p\n", this, pane, m_pActivePane);
   #endif
-  pPane->Activate();
 
-#if 0
-  int iItem = 0;
+  if (pane == m_pActivePane)
+    return;
+
+  auto tab_index = 0;
   for (;;) {
-    TCITEM oItem;
-    oItem.mask = TCIF_PARAM;
-    if (TabCtrl_GetItem(m_hwndTabBand, iItem, &oItem)) {
-      if (oItem.lParam == reinterpret_cast<LPARAM>(pPane)) {
-        if (TabCtrl_GetCurSel(m_hwndTabBand) == iItem) {
-          ::SetFocus(*pPane);
-        } else {
-          TabCtrl_SetCurSel(m_hwndTabBand, iItem);
-        }
+    TCITEM tab_item;
+    tab_item.mask = TCIF_PARAM;
+    if (TabCtrl_GetItem(m_hwndTabBand, tab_index, &tab_item)) {
+      if (tab_item.lParam == reinterpret_cast<LPARAM>(pane)) {
+        if (TabCtrl_GetCurSel(m_hwndTabBand) == tab_index)
+          pane->SetFocus();
+        else
+          TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
         break;
       }
     }
-    iItem += 1;
+    ++tab_index;
   }
-#endif
 }
 
 /// <summary>

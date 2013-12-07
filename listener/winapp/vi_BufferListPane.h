@@ -17,7 +17,27 @@
 
 class Buffer;
 
-class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
+class NativePane : public CommandWindow_<NativePane, Pane> {
+  // [G]
+  public: static const char16* GetClass_() { return L"NativePane"; }
+
+  // [H]
+  public: virtual void Hide() override;
+
+  // [O]
+  protected: virtual LRESULT onMessage(UINT uMsg, WPARAM wParam,
+                                       LPARAM lParam) override;
+
+  // [R]
+  public: virtual void Realize() override;
+  public: virtual void Resize(const RECT&) override;
+
+  // [S]
+  public: virtual void SetFocus() override;
+  public: virtual void Show() override;
+};
+
+class BufferListPane : public CommandWindow_<BufferListPane, NativePane> {
   private: enum Constant {
       ListViewId = 1234,
   };

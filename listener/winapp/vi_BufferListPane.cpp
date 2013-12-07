@@ -65,6 +65,50 @@ static HCURSOR loadCursor(HCURSOR* inout_hCursor,
   return hCursor;
 } // loadCursor
 
+//////////////////////////////////////////////////////////////////////
+//
+// NativePane
+//
+
+void NativePane::Hide() {
+  ::ShowWindow(*this, SW_HIDE);
+}
+
+LRESULT NativePane::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  if (uMsg == WM_DESTROY) {
+    GetFrame()->WillDestroyPane(this);
+    return 0;
+  }
+  return Pane::onMessage(uMsg, wParam, lParam);
+}
+
+void NativePane::Realize() {
+  ASSERT(!IsRealized());
+  const auto& frame = *GetFrame();
+  const auto rect = frame.GetPaneRect();
+  CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, frame,
+                 rect.left, rect.top, rect.width(), rect.height());
+}
+
+void NativePane::Resize(const RECT& rect) {
+  ::SetWindowPos(*this, nullptr, rect.left, rect.top, rect.right - rect.left,
+                 rect.bottom - rect.top, SWP_NOZORDER);
+}
+
+void NativePane::SetFocus() {
+  ASSERT(IsRealized());
+  ::SetFocus(*this);
+}
+
+void NativePane::Show() {
+  ::ShowWindow(*this, SW_SHOW);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// BufferListPane
+//
+
 BufferListPane::BufferListPane()
     : m_pDragItem(nullptr),
       m_hwndListView(nullptr) {
@@ -303,7 +347,7 @@ LRESULT BufferListPane::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
   }
-  return Pane::onMessage(uMsg, wParam, lParam);
+  return NativePane::onMessage(uMsg, wParam, lParam);
 }
 
 void BufferListPane::Refresh() {

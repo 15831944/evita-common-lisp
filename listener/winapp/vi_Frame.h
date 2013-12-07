@@ -114,7 +114,7 @@ class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
   public: void ResetMessages();
 
   // [S]
-  private: void SetActivePane(Pane*);
+  public: void SetActivePane(Pane*);
   public: void SetStatusBar(int, const char16*);
   public: void SetStatusBarf(int, const char16*, ...);
   public: void SetStatusBarParts(const int*, int);

@@ -21,6 +21,11 @@ Pane::Pane()
       m_pwszName(L"") {
 }
 
+void Pane::Activate() {
+  ++m_nActiveTick;
+  GetFrame()->SetActivePane(this);
+}
+
 LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg)
     {

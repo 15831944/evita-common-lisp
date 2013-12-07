@@ -27,9 +27,7 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   protected: Pane();
 
   // [A]
-  public: virtual void Activate() {
-    ++m_nActiveTick;
-  }
+  public: virtual void Activate();
 
   // [D]
   public: virtual bool DidCreateHwnd(HWND) {
@@ -53,7 +51,7 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
 
   // [H]
   public: virtual bool HasFocus() const { return ::GetFocus() == m_hwnd; }
-  public: virtual void Hide() {}
+  public: virtual void Hide() = 0;
 
   // [I]
   public: virtual bool IsPane() const override { return true; }
@@ -82,7 +80,8 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   }
 
   // [S]
-  public: virtual void Show() {}
+  public: virtual void SetFocus() = 0;
+  public: virtual void Show() = 0;
 
   // [U]
   public: virtual void UpdateStatusBar() {}
