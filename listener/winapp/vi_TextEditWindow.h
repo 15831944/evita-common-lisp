@@ -12,14 +12,9 @@
 #define INCLUDE_listener_winapp_visual_text_pane_h
 
 #include "./li_util.h"
+#include "./gfx_base.h"
 #include "./vi_CommandWindow.h"
 #include "./vi_Page.h"
-
-namespace gfx {
-class Graphics;
-class PointF;
-class RectF;
-};
 
 class Buffer;
 class Page;

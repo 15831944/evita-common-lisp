@@ -1029,7 +1029,10 @@ void TextEditWindow::onVScroll(uint nCode)
 //  TextEditWindow::onMessage WM_WINDOWPOSCHANGED
 //
 void TextEditWindow::redraw() {
-  bool fSelectionActive = m_fHasFocus;
+  if (!(::GetWindowLong(m_hwnd, GWL_STYLE) & WS_VISIBLE))
+    return;
+
+  auto fSelectionActive = m_fHasFocus;
 
   if (g_hwndActiveDialog) {
     auto const edit_pane = Application::Get()->GetActiveFrame()->
