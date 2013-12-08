@@ -42,12 +42,14 @@ class Font {
 
     public: float ascent() const { return ascent_; }
     public: const gfx::FontFace& font_face() const { return *font_face_; }
+    public: float height() const { return height_; }
 
     public: float font_size() const {
       return m_oLogFont.lfHeight * 96.0f / 72.0f;
     }
 
     // [C]
+    private: float ConvertDesignUnitToDip(int design_unit) const;
     public: static base::OwnPtr<Font> Create(const LOGFONT*);
 
     // [E]
@@ -58,7 +60,7 @@ class Font {
     // [G]
     public: float GetCharWidth(char16) const;
     public: float GetDescent() const { return descent_; }
-    public: float GetHeight()  const { return height_; }
+    private: float GetHeight()  const { return height_; }
     public: const Key* GetKey() const { return &m_oLogFont; }
     public: float GetTextWidth(const char16* pwch, uint cwch) const;
 
@@ -70,9 +72,6 @@ class Font {
     }
 
     public: static int HashKey(const Key*);
-
-    // [S]
-    private: float Scale(int design_unit) const;
 
     DISALLOW_COPY_AND_ASSIGN(Font);
 }; // Font

@@ -96,10 +96,10 @@ static int CalculateFontHeight(const gfx::FontFace& font_face) {
 Font::Font(const LOGFONT& log_font)
     : m_oLogFont(log_font),
       font_face_(*new gfx::FontFace(log_font.lfFaceName)),
-      ascent_(Scale(font_face_->metrics().ascent)),
-      descent_(Scale(font_face_->metrics().descent)),
-      height_(::ceilf(Scale(CalculateFontHeight(*font_face_)))),
-      fixed_width_(Scale(CalculateFixedWidth(*font_face_))) {
+      ascent_(ConvertDesignUnitToDip(font_face_->metrics().ascent)),
+      descent_(ConvertDesignUnitToDip(font_face_->metrics().descent)),
+      height_(ConvertDesignUnitToDip(CalculateFontHeight(*font_face_))),
+      fixed_width_(ConvertDesignUnitToDip(CalculateFixedWidth(*font_face_))) {
 }
 
 Font::~Font() {
@@ -129,7 +129,7 @@ float Font::GetTextWidth(const char16* pwch, uint cwch) const {
   for (const auto metric: metrics) {
     width += metric.advanceWidth;
   }
-  return Scale(width);
+  return ConvertDesignUnitToDip(width);
 }
 
 bool Font::HasCharacter(char16 wch) const {
@@ -148,7 +148,7 @@ bool Font::HasCharacter(char16 wch) const {
 }
 
 // Convert pt(1/72in) to dip(1/96in)
-float Font::Scale(int design_unit) const {
+float Font::ConvertDesignUnitToDip(int design_unit) const {
   auto const pt = static_cast<float>(m_oLogFont.lfHeight * design_unit) /
       font_face_->metrics().designUnitsPerEm;
   return pt * 96.0f / 72.0f;

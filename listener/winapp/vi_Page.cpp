@@ -22,6 +22,10 @@
 #include "./vi_Selection.h"
 #include "./vi_util.h"
 
+// TODO: move |#undef min| to another place.
+#undef min
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 namespace PageInternal {
@@ -35,6 +39,20 @@ inline char16 toxdigit(int k) {
     return static_cast<char16>(k + '0');
  return static_cast<char16>(k - 10 + 'A');
 } // toxdigit
+
+float AlignHeightToPixel(const gfx::Graphics& gfx, float height) {
+  return gfx.AlignToPixel(gfx::SizeF(0.0f, height)).height;
+}
+
+#if 0
+float AlignWidthToPixel(const gfx::Graphics& gfx, float width) {
+  return gfx.AlignToPixel(gfx::SizeF(width, 0.0f)).width;
+}
+#else
+float AlignWidthToPixel(const gfx::Graphics&, float width) {
+  return width;
+}
+#endif
 
 inline gfx::ColorF ColorToColorF(Color color) {
   COLORREF const cr = color;
@@ -80,7 +98,7 @@ static void DrawText(const gfx::Graphics& gfx, const Font& font,
                                                &glyph_indexs[0]));
   DWRITE_GLYPH_RUN glyph_run;
   glyph_run.fontFace = font.font_face();
-  glyph_run.fontEmSize = gfx::FactorySet::ScaleY(font.font_size());
+  glyph_run.fontEmSize = font.font_size();
   glyph_run.glyphCount = glyph_indexs.size();
   glyph_run.glyphIndices = &glyph_indexs[0];
   glyph_run.glyphAdvances = nullptr;
@@ -144,7 +162,7 @@ class Cell : public ObjectInHeap {
   }
 
   public: virtual float GetDescent() const { return 0; }
-  public: virtual float GetHeight() const = 0;
+  public: float GetHeight() const { return m_cy; }
   public: virtual CellKind GetKind() const = 0;
   public: float GetWidth() const { return m_cx; }
 
@@ -190,13 +208,13 @@ class EnumCell {
 };
 
 class FillerCell final : public Cell {
-  public: FillerCell(Color cr, float cx, float cy) : Cell(cr, cx, cy) {}
+  public: FillerCell(Color cr, float cx, float cy)
+      : Cell(cr, cx, cy) {
+  }
 
   public: virtual Cell* Copy(HANDLE hHeap, char16*) const override {
     return new(hHeap) FillerCell(*this);
   }
-
-  public: virtual float GetHeight() const override { return 0.0f; }
 
   public: virtual CellKind GetKind() const override { 
     return CellKind_Filler;
@@ -261,7 +279,6 @@ class MarkerCell final : public Cell {
   }
 
   public: virtual float GetDescent() const override { return m_iDescent; }
-  public: virtual float GetHeight()  const override { return m_cy; }
   public: virtual CellKind GetKind() const override {
     return CellKind_Marker;
   }
@@ -304,7 +321,7 @@ class MarkerCell final : public Cell {
       case Kind_Eob: { // Draw <-
         // FIXME 2007-06-13 We should get internal leading from font.
         auto const iInternalLeading = 3;
-        auto const w = max(m_iAscent / 6, 2);
+        auto const w = max(m_iAscent / 6, 2.0f);
         auto const y = yBottom - (m_iAscent - iInternalLeading) / 2;
         drawHLine(gfx, stroke_brush, xLeft, xRight, y);
         drawLine(gfx, stroke_brush, xLeft + w, y - w, xLeft, y);
@@ -364,7 +381,8 @@ class TextCell : public Cell {
   protected: uint             m_ofs;
 
   public: TextCell(
-      const StyleValues*    pStyle,
+      const gfx::Graphics& gfx,
+      const StyleValues* pStyle,
       Color           crColor,
       Color           crBackground,
       Font*           pFont,
@@ -379,7 +397,8 @@ class TextCell : public Cell {
           m_lEnd(lPosn + 1),
           m_ofs(ofs),
           m_pFont(pFont),
-          Cell(crBackground, cx, pFont->GetHeight()) {
+          Cell(crBackground, cx,
+               AlignHeightToPixel(gfx, pFont->height())) {
   }
 
   public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
@@ -416,10 +435,6 @@ class TextCell : public Cell {
     return m_pFont->GetDescent();
   }
 
-  public: virtual float GetHeight() const override {
-   return m_pFont->GetHeight();
-  }
-
   public: virtual CellKind GetKind() const override {
     return CellKind_Text;
   }
@@ -438,7 +453,7 @@ class TextCell : public Cell {
     return nHash;
   }
 
-  public: virtual float MapPosnToX(const gfx::Graphics&,
+  public: virtual float MapPosnToX(const gfx::Graphics& gfx,
                                    Posn lPosn) const override final {
     if (lPosn <  m_lStart)
       return -1;
@@ -447,22 +462,22 @@ class TextCell : public Cell {
     auto const cwch = lPosn - m_lStart;
     if (!cwch)
       return 0;
-    return ::ceilf(m_pFont->GetTextWidth(m_pwch, cwch));
+    return AlignWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, cwch));
   }
 
-    public: virtual Posn MapXToPosn(const gfx::Graphics&,
+    public: virtual Posn MapXToPosn(const gfx::Graphics& gfx,
                                   float x) const override final {
     if (x >= m_cx)
       return m_lEnd;
     for (uint k = 1; k <= m_cwch; ++k) {
-      auto const cx = ::floorf(m_pFont->GetTextWidth(m_pwch, k));
+      auto const cx = AlignWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, k));
       if (x < cx)
         return m_lStart + k - 1;
     }
     return m_lEnd;
   }
 
-  // Merge - Returns true if specified cell is mergable to this cell.
+  // Merge - Returns true if specified cell is merged to this cell.
   public: virtual bool Merge(
       Font*           pFont,
       Color           crColor,
@@ -518,6 +533,7 @@ class TextCell : public Cell {
 //
 class UnicodeCell final : public TextCell {
   public: UnicodeCell(
+      const gfx::Graphics& gfx,
       const StyleValues*    pStyle,
       Color           crColor,
       Color           crBackground,
@@ -527,6 +543,7 @@ class UnicodeCell final : public TextCell {
       uint            ofs,
       uint            cwch) :
           TextCell(
+              gfx,
               pStyle,
               crColor,
               crBackground,
@@ -816,17 +833,19 @@ Cell* Formatter::formatChar(
 
     if (0x09 == wch) {
       Font* pFont = FontSet::Get(m_gfx, pStyle)->FindFont(m_gfx, 'x');
-      auto const cxTab = pFont->GetTextWidth(L" ", 1) * k_nTabWidth;
+      auto const cxTab = AlignWidthToPixel(m_gfx, pFont->GetCharWidth(' ')) *
+                            k_nTabWidth;
       auto const x2 = (x + cxTab - cxLeftMargin) / cxTab * cxTab;
       auto const cx = (x2 + cxLeftMargin) - x;
-      if (pPrev && x2 + pFont->GetCharWidth('M') > m_pPage->m_rc.right)
+      auto const cxM = AlignWidthToPixel(m_gfx, pFont->GetCharWidth('M'));
+      if (pPrev && x2 + cxM > m_pPage->m_rc.right)
         return nullptr;
 
       return new(m_hObjHeap) MarkerCell(
           pStyle->GetMarker(),
           crBackground,
           cx,
-          pFont->GetHeight(),
+          AlignHeightToPixel(m_gfx, pFont->height()),
           pFont->GetDescent(),
           lPosn,
           MarkerCell::Kind_Tab);
@@ -854,12 +873,14 @@ Cell* Formatter::formatChar(
             cwch = 5;
         } // if
 
-        auto const cxUni = pFont->GetTextWidth(rgwch, cwch) + 6.0f;
-        auto const cxM = pFont->GetCharWidth('M');
+        auto const cxUni = 6.0f +
+            AlignWidthToPixel(m_gfx, pFont->GetTextWidth(rgwch, cwch));
+        auto const cxM = AlignWidthToPixel(m_gfx, pFont->GetCharWidth('M'));
         if (pPrev && x + cxUni + cxM > m_pPage->m_rc.right)
           return nullptr;
 
         UnicodeCell* pCell = new(m_hObjHeap) UnicodeCell(
+            m_gfx,
             pStyle,
             pStyle->GetMarker(),
             crBackground,
@@ -873,12 +894,13 @@ Cell* Formatter::formatChar(
         return pCell;
     } // if
 
-    auto const cx = pFont->GetCharWidth(wch);
+    auto const cx = AlignWidthToPixel(m_gfx, pFont->GetCharWidth(wch));
 
     if (nullptr == pPrev)
     {
         // We must draw a char at start of window line.
         TextCell* pCell = new(m_hObjHeap) TextCell(
+            m_gfx,
             pStyle,
             crColor,
             crBackground,
@@ -891,7 +913,8 @@ Cell* Formatter::formatChar(
         return pCell;
     } // if
 
-    if (x + cx + pFont->GetCharWidth('M') > m_pPage->m_rc.right) {
+    auto const cxM = AlignWidthToPixel(m_gfx, pFont->GetCharWidth('M'));
+    if (x + cx + cxM > m_pPage->m_rc.right) {
       // We doesn't have enough room for a char in the line.
       return nullptr;
     }
@@ -903,6 +926,7 @@ Cell* Formatter::formatChar(
 
     {
         TextCell* pCell = new(m_hObjHeap) TextCell(
+            m_gfx,
             pStyle,
             crColor,
             crBackground,
@@ -939,8 +963,8 @@ Cell* Formatter::formatMarker(MarkerCell::Kind  eKind) {
     MarkerCell* pCell = new(m_hObjHeap) MarkerCell(
         crColor,
         crBackground,
-        pFont->GetTextWidth(L"x", 1),
-        pFont->GetHeight(),
+        AlignWidthToPixel(m_gfx, pFont->GetCharWidth('x')),
+        AlignHeightToPixel(m_gfx, pFont->height()),
         pFont->GetDescent(),
         m_oEnumCI.GetPosn(),
         eKind);
@@ -970,8 +994,9 @@ void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
   // FIXME 2007-08-05 yosi@msn.com We should expose rule position to
   // user.
   auto const num_columns = 80;
+  auto const width_of_M = AlignWidthToPixel(gfx, pFont->GetCharWidth('M'));
   drawVLine(gfx, gfx::Brush(gfx, gfx::ColorF::LightGray),
-            m_rc.left + pFont->GetCharWidth('M') * num_columns,
+            m_rc.left + width_of_M * num_columns,
             m_rc.top, m_rc.bottom);
 }
 
@@ -1280,8 +1305,8 @@ int Page::pageLines(const gfx::Graphics& gfx) const
 {
     Font* pFont = FontSet::Get(gfx, m_pBuffer->GetDefaultStyle())->
         FindFont(gfx, 'x');
-
-    return static_cast<int>(m_rc.height() / pFont->GetHeight());
+    auto const height = AlignHeightToPixel(gfx, pFont->height());
+    return static_cast<int>(m_rc.height() / height);
 }
 
 void Page::Prepare(const Selection& selection) {
@@ -1341,249 +1366,256 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
   fillBottom(gfx, y);
 }
 
+namespace {
+
+//////////////////////////////////////////////////////////////////////
+//
+// LineWithTop
+//
+class LineWithTop {
+  private: typedef Page::Line Line;
+
+  private: const Line* line_;
+  private: float line_top_;
+
+  public: LineWithTop(const Line* line, float line_top)
+      : line_(line), line_top_(line_top) {
+  }
+
+  public: LineWithTop()
+      : line_(nullptr), line_top_(0.0f) {
+  }
+
+  public: operator bool() const { return line_; }
+  public: bool operator!() const { return !line_; }
+  public: operator const Line*() const { return line_; }
+
+  public: const Line& operator*() const {
+    ASSERT(line_);
+    return *line_;
+  }
+
+  public: const Line* operator->() const {
+    ASSERT(line_);
+    return line_;
+  }
+
+  public: LineWithTop& operator++() {
+    ASSERT(line_);
+    line_top_ = line_bottom();
+    line_ = line_->GetNext();
+    return *this;
+  }
+
+  public: bool operator==(const LineWithTop& other) const {
+    ASSERT(line_);
+    ASSERT(!!other);
+    return line_top_ == other.line_top_ && line_->Equal(other.line_);
+  }
+
+  public: bool operator!=(const LineWithTop& other) const {
+    ASSERT(line_);
+    ASSERT(!!other);
+    return line_top_ != other.line_top_ || !line_->Equal(other.line_);
+  }
+
+  public: float height() const {
+    ASSERT(line_);
+    return line_->GetHeight();
+  }
+
+  public: float line_bottom() const {
+    ASSERT(line_);
+    return line_top_ + line_->GetHeight();
+  }
+
+  public: float line_top() const {
+    return line_top_;
+  }
+
+  public: LineWithTop Next() const {
+    ASSERT(line_);
+    return LineWithTop(line_->GetNext(), line_bottom());
+  }
+};
+
+//////////////////////////////////////////////////////////////////////
+//
+// LineCopier
+//
+class LineCopier {
+  private: typedef Page::Line Line;
+
+  private: const gfx::RectF rect_;
+  private: const gfx::Graphics& gfx_;
+  private: const base::OwnPtr<gfx::Bitmap> screen_bitmap_;
+  private: std::vector<const LineWithTop> lines_;
+
+  public: LineCopier(const gfx::Graphics& gfx, const gfx::RectF& rect,
+                     const Line* start_line)
+      : gfx_(gfx), rect_(rect), screen_bitmap_(*new gfx::Bitmap(gfx)) {
+    auto runner = start_line;
+    auto runner_top = rect.top;
+    while (runner) {
+      auto const runner_bottom = runner_top + runner->GetHeight();
+      if (runner_bottom > rect.bottom) {
+        // |runner| is partially on screen.
+        break;
+      }
+      lines_.push_back(LineWithTop(runner, runner_top));
+      runner_top = runner_bottom;
+      runner = runner->GetNext();
+    }
+    PopulateScreenBitmap();
+  }
+
+  private: void Copy(float dst_top, float dst_bottom, float src_top) const {
+    auto const src_bottom = src_top + dst_bottom - dst_top;
+    ASSERT(src_bottom <= rect_.bottom);
+
+    auto const height = std::min(std::min(rect_.bottom, dst_bottom) - dst_top, 
+                                 std::min(rect_.bottom, src_bottom) - src_top);
+
+    gfx::RectF dst_rect(0.0f, dst_top, rect_.right, dst_top + height);
+    gfx::RectF src_rect(0.0f, src_top, rect_.right, src_top + height);
+    ASSERT(dst_rect.size() == src_rect.size());
+
+    auto const opacity = 1.0f;
+    gfx_->DrawBitmap(*screen_bitmap_, dst_rect, opacity,
+                     D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                     src_rect);
+
+    #if DEBUG_RENDER
+      if (dst_rect.height() > 8) {
+          fillRect(gfx_,
+                   gfx::RectF(gfx::PointF(dst_rect.left + 4, dst_rect.top + 2),
+                              gfx::SizeF(4.0f, dst_rect.height() - 4)),
+                   gfx::ColorF::LightGreen);
+      }
+      DEBUG_PRINTF("copy (%d,%d)+(%d,%d) to %d\n",
+        static_cast<uint>(src_rect.left * 100),
+        static_cast<uint>(src_rect.top * 100),
+        static_cast<uint>(src_rect.right * 100),
+        static_cast<uint>(src_rect.bottom * 100),
+        static_cast<uint>(dst_rect.top * 100));
+    #endif
+  }
+
+  private: LineWithTop FindSameLine(const LineWithTop& line) const {
+    for (auto present: lines_) {
+      if (present->Equal(line))
+        return present;
+    }
+    return LineWithTop();
+  }
+
+  private: void PopulateScreenBitmap() {
+    gfx::RectU screen_rect((*screen_bitmap_)->GetPixelSize());
+    ASSERT(static_cast<float>(screen_rect.width()) == rect_.width());
+    ASSERT(static_cast<float>(screen_rect.height()) == rect_.height());
+    COM_VERIFY((*screen_bitmap_)->CopyFromRenderTarget(nullptr, gfx_,
+                                                       &screen_rect));
+  }
+
+  public: LineWithTop TryCopy(const LineWithTop& new_start) const {
+    auto present_start = FindSameLine(new_start);
+    if (!present_start)
+      return LineWithTop();
+    if (present_start.line_top() == new_start.line_top())
+      return new_start.Next();
+
+    auto new_last = new_start;
+    auto new_runner = new_start.Next();
+    auto present_runner = present_start.Next();
+    while (new_runner && present_runner) {
+      if (present_runner.line_bottom() > rect_.bottom ||
+          !new_runner->Equal(present_runner)) {
+        break;
+      }
+      new_last = new_runner;
+      ++new_runner;
+      ++present_runner;
+    }
+
+    if (new_start.line_top() != present_start.line_top()) {
+      Copy(new_start.line_top(), new_last.line_bottom(),
+           present_start.line_top());
+    }
+    return new_last;
+  }
+
+  DISALLOW_COPY_AND_ASSIGN(LineCopier);
+};
+
+} // namespace
+
 bool Page::Render(const gfx::Graphics& gfx, HWND) {
-    uint cRedraws = 0;
+  auto number_of_rendering = 0;
 
-    auto yNew = m_rc.top;
+  LineWithTop format_line(m_oFormatBuf.GetFirst(), m_rc.top);
+  LineWithTop screen_line(m_oScreenBuf.GetFirst(), m_rc.top);
+  while (format_line && screen_line) {
+    if (format_line != screen_line)
+      break;
+    ++format_line;
+    ++screen_line;
+  }
 
-    // Compute common Start -- pNewStart is end of common Start.
-    Line* pCurStart = m_oScreenBuf.GetFirst();
-    Line* pNewStart = m_oFormatBuf.GetFirst();
-    {
-        while (pNewStart && pCurStart) {
-            if (!pNewStart->Equal(pCurStart)) 
-                break;
-            yNew += pNewStart->GetHeight();
-            pNewStart = pNewStart->GetNext();
-            pCurStart = pCurStart->GetNext();
-        } // while
+  if (format_line) {
+    #if DEBUG_RENDER
+      DEBUG_PRINTF("start from %d\n",
+          static_cast<int>(format_line.line_top() * 100));
+    #endif
 
-        if (!pNewStart && !pCurStart) {
-            // m_oFormatBuf and m_oScreenBuf are same.
-            #if DEBUG_RENDER
-                DEBUG_PRINTF("nothing to do\n");
-            #endif // DEBUG_RENDER
-            return false;
-        }
-    }
-
-    // Compute common End -- pNewEnd is start of common End.
-    Line* pCurEnd = m_oScreenBuf.GetLast();
-    Line* pNewEnd = m_oFormatBuf.GetLast();
-
-    if (m_oFormatBuf.GetHeight() == m_oScreenBuf.GetHeight()) {
-      while (pNewEnd->Equal(pCurEnd)) {
-        pNewEnd = pNewEnd->GetPrev();
-        pCurEnd = pCurEnd->GetPrev();
+    LineCopier line_copier(gfx, m_rc, m_oScreenBuf.GetFirst());
+    while (format_line) {
+      auto const last_copy_line = line_copier.TryCopy(format_line);
+      if (last_copy_line) {
+        format_line = last_copy_line.Next();
+        continue;
       }
+
+      ++number_of_rendering;
+      format_line->Render(gfx, gfx::PointF(m_rc.left, format_line.line_top()));
+      fillRight(gfx, format_line, format_line.line_top());
+      ++format_line;
     }
+  }
 
-    if (pCurEnd)
-        pCurEnd = pCurEnd->GetNext();
-    pNewEnd = pNewEnd->GetNext();
+  fillBottom(gfx, format_line.line_top());
 
-    // We need to redraw pNewStart (inclusive) to pNewEnd (exclsuive).
-    Line* pScrollEnd;
-    Line* pScrollStart = TryScroll(
-        gfx,
-        pNewStart, pNewEnd, yNew,
-        pCurStart, pCurEnd, yNew,
-        &pScrollEnd);
-    if (pScrollStart) {
-        for (Line* pNewLine = pNewStart; pNewLine != pNewEnd;
-             pNewLine = pNewLine->GetNext()) {
-          ASSERT(pNewLine);
-
-          if (pNewLine == pScrollStart) {
-            pScrollStart = pScrollStart->GetNext();
-            if (pScrollStart == pScrollEnd)
-              pScrollStart = nullptr;
-          } else {
-            cRedraws += 1;
-            pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
-            fillRight(gfx, pNewLine, yNew);
-          }
-
-          yNew += pNewLine->GetHeight();
-        }
-    } else {
-        auto yCur = m_rc.top;
-        auto pCurLine = pCurStart;
-
-        // This is super test.
-        // Are you ready to go?
-        for (
-            auto pNewLine = pNewStart;
-            pNewLine != pNewEnd;
-            pNewLine = pNewLine->GetNext())
-        {
-            bool fRedraw;
-            while (nullptr != pCurLine) {
-              if (yCur >= yNew) break;
-              pCurLine = pCurLine->GetNext();
-            }
-
-            ASSERT(nullptr != pNewLine);
-            
-            if (!pCurLine) {
-                fRedraw = true;
-            } else {
-                fRedraw = yNew != yCur || !pNewLine->Equal(pCurLine);
-                yCur += pCurLine->GetHeight();
-                pCurLine = pCurLine->GetNext();
-            } // if
-
-            if (fRedraw) {
-                cRedraws += 1;
-                pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
-                fillRight(gfx, pNewLine, yNew);
-            } // if
-
-            yNew += pNewLine->GetHeight(); // Are you ready to go?
-        }
-    } // if
-
-    while (pNewEnd) {
-      yNew += pNewEnd->GetHeight();
-      pNewEnd = pNewEnd->GetNext();
-    } // while
-
-    fillBottom(gfx, yNew);
-
-    // Update m_oScreenBuf for next rendering.
-    {
-      auto const hHeap = m_oScreenBuf.Reset();
-      foreach (EnumLine, oEnum, m_oFormatBuf) {
-        auto const pLine = oEnum.Get();
-        m_oScreenBuf.Append(pLine->Copy(hHeap));
-      }
+  // Update m_oScreenBuf for next rendering.
+  {
+    auto const hHeap = m_oScreenBuf.Reset();
+    foreach (EnumLine, oEnum, m_oFormatBuf) {
+      auto const pLine = oEnum.Get();
+      m_oScreenBuf.Append(pLine->Copy(hHeap));
     }
+  }
 
-    if (cRedraws >= 1) {
-        #if DEBUG_RENDER
-        {
-            DEBUG_PRINTF("%p"
-                " redraw=%d"
-                " r[%d, %d] s[%d, %d]"
-                " rc=(%d,%d)-(%d,%d)\r\n",
-                this,
-                cRedraws,
-                m_lStart, m_lEnd,
-                m_lSelStart, m_lSelEnd,
-                m_rc.left, m_rc.top, m_rc.right, m_rc.bottom);
-        }
-        #endif // DEBUG_RENDER
-    } // if
-
-    return cRedraws > 0;
+  #if DEBUG_RENDER
+    if (number_of_rendering >= 1) {
+      DEBUG_PRINTF("%p" 
+                   " redraw=%d"
+                   " r[%d, %d] s[%d, %d]"
+                   " rc=(%d,%d)+(%d,%d)\r\n",
+                   this,
+                   number_of_rendering,
+                   m_lStart, m_lEnd,
+                   m_lSelStart, m_lSelEnd,
+                   static_cast<int>(m_rc.left),
+                   static_cast<int>(m_rc.top),
+                   static_cast<int>(m_rc.right),
+                   static_cast<int>(m_rc.bottom));
+    }
+  #endif // DEBUG_RENDER
+  return number_of_rendering > 0;
 }
 
 void Page::Reset() {
   m_oScreenBuf.Reset();
 }
 
-Page::Line* Page::TryScroll(
-    const gfx::Graphics& gfx,
-    Line*   pNewStart,
-    Line*   pNewEnd,
-    float   yNewStart,
-    Line*   pCurStart,
-    Line*   pCurEnd,
-    float   yCurStart,
-    Line**  out_pScrollEnd) {
-  auto yCurScroll   = 0.0f;
-  auto yNewScroll   = 0.0f;
-  auto cyScroll     = k_cyMinScroll;
-  Line* pScrollStart = nullptr;
-  Line* pScrollEnd   = nullptr;
-
-  auto yNew = yNewStart;
-  for (auto pNewLine = pNewStart; pNewLine != pNewEnd;
-    pNewLine = pNewLine->GetNext())  {
-    auto yCur = yCurStart;
-    for (auto pCurLine = pCurStart; pCurLine != pCurEnd;
-         pCurLine = pCurLine->GetNext()) {
-      if (yCur + pCurLine->GetHeight() > m_rc.bottom)
-        break;
-      if (yCur == yNew || !pNewLine->Equal(pCurLine)) {
-        yCur += pCurLine->GetHeight();
-        continue;
-      }
-      auto cyCommon = pCurLine->GetHeight();
-      auto pCurRunner = pCurLine;
-      auto pNewRunner = pNewLine;
-      for (;;) {
-        pCurRunner = pCurRunner->GetNext();
-        pNewRunner = pNewRunner->GetNext();
-        if (!pCurRunner || yCur + pCurRunner->GetHeight() > m_rc.bottom)
-          break;
-        if (!pNewRunner || yNew + pNewRunner->GetHeight() > m_rc.bottom ||
-            !pNewRunner->Equal(pCurRunner))
-          break;
-        cyCommon += pCurRunner->GetHeight();
-      }
-      if (cyScroll < cyCommon) {
-        cyScroll = cyCommon;
-        yCurScroll = yCur;
-        yNewScroll = yNew;
-        pScrollStart = pNewLine;
-        pScrollEnd = pNewRunner;
-      }
-      break;
-    }
-    yNew += pNewLine->GetHeight();
-  }
-
-  #if DEBUG_RENDER
-    fillRect(gfx, gfx::RectF(gfx::PointF(m_rc.left, m_rc.top),
-                               gfx::SizeF(2.0f, m_rc.height())),
-             gfx::ColorF::White);
-  #endif
-
-  if (cyScroll <= k_cyMinScroll)
-    return nullptr;
-
-  {
-    gfx::Bitmap screen_bitmap(gfx);
-    gfx::RectU screen_rect(screen_bitmap->GetPixelSize());
-    ASSERT(static_cast<float>(screen_rect.width()) == m_rc.width());
-    ASSERT(static_cast<float>(screen_rect.height()) == m_rc.height());
-    COM_VERIFY(screen_bitmap->CopyFromRenderTarget(nullptr, gfx,
-                                                   &screen_rect));
-
-    gfx::RectF dst_rect(0.0f, yNewScroll,
-                        m_rc.right, ::ceilf(yNewScroll + cyScroll));
-    gfx::RectF src_rect(0.0f, yCurScroll,
-                       m_rc.right, ::ceilf(yCurScroll + cyScroll));
-    ASSERT(dst_rect.width() == src_rect.width());
-    ASSERT(dst_rect.height() == src_rect.height());
-
-    auto const opacity = 1.0f;
-    gfx->DrawBitmap(screen_bitmap, dst_rect, opacity,
-                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-                    src_rect);
-
-    #if DEBUG_RENDER
-      fillRect(gfx, gfx::RectF(dst_rect.left_top(),
-                               gfx::SizeF(2.0f, dst_rect.height())),
-               gfx::ColorF::DarkGreen);
-      DEBUG_PRINTF("scroll (%d,%d)+(%d,%d) to %d\n",
-        static_cast<uint>(src_rect.left),
-        static_cast<uint>(src_rect.top),
-        static_cast<uint>(src_rect.right),
-        static_cast<uint>(src_rect.bottom),
-        static_cast<uint>(dst_rect.top));
-    #endif
-  }
-
-  *out_pScrollEnd = pScrollEnd;
-  return pScrollStart;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Page::ScrollDown
-//
 bool Page::ScrollDown(const gfx::Graphics& gfx) {
   if (!m_lStart) {
     // This page shows start of buffer.

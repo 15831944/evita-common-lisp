@@ -506,8 +506,8 @@ class Item : public Element {
     if (!hIcon)
       return;
     gfx::Bitmap bitmap(gfx, hIcon);
-    auto const icon_size = gfx.Scale(gfx::SizeF(16, 16));
-    auto const icon_offset = gfx.Scale(gfx::SizeF(-20, 8));
+    auto const icon_size = gfx.RoundToPixel(gfx::SizeF(16, 16));
+    auto const icon_offset = gfx.RoundToPixel(gfx::SizeF(-20, 8));
     auto const icon_left_top = gfx::PointF(m_rcLabel.left, m_rc.top) +
                                icon_offset;
     gfx->DrawBitmap(bitmap, gfx::RectF(icon_left_top, icon_size));
