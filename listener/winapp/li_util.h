@@ -546,16 +546,19 @@ namespace base {
 template<class T>
 class OwnPtr {
   private: T* ptr_;
+  public: OwnPtr() : ptr_(nullptr) {}
   public: explicit OwnPtr(T* ptr) : ptr_(ptr) { ASSERT(ptr_); }
-  public: explicit OwnPtr(T& ptr) : ptr_(&ptr) {}
+  public: explicit OwnPtr(T& obj) : ptr_(&obj) {}
   public: OwnPtr(OwnPtr& other) : ptr_(other.ptr_) {}
   public: OwnPtr(OwnPtr&& other) : ptr_(other.ptr_) {
     other.ptr_ = nullptr;
   }
   public: ~OwnPtr() { delete ptr_; }
-  public: operator T*() const { return ptr_; }
+  public: operator T*() const { ASSERT(ptr_); return ptr_; }
   public: T* operator ->() const { ASSERT(ptr_); return ptr_; }
   public: T& operator*() const { ASSERT(ptr_); return *ptr_; }
+  public: operator bool() const { return ptr_; }
+  public: bool operator!() const { return !ptr_; }
   public: bool operator==(const OwnPtr<T>& other) const {
     return ptr_ == other.ptr_;
   }
@@ -566,6 +569,10 @@ class OwnPtr {
   public: bool operator!=(const T* other) const { return ptr_ != other; }
   public: bool operator==(const T& other) const { return ptr_ == &other; }
   public: bool operator!=(const T& other) const { return ptr_ != &other; }
+  public: void Assign(T& obj) {
+    ASSERT(!ptr_);
+    ptr_ = &obj;
+  }
   public: T& Detach() {
     auto const ptr = ptr_;
     ptr_ = nullptr;
