@@ -171,10 +171,37 @@ DWRITE_FONT_METRICS GetFontMetrics(IDWriteFontFace* font) {
 
 } // namespace
 
+//////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+namespace {
+base::ComPtr<ID2D1Bitmap> CreateBitmap(const Graphics& gfx, SizeU size) {
+  base::ComPtr<ID2D1Bitmap> bitmap;
+  D2D1_BITMAP_PROPERTIES props;
+  props.pixelFormat = gfx->GetPixelFormat();
+  gfx->GetDpi(&props.dpiX, &props.dpiY);
+  COM_VERIFY(gfx->CreateBitmap(size, props, &bitmap));
+  return std::move(bitmap);
+}
+}
+
 Bitmap::Bitmap(const Graphics& gfx, HICON hIcon)
     : SimpleObject_(CreateBitmap(gfx, hIcon)) {
 }
 
+Bitmap::Bitmap(const Graphics& gfx, SizeU size)
+    : SimpleObject_(CreateBitmap(gfx, size)) {
+}
+
+Bitmap::Bitmap(const Graphics& gfx)
+    : Bitmap(gfx, gfx->GetPixelSize()) {
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Brush
+//
 Brush::Brush(const Graphics& gfx, ColorF color)
     : SimpleObject_(CreateSolidColorBrush(gfx, color)) {
 }
@@ -187,6 +214,10 @@ Brush::~Brush() {
 }
 #endif
 
+//////////////////////////////////////////////////////////////////////
+//
+// FactorySet
+//
 FactorySet::FactorySet()
       : d2d1_factory_(CreateD2D1Factory()),
         dwrite_factory_(CreateDWriteFactory()),
@@ -211,8 +242,10 @@ FactorySet& FactorySet::instance() {
   return *instance;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
 // Graphics
-
+//
 Graphics::Graphics()
     : factory_set_(FactorySet::instance()),
       work_(nullptr),

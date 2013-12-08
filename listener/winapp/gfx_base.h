@@ -15,19 +15,6 @@
 
 namespace gfx {
 
-typedef D2D1::ColorF ColorF;
-
-class Bitmap;
-class Brush;
-class FactorySet;
-class FontFace;
-class Graphics;
-class PointF;
-class RectF;
-class SizeF;
-class TextFormat;
-class TextLayout;
-
 class Object {
   protected: Object() {}
   protected: ~Object() {}
@@ -43,148 +30,170 @@ class SimpleObject_ : public Object {
   public: T* operator->() const { return ptr_; }
 };
 
-class SizeF : public D2D1_SIZE_F {
-  public: SizeF() {
+//////////////////////////////////////////////////////////////////////
+//
+// Geometry objects
+//
+
+template<typename BaseType, typename UnitType>
+class Size_ : public BaseType {
+  public: typedef UnitType UnitType;
+
+  public: Size_() {
     width = height = 0;
   }
-  public: SizeF(float width, float height) {
+  public: Size_(const BaseType& other) {
+    width = other.width;
+    height = other.height;
+  }
+  public: Size_(UnitType width, UnitType height) {
     this->width = width;
     this->height = height;
   }
-  public: SizeF(int width, int height) {
-    this->width = static_cast<float>(width);
-    this->height = static_cast<float>(height);
+  public: Size_(int width, int height) {
+    this->width = static_cast<UnitType>(width);
+    this->height = static_cast<UnitType>(height);
   }
-  public: bool operator==(const SizeF& other) const {
+  public: bool operator==(const Size_& other) const {
     return width == other.width && height == other.height;
   }
-  public: bool operator!=(const SizeF& other) const {
+  public: bool operator!=(const Size_& other) const {
     return width != other.width && height != other.height;
   }
 
-  public: SizeF operator+(const SizeF& other) const {
-    return SizeF(width + other.width, height + other.height);
+  public: Size_ operator+(const Size_& other) const {
+    return Size_(width + other.width, height + other.height);
   }
 
-  public: SizeF operator+(float scalar) const {
-    return SizeF(width + scalar, height + scalar);
+  public: Size_ operator+(UnitType scalar) const {
+    return Size_(width + scalar, height + scalar);
   }
 
-  public: SizeF operator-(const SizeF& other) const {
-    return SizeF(width - other.width, height - other.height);
+  public: Size_ operator-(const Size_& other) const {
+    return Size_(width - other.width, height - other.height);
   }
 
-  public: SizeF operator-(float scalar) const {
-    return SizeF(width - scalar, height - scalar);
+  public: Size_ operator-(UnitType scalar) const {
+    return Size_(width - scalar, height - scalar);
   }
 
-  public: SizeF operator*(const SizeF& other) const {
-    return SizeF(width * other.width, height * other.height);
+  public: Size_ operator*(const Size_& other) const {
+    return Size_(width * other.width, height * other.height);
   }
 
-  public: SizeF operator*(float scalar) const {
-    return SizeF(width * scalar, height * scalar);
+  public: Size_ operator*(UnitType scalar) const {
+    return Size_(width * scalar, height * scalar);
   }
 
-  public: SizeF operator/(const SizeF& other) const {
-    return SizeF(width / other.width, height / other.height);
+  public: Size_ operator/(const Size_& other) const {
+    return Size_(width / other.width, height / other.height);
   }
 
-  public: SizeF operator/(float scalar) const {
-    return SizeF(width / scalar, height / scalar);
+  public: Size_ operator/(UnitType scalar) const {
+    return Size_(width / scalar, height / scalar);
   }
 };
 
-class PointF : public D2D1_POINT_2F {
-  public: PointF(const PointF& other) {
+template<typename BaseType, typename SizeType>
+class Point_ : public BaseType {
+  public: typedef typename SizeType::UnitType UnitType;
+  public: Point_(const Point_& other) {
     x = other.x;
     y = other.y;
   }
-  public: PointF(float x, float y) {
+  public: Point_(UnitType x, UnitType y) {
     this->x = x;
     this->y = y;
   }
-  public: PointF(int x, int y) {
-    this->x = static_cast<float>(x);
-    this->y = static_cast<float>(y);
+  public: Point_(int x, int y) {
+    this->x = static_cast<UnitType>(x);
+    this->y = static_cast<UnitType>(y);
   }
-  public: PointF(const POINT& point) {
-    x = static_cast<float>(point.x);
-    y = static_cast<float>(point.y);
+  public: Point_(const POINT& point) {
+    x = static_cast<UnitType>(point.x);
+    y = static_cast<UnitType>(point.y);
   }
-  public: PointF() {
-    this->x = 0;
-    this->y = 0;
+  public: Point_() {
+    this->x = static_cast<UnitType>(0);
+    this->y = static_cast<UnitType>(0);
   }
 
-  public: PointF& operator=(const PointF& other) {
+  public: Point_& operator=(const Point_& other) {
     x = other.x;
     y = other.y;
     return *this;
   }
 
-  public: PointF operator+(const PointF& other) const {
-    return PointF(x + other.x, y + other.y);
+  public: Point_ operator+(const Point_& other) const {
+    return Point_(x + other.x, y + other.y);
   }
 
-  public: PointF operator+(const SizeF& size) const {
-    return PointF(x + size.width, y + size.height);
+  public: Point_ operator+(const SizeType& size) const {
+    return Point_(x + size.width, y + size.height);
   }
 
-  public: PointF operator-(const PointF& other) const {
-    return PointF(x - other.x, y - other.y);
+  public: Point_ operator-(const Point_& other) const {
+    return Point_(x - other.x, y - other.y);
   }
 
-  public: PointF operator-(const SizeF& size) const {
-    return PointF(x - size.width, y - size.height);
+  public: Point_ operator-(const SizeType& size) const {
+    return Point_(x - size.width, y - size.height);
   }
 
-  public: PointF operator*(const PointF& other) const {
-    return PointF(x * other.x, y * other.y);
+  public: Point_ operator*(const Point_& other) const {
+    return Point_(x * other.x, y * other.y);
   }
 
-  public: PointF operator*(const SizeF& size) const {
-    return PointF(x * size.width, y * size.height);
+  public: Point_ operator*(const SizeType& size) const {
+    return Point_(x * size.width, y * size.height);
   }
 
-  public: PointF operator/(float divisor) const {
-    return PointF(x / divisor, y / divisor);
+  public: Point_ operator/(UnitType divisor) const {
+    return Point_(x / divisor, y / divisor);
   }
 };
 
-class RectF : public D2D1_RECT_F {
-  public: RectF() {
+template<typename BaseType, typename PointType, typename SizeType>
+class Rect_ : public BaseType {
+  public: typedef typename SizeType::UnitType UnitType;
+  public: Rect_() {
     left = top = right = bottom = 0;
   }
-  public: RectF(float left, float top, float right, float bottom) {
+  public: Rect_(UnitType left, UnitType top, UnitType right, UnitType bottom) {
     this->left = left;
     this->top = top;
     this->right = right;
     this->bottom = bottom;
   }
-  public: RectF(int left, int top, int right, int bottom) {
-    this->left = static_cast<float>(left);
-    this->top = static_cast<float>(top);
-    this->right = static_cast<float>(right);
-    this->bottom = static_cast<float>(bottom);
+  public: Rect_(int left, int top, int right, int bottom) {
+    this->left = static_cast<UnitType>(left);
+    this->top = static_cast<UnitType>(top);
+    this->right = static_cast<UnitType>(right);
+    this->bottom = static_cast<UnitType>(bottom);
   }
-  public: explicit RectF(const RECT& rc) {
-    this->left = static_cast<float>(rc.left);
-    this->top = static_cast<float>(rc.top);
-    this->right = static_cast<float>(rc.right);
-    this->bottom = static_cast<float>(rc.bottom);
+  public: explicit Rect_(const RECT& rc) {
+    this->left = static_cast<UnitType>(rc.left);
+    this->top = static_cast<UnitType>(rc.top);
+    this->right = static_cast<UnitType>(rc.right);
+    this->bottom = static_cast<UnitType>(rc.bottom);
   }
-  public: RectF(const PointF& left_top, const PointF& right_bottom) {
+  public: Rect_(const PointType& left_top, const PointType& right_bottom) {
     left = left_top.x;
     top = left_top.y;
     right = right_bottom.x;
     bottom = right_bottom.y;
   }
-  public: RectF(const PointF& left_top, const SizeF& size) {
+  public: Rect_(const PointType& left_top, const SizeType& size) {
     left = left_top.x;
     top = left_top.y;
     right = left + size.width;
     bottom = top + size.height;
+  }
+  public: explicit Rect_(const SizeType& size) {
+    left = 0;
+    top = 0;
+    right = size.width;
+    bottom = size.height;
   }
 
   public: operator RECT() const {
@@ -196,12 +205,12 @@ class RectF : public D2D1_RECT_F {
     return rc;
   }
 
-  public: RectF operator*(const SizeF& size) const {
-    return RectF(left * size.width, top * size.height,
+  public: Rect_ operator*(const SizeType& size) const {
+    return Rect_(left * size.width, top * size.height,
                  right * size.width, bottom * size.height);
   }
 
-  public: RectF& operator*=(const SizeF& size) {
+  public: Rect_& operator*=(const SizeType& size) {
     left *= size.width;
     top *= size.height;
     right *= size.width;
@@ -212,26 +221,48 @@ class RectF : public D2D1_RECT_F {
   public: operator bool() const { return !is_empty(); }
   public: bool operator!() const { return is_empty(); }
 
-  public: float height() const { return bottom - top; }
+  public: UnitType height() const { return bottom - top; }
 
   public: bool is_empty() const {
     return width() <= 0 || height() <= 0;
   }
 
-  public: PointF left_top() const {
-    return PointF(left, top);
+  public: PointType left_top() const {
+    return PointType(left, top);
   }
 
-  public: PointF right_bottom() const {
-    return PointF(right, bottom);
+  public: PointType right_bottom() const {
+    return PointType(right, bottom);
   }
 
-  public: float width() const { return right - left; }
-
+  public: SizeType size() const { return SizeType(width(), height()); }
+  public: UnitType width() const { return right - left; }
 };
+
+typedef Size_<D2D1_SIZE_F, float> SizeF;
+typedef Size_<D2D1_SIZE_U, uint> SizeU;
+typedef Point_<D2D1_POINT_2F, SizeF> PointF;
+typedef Point_<D2D1_POINT_2U, SizeU> PointU;
+typedef Rect_<D2D1_RECT_F, PointF, SizeF> RectF;
+typedef Rect_<D2D1_RECT_U, PointU, SizeU> RectU;
+
+//////////////////////////////////////////////////////////////////////
+//
+// Graphics objects
+//
+typedef D2D1::ColorF ColorF;
+class Bitmap;
+class Brush;
+class FactorySet;
+class FontFace;
+class Graphics;
+class TextFormat;
+class TextLayout;
 
 class Bitmap : public SimpleObject_<ID2D1Bitmap> {
   public: Bitmap(const Graphics& gfx, HICON hIcon);
+  public: Bitmap(const Graphics& gfx, SizeU size);
+  public: explicit Bitmap(const Graphics& gfx);
 };
 
 class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
@@ -317,6 +348,9 @@ class Graphics : public Object {
   public: Graphics();
   public: ~Graphics();
 
+  public: operator ID2D1HwndRenderTarget*() const {
+    return &render_target();
+  }
   public: ID2D1HwndRenderTarget* operator->() const {
     return &render_target();
   }
