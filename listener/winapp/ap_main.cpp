@@ -12,7 +12,7 @@
 // Example options:
 //  -dll vanilla.dll -image evcl3.image -multiple
 //
-#define DEBUG_IDLE 0
+#define DEBUG_IDLE _DEBUG
 
 #if USE_LISTENER
     #include "./ap_listener_buffer.h"
@@ -156,6 +156,10 @@ static void NoReturn fatalExit(const char16* pwsz) {
   ::FatalAppExit(0, wsz);
 }
 
+static bool IsKeepIdleMessage(uint message) {
+  return message == WM_PAINT || message == WM_SYSTIMER;
+}
+
 static int MainLoop(EnumArg* pEnumArg) {
   // Initialize Default Style
   // This initialize must be before creating edit buffers.
@@ -256,7 +260,7 @@ static int MainLoop(EnumArg* pEnumArg) {
     ::TranslateMessage(&oMsg);
     ::DispatchMessage(&oMsg);
 
-    if (oMsg.message != WM_PAINT && oMsg.message != WM_SYSTIMER) {
+    if (!IsKeepIdleMessage(oMsg.message)) {
       #if DEBUG_IDLE
         DEBUG_PRINTF("Enable idle by messgage=0x%04X\n", oMsg.message);
       #endif
