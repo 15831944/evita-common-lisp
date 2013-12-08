@@ -87,12 +87,18 @@ static uint CalculateFixedWidth(const gfx::FontFace& font_face) {
   return width;
 }
 
+static int CalculateFontHeight(const gfx::FontFace& font_face) {
+  return font_face.metrics().ascent +
+         font_face.metrics().lineGap +
+         font_face.metrics().descent;
+}
+
 Font::Font(const LOGFONT& log_font)
     : m_oLogFont(log_font),
       font_face_(*new gfx::FontFace(log_font.lfFaceName)),
       ascent_(Scale(font_face_->metrics().ascent)),
       descent_(Scale(font_face_->metrics().descent)),
-      height_(Scale(font_face_->metrics().lineGap) + ascent_ + descent_),
+      height_(::ceilf(Scale(CalculateFontHeight(*font_face_)))),
       fixed_width_(Scale(CalculateFixedWidth(*font_face_))) {
 }
 
