@@ -211,7 +211,7 @@ class Page {
   public: void Reset();
 
     // [T]
-  private: Line* TryScroll(HWND,
+  private: Line* TryScroll(const gfx::Graphics& gfx,
                            Line* new_start, Line* new_end, float new_top,
                            Line* cur_start, Line* cur_end, float cur_top,
                            Line** out_scroll_end);

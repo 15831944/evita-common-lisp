@@ -12,7 +12,7 @@
 #define DEBUG_DIRTY  0
 #define DEBUG_FORMAT 0
 #define DEBUG_HEAP   0
-#define DEBUG_RENDER 0
+#define DEBUG_RENDER _DEBUG
 #include "./vi_Page.h"
 
 #include "./ed_interval.h"
@@ -1341,15 +1341,7 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
   fillBottom(gfx, y);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Page::Render
-//
-// Note:
-//  We need hwnd for ScrollWindowEx in TryScroll.
-//
-bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
-    ASSERT(hwnd);
+bool Page::Render(const gfx::Graphics& gfx, HWND) {
     uint cRedraws = 0;
 
     auto yNew = m_rc.top;
@@ -1391,11 +1383,9 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
     pNewEnd = pNewEnd->GetNext();
 
     // We need to redraw pNewStart (inclusive) to pNewEnd (exclsuive).
-    //::SetTextAlign(gfx, TA_BASELINE);
-
     Line* pScrollEnd;
     Line* pScrollStart = TryScroll(
-        hwnd,
+        gfx,
         pNewStart, pNewEnd, yNew,
         pCurStart, pCurEnd, yNew,
         &pScrollEnd);
@@ -1404,14 +1394,11 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
              pNewLine = pNewLine->GetNext()) {
           ASSERT(pNewLine);
 
-          bool fRedraw = true;
           if (pNewLine == pScrollStart) {
-            fRedraw = false;
-          } else if (pNewLine == pScrollEnd) {
-            fRedraw = true;
-          }
-
-          if (fRedraw) {
+            pScrollStart = pScrollStart->GetNext();
+            if (pScrollStart == pScrollEnd)
+              pScrollStart = nullptr;
+          } else {
             cRedraws += 1;
             pNewLine->Render(gfx, gfx::PointF(m_rc.left, yNew));
             fillRight(gfx, pNewLine, yNew);
@@ -1423,18 +1410,18 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
         auto yCur = m_rc.top;
         auto pCurLine = pCurStart;
 
+        // This is super test.
+        // Are you ready to go?
         for (
             auto pNewLine = pNewStart;
             pNewLine != pNewEnd;
             pNewLine = pNewLine->GetNext())
         {
             bool fRedraw;
-
-            while (nullptr != pCurLine)
-            {
-                if (yCur >= yNew) break;
-                pCurLine = pCurLine->GetNext();
-            } // while
+            while (nullptr != pCurLine) {
+              if (yCur >= yNew) break;
+              pCurLine = pCurLine->GetNext();
+            }
 
             ASSERT(nullptr != pNewLine);
             
@@ -1452,24 +1439,24 @@ bool Page::Render(const gfx::Graphics& gfx, HWND hwnd) {
                 fillRight(gfx, pNewLine, yNew);
             } // if
 
-            yNew += pNewLine->GetHeight();
-        } // for each line
+            yNew += pNewLine->GetHeight(); // Are you ready to go?
+        }
     } // if
 
     while (pNewEnd) {
-        yNew += pNewEnd->GetHeight();
-        pNewEnd = pNewEnd->GetNext();
+      yNew += pNewEnd->GetHeight();
+      pNewEnd = pNewEnd->GetNext();
     } // while
 
     fillBottom(gfx, yNew);
 
     // Update m_oScreenBuf for next rendering.
     {
-        auto const hHeap = m_oScreenBuf.Reset();
-        foreach (EnumLine, oEnum, m_oFormatBuf) {
-            auto const pLine = oEnum.Get();
-            m_oScreenBuf.Append(pLine->Copy(hHeap));
-        } // for each line
+      auto const hHeap = m_oScreenBuf.Reset();
+      foreach (EnumLine, oEnum, m_oFormatBuf) {
+        auto const pLine = oEnum.Get();
+        m_oScreenBuf.Append(pLine->Copy(hHeap));
+      }
     }
 
     if (cRedraws >= 1) {
@@ -1495,9 +1482,8 @@ void Page::Reset() {
   m_oScreenBuf.Reset();
 }
 
-#if 0
 Page::Line* Page::TryScroll(
-    HWND    hwnd,
+    const gfx::Graphics& gfx,
     Line*   pNewStart,
     Line*   pNewEnd,
     float   yNewStart,
@@ -1517,76 +1503,82 @@ Page::Line* Page::TryScroll(
     auto yCur = yCurStart;
     for (auto pCurLine = pCurStart; pCurLine != pCurEnd;
          pCurLine = pCurLine->GetNext()) {
-      if (yCur != yNew) {
-          if (pNewLine->Equal(pCurLine)) {
-            auto cy = pNewLine->GetHeight();
-            auto pNewRunner = pNewLine->GetNext();
-            auto pCurRunner = pCurLine->GetNext();
-            while (pNewRunner && pCurRunner) {
-              if (!pNewRunner->Equal(pCurRunner))
-                break;
-              cy += pNewRunner->GetHeight();
-              pNewRunner = pNewRunner->GetNext();
-              pCurRunner = pCurRunner->GetNext();
-            }
-
-            if (cyScroll < cy) {
-              cyScroll     = cy;
-              yNewScroll   = yNew;
-              yCurScroll   = yCur;
-              pScrollStart = pNewLine;
-              pScrollEnd   = pNewRunner;
-            }
-         }
+      if (yCur + pCurLine->GetHeight() > m_rc.bottom)
+        break;
+      if (yCur == yNew || !pNewLine->Equal(pCurLine)) {
+        yCur += pCurLine->GetHeight();
+        continue;
       }
-      yCur += pCurLine->GetHeight();
+      auto cyCommon = pCurLine->GetHeight();
+      auto pCurRunner = pCurLine;
+      auto pNewRunner = pNewLine;
+      for (;;) {
+        pCurRunner = pCurRunner->GetNext();
+        pNewRunner = pNewRunner->GetNext();
+        if (!pCurRunner || yCur + pCurRunner->GetHeight() > m_rc.bottom)
+          break;
+        if (!pNewRunner || yNew + pNewRunner->GetHeight() > m_rc.bottom ||
+            !pNewRunner->Equal(pCurRunner))
+          break;
+        cyCommon += pCurRunner->GetHeight();
+      }
+      if (cyScroll < cyCommon) {
+        cyScroll = cyCommon;
+        yCurScroll = yCur;
+        yNewScroll = yNew;
+        pScrollStart = pNewLine;
+        pScrollEnd = pNewRunner;
+      }
+      break;
     }
     yNew += pNewLine->GetHeight();
   }
 
+  #if DEBUG_RENDER
+    fillRect(gfx, gfx::RectF(gfx::PointF(m_rc.left, m_rc.top),
+                               gfx::SizeF(2.0f, m_rc.height())),
+             gfx::ColorF::White);
+  #endif
+
   if (cyScroll <= k_cyMinScroll)
     return nullptr;
 
-  // Note:
-  //  SW_INVALIDATE is needed for when source area is not
-  //  visible, e.g. out of screen, other windows hides
-  //  this window.
-  RECT rc = gfx::RectF(m_rc.left, yCurScroll, m_rc.right, rc.top + cyScroll);
-  RECT rc_clip = m_rc;
-  auto const iRgn = ::ScrollWindowEx(hwnd, 0, 
-                                     static_cast<int>(yNewScroll - yCurScroll),
-                                     &rc, // prcScroll
-                                     &rc_clip, // prcClip
-                                     nullptr, // prgnUpdate
-                                     nullptr, // prcUpdate
-                                     SW_INVALIDATE);
+  {
+    gfx::Bitmap screen_bitmap(gfx);
+    gfx::RectU screen_rect(screen_bitmap->GetPixelSize());
+    ASSERT(static_cast<float>(screen_rect.width()) == m_rc.width());
+    ASSERT(static_cast<float>(screen_rect.height()) == m_rc.height());
+    COM_VERIFY(screen_bitmap->CopyFromRenderTarget(nullptr, gfx,
+                                                   &screen_rect));
 
-  #if DEBUG_RENDER
-    DEBUG_PRINTF("scroll %d->%d+%d %d\n", yCurScroll, yNewScroll, cyScroll,
-                 iRgn);
-  #endif // DEBUG_RENDER
+    gfx::RectF dst_rect(0.0f, yNewScroll,
+                        m_rc.right, ::ceilf(yNewScroll + cyScroll));
+    gfx::RectF src_rect(0.0f, yCurScroll,
+                       m_rc.right, ::ceilf(yCurScroll + cyScroll));
+    ASSERT(dst_rect.width() == src_rect.width());
+    ASSERT(dst_rect.height() == src_rect.height());
 
-  if (iRgn == ERROR) {
-    DEBUG_PRINTF("ScorllWindowEx failed!\n");
-    return nullptr;
+    auto const opacity = 1.0f;
+    gfx->DrawBitmap(screen_bitmap, dst_rect, opacity,
+                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                    src_rect);
+
+    #if DEBUG_RENDER
+      fillRect(gfx, gfx::RectF(dst_rect.left_top(),
+                               gfx::SizeF(2.0f, dst_rect.height())),
+               gfx::ColorF::DarkGreen);
+      DEBUG_PRINTF("scroll (%d,%d)+(%d,%d) to %d\n",
+        static_cast<uint>(src_rect.left),
+        static_cast<uint>(src_rect.top),
+        static_cast<uint>(src_rect.right),
+        static_cast<uint>(src_rect.bottom),
+        static_cast<uint>(dst_rect.top));
+    #endif
   }
 
   *out_pScrollEnd = pScrollEnd;
   return pScrollStart;
 }
-#else
-Page::Line* Page::TryScroll(
-    HWND    /* hwnd */,
-    Line*   /* pNewStart */,
-    Line*   /* pNewEnd */,
-    float   /* yNewStart */,
-    Line*   /* pCurStart */,
-    Line*   /* pCurEnd */,
-    float   /*yCurStart */,
-    Line**  /*out_pScrollEnd*/) {
-  return nullptr;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
