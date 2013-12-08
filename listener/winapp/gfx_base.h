@@ -92,6 +92,9 @@ class Size_ : public BaseType {
   public: Size_ operator/(UnitType scalar) const {
     return Size_(width / scalar, height / scalar);
   }
+
+  public: bool is_empty() const { return width <= 0 || height <= 0; }
+  public: bool is_zero() const { return !width && !height; }
 };
 
 template<typename BaseType, typename SizeType>
@@ -227,6 +230,8 @@ class Rect_ : public BaseType {
     return width() <= 0 || height() <= 0;
   }
 
+  public: bool is_zero() const { return !width() && !height(); }
+
   public: PointType left_top() const {
     return PointType(left, top);
   }
@@ -272,13 +277,21 @@ class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
   #endif
 };
 
+class DpiHandler {
+  private: SizeF dpi_;
+  private: SizeF pixel_in_dip_;
+  public: SizeF AlignToPixel(const SizeF& size) const;
+  public: SizeF RoundToPixel(const SizeF& size) const;
+  protected: void UpdateDpi(const SizeF&);
+};
+
 class FactorySet : public RefCounted_<FactorySet>,
                    public base::ComInit,
+                   public DpiHandler,
                    public Object {
   private: base::ComPtr<ID2D1Factory> d2d1_factory_;
   private: base::ComPtr<IDWriteFactory> dwrite_factory_;
   private: base::ComPtr<IWICImagingFactory> image_factory_;
-  private: SizeF dpi_scale_;
 
   public: FactorySet();
   public: ~FactorySet() {}
@@ -292,17 +305,12 @@ class FactorySet : public RefCounted_<FactorySet>,
   public: static IWICImagingFactory& image() {
     return *instance().image_factory_;
   }
-  public: static PointF Scale(const PointF& point) {
-    return point * instance().dpi_scale_;
+
+  public: static SizeF AlignToPixel(const SizeF& size) {
+    return instance().DpiHandler::AlignToPixel(size);
   }
-  public: static SizeF Scale(const SizeF& size) {
-    return size * instance().dpi_scale_;
-  }
-  public: static float ScaleX(float x) {
-    return x * instance().dpi_scale_.width;
-  }
-  public: static float ScaleY(float y) {
-    return y * instance().dpi_scale_.height;
+  public: static SizeF RoundToPixel(const SizeF& size) {
+    return instance().DpiHandler::RoundToPixel(size);
   }
 };
 
@@ -323,7 +331,7 @@ class TextLayout : public SimpleObject_<IDWriteTextLayout> {
   public: SIZE GetMetrics() const;
 };
 
-class Graphics : public Object {
+class Graphics : public Object, public DpiHandler {
   private: ScopedRefCount_<FactorySet> factory_set_;
   private: base::ComPtr<ID2D1HwndRenderTarget> render_target_;
   private: mutable void* work_;
@@ -368,10 +376,6 @@ class Graphics : public Object {
     return reinterpret_cast<T*>(work_); 
   }
   public: void set_work(void* ptr) const { work_ = ptr; }
-
-  public: SizeF Scale(const SizeF& size) const {
-    return FactorySet::Scale(size);
-  }
 
   // [D]
   public: void DrawLine(const Brush& brush, int sx, int sy, int ex, int ey,

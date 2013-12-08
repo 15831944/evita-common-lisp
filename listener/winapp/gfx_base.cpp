@@ -8,6 +8,7 @@
 //
 #include "gfx_base.h"
 
+#include <math.h>
 #include <utility>
 
 #pragma comment(lib, "d2d1.lib")
@@ -148,8 +149,8 @@ base::ComPtr<IDWriteTextFormat> CreateTextFormat(
     const FactorySet&,
     const LOGFONT& log_font) {
   ASSERT(log_font.lfHeight < 0);
-  auto const height = FactorySet::ScaleY(
-    static_cast<float>(-log_font.lfHeight) * 96.0f / 72.0f);
+  auto size = FactorySet::RoundToPixel(
+      SizeF(0.0f, static_cast<float>(-log_font.lfHeight) * 96.0f / 72.0f));
   base::ComPtr<IDWriteTextFormat> text_format;
   COM_VERIFY(FactorySet::dwrite().CreateTextFormat(
     log_font.lfFaceName,
@@ -157,7 +158,7 @@ base::ComPtr<IDWriteTextFormat> CreateTextFormat(
     DWRITE_FONT_WEIGHT_REGULAR,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    height,
+    size.height,
     L"en-us",
     &text_format));
   return std::move(text_format);
@@ -167,6 +168,10 @@ DWRITE_FONT_METRICS GetFontMetrics(IDWriteFontFace* font) {
   DWRITE_FONT_METRICS metrics;
   font->GetMetrics(&metrics);
   return metrics;
+}
+
+float MultipleOf(float x, float unit) {
+  return ::ceilf(x / unit) * unit;
 }
 
 } // namespace
@@ -216,23 +221,39 @@ Brush::~Brush() {
 
 //////////////////////////////////////////////////////////////////////
 //
+// DpiHandler
+//
+SizeF DpiHandler::AlignToPixel(const SizeF& size) const {
+  ASSERT(!pixel_in_dip_.is_empty());
+  return SizeF(MultipleOf(size.width, pixel_in_dip_.width),
+               MultipleOf(size.height, pixel_in_dip_.height));
+}
+
+SizeF DpiHandler::RoundToPixel(const SizeF& size) const {
+  return SizeF(::ceilf(size.width * pixel_in_dip_.width),
+               ::ceilf(size.height * pixel_in_dip_.height));
+}
+
+void DpiHandler::UpdateDpi(const SizeF& dpi) {
+  dpi_ = dpi;
+  // Note: All render targets except for ID2D1HwndRenderTarget, DPI values
+  // are 96 DPI.
+  float const default_dpi = 96.0f;
+  pixel_in_dip_ = dpi_ / default_dpi;
+  pixel_in_dip_ = SizeF(96.0f / dpi_.width, 96.0f / dpi_.height);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // FactorySet
 //
 FactorySet::FactorySet()
       : d2d1_factory_(CreateD2D1Factory()),
         dwrite_factory_(CreateDWriteFactory()),
         image_factory_(CreateImageFactory()) {
-  float dpi_x, dpi_y;
-  d2d1_factory_->GetDesktopDpi(&dpi_x, &dpi_y);
-  // All render targets except for ID2D1HwndRenderTarget, DPI values are
-  // 96 DPI.
-  float const default_dpi = 96.0f;
-  dpi_scale_ = SizeF(dpi_x, dpi_y) / default_dpi;
-}
-
-FontFace::FontFace(const char16* family_name)
-    : SimpleObject_(CreateFontFace(family_name)),
-      ALLOW_THIS_IN_INITIALIZER_LIST(metrics_(GetFontMetrics(*this))) {
+  SizeF dpi;
+  d2d1_factory_->GetDesktopDpi(&dpi.width, &dpi.height);
+  UpdateDpi(dpi);
 }
 
 FactorySet& FactorySet::instance() {
@@ -240,6 +261,15 @@ FactorySet& FactorySet::instance() {
   if (!instance)
     instance = new FactorySet();
   return *instance;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// FontSet
+//
+FontFace::FontFace(const char16* family_name)
+    : SimpleObject_(CreateFontFace(family_name)),
+      ALLOW_THIS_IN_INITIALIZER_LIST(metrics_(GetFontMetrics(*this))) {
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -275,6 +305,9 @@ void Graphics::Init(HWND hwnd) {
       D2D1::HwndRenderTargetProperties(hwnd, size,
                                        D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS),
       &render_target_));
+  SizeF dpi;
+  render_target_->GetDpi(&dpi.width, &dpi.height);
+  UpdateDpi(dpi);
 }
 
 void Graphics::Resize(const RECT& rc) const {
@@ -282,8 +315,10 @@ void Graphics::Resize(const RECT& rc) const {
   COM_VERIFY(render_target().Resize(size));
 }
 
+//////////////////////////////////////////////////////////////////////
+//
 // TextFormat
-
+//
 TextFormat::TextFormat(const LOGFONT& log_font)
     : SimpleObject_(CreateTextFormat(FactorySet::instance(), log_font)),
     factory_set_(FactorySet::instance()) {
