@@ -30,6 +30,8 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   public: virtual void Activate();
 
   // [D]
+  public: virtual void DidChangeOwnerFrame() = 0;
+
   public: virtual bool DidCreateHwnd(HWND) {
     // TODO: Once make EditPane isn't derived from Pane, we should remove
     // Pane::DidCreateHwnd().

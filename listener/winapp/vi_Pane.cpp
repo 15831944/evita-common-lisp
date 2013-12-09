@@ -23,7 +23,7 @@ Pane::Pane()
 
 void Pane::Activate() {
   ++m_nActiveTick;
-  GetFrame()->SetActivePane(this);
+  GetFrame()->DidActivePane(this);
 }
 
 LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {

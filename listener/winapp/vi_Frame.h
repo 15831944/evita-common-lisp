@@ -72,14 +72,14 @@ class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
 
   // [A]
   public: bool  Activate();
-  public: Pane* AddPane(Pane*);
+  public: void AddPane(Pane*);
   private: void AddTab(Pane*);
 
   // [C]
   private: bool canClose();
 
   // [D]
-  private: void DetachPane(Pane*);
+  public: void DidActivePane(Pane*);
 
   // [G]
   public: Pane* GetActivePane();
@@ -114,7 +114,6 @@ class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
   public: void ResetMessages();
 
   // [S]
-  public: void SetActivePane(Pane*);
   public: void SetStatusBar(int, const char16*);
   public: void SetStatusBarf(int, const char16*, ...);
   public: void SetStatusBarParts(const int*, int);

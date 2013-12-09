@@ -69,7 +69,7 @@ class BaseWindow
 
     // [I]
     public: static int Init();
-    public: bool IsRealized() const { return NULL != m_hwnd; }
+    public: virtual bool IsRealized() const { return m_hwnd; }
 
     // [M]
     protected: static BaseWindow* MapHwndToWindow(HWND);

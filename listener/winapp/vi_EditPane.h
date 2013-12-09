@@ -81,6 +81,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   // [D]
   public: virtual void Destroy() override;
+  public: virtual void DidChangeOwnerFrame() override;
   public: virtual bool DidCreateHwnd(HWND hwnd) override;
   public: virtual bool DidDestroyHwnd(HWND hwnd) override;
 
@@ -99,6 +100,11 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   // [H]
   public: virtual bool HasFocus() const override;
   public: virtual void Hide() override;
+
+  // [I]
+  public: virtual bool IsRealized() const override {
+    return m_eState == State_Realized;
+  }
 
   // [M]
   public: virtual Command::KeyBindEntry* MapKey(uint) override;

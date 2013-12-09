@@ -18,6 +18,9 @@
 class Buffer;
 
 class NativePane : public CommandWindow_<NativePane, Pane> {
+  // [D]
+  public: virtual void DidChangeOwnerFrame() override;
+
   // [G]
   public: static const char16* GetClass_() { return L"NativePane"; }
 

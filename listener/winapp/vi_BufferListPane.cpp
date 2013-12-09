@@ -70,6 +70,10 @@ static HCURSOR loadCursor(HCURSOR* inout_hCursor,
 // NativePane
 //
 
+void NativePane::DidChangeOwnerFrame() {
+  ::SetParent(*this, *GetFrame());
+}
+
 void NativePane::Hide() {
   ::ShowWindow(*this, SW_HIDE);
 }

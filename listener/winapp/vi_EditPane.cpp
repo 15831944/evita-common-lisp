@@ -64,6 +64,7 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: void set_outer(LayoutBox& outer) { outer_ = &outer; }
     public: virtual void CloseAllBut(Window*) = 0;
     public: virtual uint CountLeafBox() const = 0;
+    public: virtual void DidChangeOwnerFrame() = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(const gfx::Graphics&) { }
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
@@ -99,6 +100,7 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual void CloseAllBut(Window*) override final;
   public: virtual uint CountLeafBox() const override final;
   public: virtual void Destroy() override final;
+  public: virtual void DidChangeOwnerFrame() override final;
   protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) = 0;
   public: virtual void MoveSplitter(const Point&, Box&) = 0;
   public: virtual LeafBox* GetActiveLeafBox() const override final;
@@ -149,6 +151,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual uint CountLeafBox() const  override final { return 1; }
 
   // [D]
+  public: virtual void DidChangeOwnerFrame() override;
   public: virtual void Destroy() override;
   public: void DetachWindow();
 
@@ -630,6 +633,12 @@ uint EditPane::LayoutBox::CountLeafBox() const {
   return count;
 }
 
+void EditPane::LayoutBox::DidChangeOwnerFrame() {
+  for (auto& box: boxes_) {
+    box.DidChangeOwnerFrame();
+  }
+}
+
 void EditPane::LayoutBox::Destroy() {
   DEBUG_PRINTF("%p\n", this);
   ASSERT(!is_removed());
@@ -746,6 +755,12 @@ void EditPane::LeafBox::CloseAllBut(Window* window) {
 
 void EditPane::LeafBox::Destroy() {
     GetWindow()->Destroy();
+}
+
+void EditPane::LeafBox::DidChangeOwnerFrame() {
+  if (m_hwndVScrollBar)
+    ::SetParent(m_hwndVScrollBar, *edit_pane_->GetFrame());
+  ::SetParent(*m_pWindow, *edit_pane_->GetFrame());
 }
 
 void EditPane::LeafBox::DetachWindow() {
@@ -1230,6 +1245,18 @@ void EditPane::Destroy() {
   root_box_->Destroy();
 }
 
+void EditPane::DidChangeOwnerFrame() {
+ root_box_->DidChangeOwnerFrame();
+ frame_ = GetFrame();
+ auto const rect = GetFrame()->GetPaneRect();
+ if (showed_) {
+   gfx::Graphics::DrawingScope drawing_scope(GetFrame()->gfx());
+   Resize(rect);
+ } else {
+   Resize(rect);
+ }
+}
+
 bool EditPane::DidCreateHwnd(HWND hwnd) {
   auto const box = root_box_->GetLeafBox(hwnd);
   if (!box)
@@ -1436,7 +1463,8 @@ void EditPane::setupStatusBar() {
 
 void EditPane::Show() {
   ASSERT(m_eState == State_Realized);
-  ASSERT(!showed_);
+  if (showed_)
+    return;
   showed_ = true;
   root_box_->Show();
   root_box_->UpdateSplitters();

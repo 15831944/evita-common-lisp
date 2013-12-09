@@ -88,6 +88,7 @@ extern uint g_TabBand__TabDragMsg;
 
 Frame::Frame()
     : gfx_(new gfx::Graphics()),
+      m_hwndTabBand(nullptr),
       m_pActivePane(nullptr) {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
 }
@@ -104,47 +105,44 @@ bool Frame::Activate() {
   return ::SetForegroundWindow(*this);
 }
 
-Pane* Frame::AddPane(Pane* const pane) {
+void Frame::AddPane(Pane* const pane) {
   ASSERT(!!pane);
 
-  if (pane->GetFrame() == this) {
-    return pane;
+  auto const current_owner_frame = pane->GetFrame();
+  if (!current_owner_frame) {
+    ASSERT(!pane->IsRealized());
+    m_oPanes.Append(this, pane);
+    if (IsRealized()) {
+      pane->Realize();
+      AddTab(pane);
+    }
+    return;
   }
 
-  if (pane->GetFrame()) {
-    auto const pFrame = pane->GetFrame();
-    if (pane->IsRealized()) {
-      ::SetParent(*pane, m_hwnd);
-      pFrame->DetachPane(pane);
-    } else {
-      pFrame->m_oPanes.Delete(pane);
-    }
-  }
+  ASSERT(IsRealized());
+
+  if (current_owner_frame == this)
+    return;
+
+  ASSERT(pane->IsRealized());
+
+  auto const tab_index = current_owner_frame->getTabFromPane(pane);
+  ASSERT(tab_index >= 0);
+  current_owner_frame->m_oPanes.Delete(pane);
+  TabCtrl_DeleteItem(current_owner_frame->m_hwndTabBand, tab_index);
 
   m_oPanes.Append(this, pane);
+  pane->DidChangeOwnerFrame();
+  AddTab(pane);
 
-  if (IsRealized()) {
-    if (!pane->IsRealized()) {
-      pane->Realize();
-    } else {
-      const auto rc = GetPaneRect();
-      ::SetWindowPos(
-          *pane,
-          nullptr,
-          rc.left + kPaddingLeft,
-          rc.top + kPaddingTop,
-          rc.right - rc.left - kPaddingRight,
-          rc.bottom - rc.top - kPaddingBottom,
-          SWP_NOZORDER);
-    }
-
-    AddTab(pane);
-  }
-
-  return pane;
+  if (current_owner_frame->m_oPanes.IsEmpty())
+    current_owner_frame->Destroy();
 }
 
 void Frame::AddTab(Pane* const pane) {
+  ASSERT(IsRealized());
+  ASSERT(pane->IsRealized());
+  ASSERT(m_hwndTabBand);
   TCITEM tab_item;
   tab_item.mask = TCIF_TEXT | TCIF_PARAM;
   tab_item.pszText = const_cast<char16*>(pane->GetName());
@@ -171,20 +169,18 @@ bool Frame::canClose() {
   return Application::Get()->CanExit();
 }
 
-// Description:
-//  Detach pPane from this frame and
-//    o Change active pane to MRU pane
-//    o If no pane in frame, destory this frame.
-void Frame::DetachPane(Pane* const pPane) {
-  auto const iItem = getTabFromPane(pPane);
-  m_oPanes.Delete(pPane);
-  TabCtrl_DeleteItem(m_hwndTabBand, iItem);
-  // Tab control activate another tab.
-  if (m_oPanes.IsEmpty()) {
-    Destroy();
-  }
+void Frame::DidActivePane(Pane* const pane) {
+  auto const tab_index = getTabFromPane(pane);
+  if (tab_index < 0)
+    return;
+  auto const selected_index = TabCtrl_GetCurSel(m_hwndTabBand);
+  #if DEBUG_FOCUS
+   DEBUG_PRINTF("%p cur=%p@%d new=%p@%d\n", this, m_pActivePane,
+                selected_index, pane, tab_index);
+  #endif
 
-  ASSERT(m_pActivePane != pPane);
+  if (tab_index != selected_index)
+    TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
 }
 
 Pane* Frame::GetActivePane() {
@@ -234,7 +230,7 @@ int Frame::getTabFromPane(Pane* const pane) const {
       return index;
     ++index;
   }
-  CAN_NOT_HAPPEN();
+  return -1;
 }
 
 Rect Frame::GetPaneRect() const {
@@ -594,16 +590,21 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
 
             case TCN_SELCHANGE: {
               auto const iCurSel = TabCtrl_GetCurSel(m_hwndTabBand);
-              if (auto const pPane = getPaneFromTab(iCurSel)) {
-                if (m_pActivePane)
-                  m_pActivePane->Hide();
+              auto const pPane = getPaneFromTab(iCurSel);
+              DEBUG_PRINTF("TCN_SELCHANGE: index=%d active=%p pane=%p\n",
+                  iCurSel, m_pActivePane, pPane);
+              if (!pPane)
+                break;
+              if (m_pActivePane == pPane)
+                  break;
 
-                m_pActivePane = pPane;
-                DEBUG_PRINTF("Show pane %p\n", m_pActivePane);
-                m_pActivePane->Show();
-                m_pActivePane->Activate();
-                updateTitleBar();
-              }
+              if (m_pActivePane)
+                m_pActivePane->Hide();
+
+              m_pActivePane = pPane;
+              pPane->Show();
+              pPane->Activate();
+              updateTitleBar();
               break;
             }
             break;
@@ -888,31 +889,6 @@ void Frame::ResetMessages() {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
 }
 
-void Frame::SetActivePane(Pane* const pane) {
-  #if DEBUG_FOCUS
-   DEBUG_PRINTF("%p new=%p cur=%p\n", this, pane, m_pActivePane);
-  #endif
-
-  if (pane == m_pActivePane)
-    return;
-
-  auto tab_index = 0;
-  for (;;) {
-    TCITEM tab_item;
-    tab_item.mask = TCIF_PARAM;
-    if (TabCtrl_GetItem(m_hwndTabBand, tab_index, &tab_item)) {
-      if (tab_item.lParam == reinterpret_cast<LPARAM>(pane)) {
-        if (TabCtrl_GetCurSel(m_hwndTabBand) == tab_index)
-          pane->SetFocus();
-        else
-          TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
-        break;
-      }
-    }
-    ++tab_index;
-  }
-}
-
 /// <summary>
 ///   Set status bar message on specified part.
 /// </summary>
@@ -1025,6 +1001,15 @@ void Frame::updateTitleBar() {
   m_pActivePane->UpdateStatusBar();
 }
 
-void Frame::WillDestroyPane(Pane* edit_pane) {
-  DetachPane(edit_pane);
+void Frame::WillDestroyPane(Pane* pane) {
+  auto const tab_index = getTabFromPane(pane);
+  ASSERT(tab_index >= 0);
+  m_oPanes.Delete(pane);
+  if (m_oPanes.IsEmpty()) {
+    Destroy();
+    return;
+  }
+  // Tab control activate another tab if needed.
+  TabCtrl_DeleteItem(m_hwndTabBand, tab_index);
+  ASSERT(m_pActivePane != pane);
 }
