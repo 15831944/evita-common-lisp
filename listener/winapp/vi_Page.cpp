@@ -216,7 +216,7 @@ class FillerCell final : public Cell {
     return new(hHeap) FillerCell(*this);
   }
 
-  public: virtual CellKind GetKind() const override { 
+  public: virtual CellKind GetKind() const override {
     return CellKind_Filler;
   }
 };
@@ -851,8 +851,8 @@ Cell* Formatter::formatChar(
           MarkerCell::Kind_Tab);
     }
 
-    Font* pFont = wch < 0x20 ? 
-        nullptr : 
+    Font* pFont = wch < 0x20 ?
+        nullptr :
         FontSet::Get(m_gfx, pStyle)->FindFont(m_gfx, wch);
 
     if (!pFont) {
@@ -977,9 +977,9 @@ using namespace PageInternal;
 
 void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
   if (y < m_rc.bottom) {
-      gfx::RectF rc(static_cast<float>(m_rc.left), 
-                    y, 
-                    static_cast<float>(m_rc.right), 
+      gfx::RectF rc(static_cast<float>(m_rc.left),
+                    y,
+                    static_cast<float>(m_rc.right),
                     static_cast<float>(m_rc.bottom));
       fillRect(gfx, rc, ColorToColorF(m_crBackground));
   }
@@ -1000,7 +1000,7 @@ void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
             m_rc.top, m_rc.bottom);
 }
 
-void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine, 
+void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
                      float y) const {
   gfx::RectF rc;
   rc.left  = pLine->GetWidth();
@@ -1028,7 +1028,7 @@ Page::Line* Page::FindLine(Posn lPosn) const {
   return nullptr;
 }
 
-void Page::Format(const gfx::Graphics& gfx, gfx::RectF rect, 
+void Page::Format(const gfx::Graphics& gfx, gfx::RectF rect,
                   const Selection& selection, Posn lStart) {
   Prepare(selection);
   m_rc = rect;
@@ -1114,7 +1114,7 @@ bool Page::IsDirty(RECT rc, const Selection& selection,
     // Page shows caret instead of seleciton.
     if (m_lSelStart == m_lSelEnd)
     {
-        if (lSelStart == lSelEnd) 
+        if (lSelStart == lSelEnd)
         {
             #if DEBUG_DIRTY
                 DEBUG_PRINTF("%p: clean with caret.\n", this);
@@ -1144,7 +1144,7 @@ bool Page::IsDirty(RECT rc, const Selection& selection,
         // Page doesn't contain selection.
         if (m_lSelEnd < m_lStart || m_lSelStart > m_lEnd)
         {
-            if (lSelStart == lSelEnd) 
+            if (lSelStart == lSelEnd)
             {
                 #if DEBUG_DIRTY
                     DEBUG_PRINTF("%p: clean with selection.\n", this);
@@ -1208,9 +1208,9 @@ bool Page::IsDirty(RECT rc, const Selection& selection,
 // Page::isPosnVisible
 //
 bool Page::isPosnVisible(Posn lPosn) const {
-  if (lPosn <  m_lStart) 
+  if (lPosn <  m_lStart)
     return false;
-  if (lPosn >= m_lEnd) 
+  if (lPosn >= m_lEnd)
     return false;
 
   auto y = static_cast<float>(m_rc.top);
@@ -1353,7 +1353,7 @@ void Page::Render(const gfx::Graphics& gfx, const gfx::RectF& rcClip) const {
       foreach (EnumCell, oEnum, pLine) {
         auto const pCell = oEnum.Get();
         if (x < rcClip.right && x + pCell->m_cx >= rcClip.left) {
-            gfx::RectF rc(x, y, x + pCell->m_cx, 
+            gfx::RectF rc(x, y, x + pCell->m_cx,
                           ::ceilf(y + pCell->m_cy));
             pCell->Render(gfx, rc);
         }
@@ -1489,7 +1489,7 @@ class LineCopier {
     auto const src_bottom = src_top + dst_bottom - dst_top;
     ASSERT(src_bottom <= rect_.bottom);
 
-    auto const height = std::min(std::min(rect_.bottom, dst_bottom) - dst_top, 
+    auto const height = std::min(std::min(rect_.bottom, dst_bottom) - dst_top,
                                  std::min(rect_.bottom, src_bottom) - src_top);
 
     gfx::RectF dst_rect(0.0f, dst_top, rect_.right, dst_top + height);
@@ -1600,7 +1600,7 @@ bool Page::Render(const gfx::Graphics& gfx, HWND) {
 
   #if DEBUG_RENDER
     if (number_of_rendering >= 1) {
-      DEBUG_PRINTF("%p" 
+      DEBUG_PRINTF("%p"
                    " redraw=%d"
                    " r[%d, %d] s[%d, %d]"
                    " rc=(%d,%d)+(%d,%d)\r\n",
@@ -1704,7 +1704,7 @@ bool Page::ScrollToPosn(const gfx::Graphics& gfx, Posn lPosn) {
       break;
   }
 
-  // If this page shows end of buffer, we shows lines as much as 
+  // If this page shows end of buffer, we shows lines as much as
   // posibble to fit in page.
   if (GetEnd() >= m_pBuffer->GetEnd()) {
     while (isPosnVisible(lPosn)) {
@@ -1748,7 +1748,7 @@ bool Page::ScrollUp(const gfx::Graphics& gfx)
     auto const cyPage = m_rc.height();
     while (m_oFormatBuf.GetHeight() > cyPage) {
         auto const pFirst = m_oFormatBuf.ScrollUp();
-        if (!pFirst) 
+        if (!pFirst)
           break;
         pFirst->Discard();
     }
@@ -1771,7 +1771,7 @@ Page::DisplayBuffer::~DisplayBuffer() {
     DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
   #endif // DEBUG_HEAP
 
-  if (m_hObjHeap) 
+  if (m_hObjHeap)
     ::HeapDestroy(m_hObjHeap);
 }
 
@@ -1900,7 +1900,7 @@ void Page::Line::Fix(float iDescent) {
   foreach (EnumCell, oEnum, this) {
     auto const pCell = oEnum.Get();
     auto const lEnd = pCell->Fix(pwch, m_iHeight, iDescent);
-    if (lEnd >= 0) 
+    if (lEnd >= 0)
       m_lEnd = lEnd;
     cx += pCell->GetWidth();
   }
@@ -1927,7 +1927,7 @@ Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
     auto const x = xGoal - xCell;
     xCell += pCell->m_cx;
     auto const lMap = pCell->MapXToPosn(gfx, x);
-    if (lMap >= 0) 
+    if (lMap >= 0)
       lPosn = lMap;
     if (x >= 0 && x < pCell->m_cx)
       break;
@@ -1940,7 +1940,7 @@ void Page::Line::Render(const gfx::Graphics& gfx,
   auto x = left_top.x;
   foreach (EnumCell, oEnum, this) {
     auto const pCell = oEnum.Get();
-    gfx::RectF rect(x, left_top.y, x + pCell->m_cx, 
+    gfx::RectF rect(x, left_top.y, x + pCell->m_cx,
                     ::ceilf(left_top.y + pCell->m_cy));
     pCell->Render(gfx, rect);
     x = rect.right;
