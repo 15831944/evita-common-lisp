@@ -14,9 +14,9 @@
 #define DEBUG_FOCUS      0
 #define DEBUG_IDLE       0
 #define DEBUG_KEY        0
-#define DEBUG_PAINT      _DEBUG
+#define DEBUG_PAINT      0
 #define DEBUG_REDRAW     0
-#define DEBUG_RESIZE     _DEBUG
+#define DEBUG_RESIZE     0
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -218,7 +218,7 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
       m_nActiveTick(0),
       m_nBlinkTimerId(0),
       m_pBlink(pBuffer->CreateRange(0,0)),
-      m_pPage(new Page(m_rc)),
+      m_pPage(new Page()),
       ALLOW_THIS_IN_INITIALIZER_LIST(selection_(
           new(pBuffer->GetHeap()) Selection(this, pBuffer))),
       m_pViewRange(pBuffer->CreateRange(lStart)),
@@ -270,10 +270,12 @@ Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal)
     {
         Posn lStart = GetBuffer()->ComputeStartOf(Unit_Paragraph, lGoal);
 
-        Page oPage(m_rc);
+        Page oPage;
+        gfx::RectF page_rect(m_rc);
         for (;;)
         {
-            Page::Line* pLine = oPage.FormatLine(*m_gfx, *selection_, lStart);
+            auto const pLine = oPage.FormatLine(*m_gfx, page_rect,
+                                                *selection_, lStart);
 
             Posn lEnd = pLine->GetEnd();
             if (lGoal < lEnd)
@@ -400,13 +402,15 @@ Posn TextEditWindow::endOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
     const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
     if (lPosn >= lBufEnd) return lBufEnd;
 
-    Page oPage(m_rc);
+    Page oPage;
+    gfx::RectF page_rect(m_rc);
     Posn lStart = selection_->GetBuffer()->ComputeStartOf(
         Unit_Paragraph,
         lPosn );
     for (;;)
     {
-        Page::Line* pLine = oPage.FormatLine(gfx, *selection_, lStart);
+        auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
+                                            lStart);
         lStart = pLine->GetEnd();
         if (lPosn < lStart) return lStart - 1;
     } // for
@@ -573,8 +577,7 @@ Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt)
 gfx::RectF TextEditWindow::MapPosnToPoint(Posn lPosn) {
   updateScreen();
   for (;;) {
-    auto rect = m_pPage->MapPosnToPoint(*m_gfx, lPosn);
-    if (rect)
+    if (auto rect = m_pPage->MapPosnToPoint(*m_gfx, lPosn))
       return rect;
     m_pPage->ScrollToPosn(*m_gfx, lPosn);
   }
@@ -796,7 +799,7 @@ LRESULT TextEditWindow::onMessage(
     case WM_USER: {
       gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
       m_pPage->Reset();
-      m_pPage->Render(*m_gfx, m_hwnd);
+      m_pPage->Render(*m_gfx);
       return 0;
     }
 
@@ -818,7 +821,7 @@ LRESULT TextEditWindow::onMessage(
         gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
         (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Red));
         m_pPage->Reset();
-        m_pPage->Render(*m_gfx, m_hwnd);
+        m_pPage->Render(*m_gfx);
       }
       ::ValidateRect(*this, nullptr);
       #if DEBUG_PAINT
@@ -919,13 +922,7 @@ LRESULT TextEditWindow::onMessage(
       #endif
       ::GetClientRect(m_hwnd, &m_rc);
       m_gfx->Resize(m_rc);
-      m_pPage->Resize(m_rc);
-      #if 0
-      {
-        gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-        (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Blue));
-      }
-      #endif
+      m_pPage->Reset();
       redraw();
       return 0;
     } // WM_WINDOWPOSCHANGED
@@ -1029,9 +1026,6 @@ void TextEditWindow::onVScroll(uint nCode)
 //  TextEditWindow::onMessage WM_WINDOWPOSCHANGED
 //
 void TextEditWindow::redraw() {
-  if (!(::GetWindowLong(m_hwnd, GWL_STYLE) & WS_VISIBLE))
-    return;
-
   auto fSelectionActive = m_fHasFocus;
 
   if (g_hwndActiveDialog) {
@@ -1117,17 +1111,21 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
   render(*m_gfx);
 
   #if DEBUG_REDRAW
-    DEBUG_PRINTF("~~~~~~~~~~ End\n");
+    DEBUG_PRINTF("~~~~~~~~~~ End Page=[%d,%d]\n",
+        m_pPage->GetStart(), m_pPage->GetEnd());
   #endif
 }
 
 void TextEditWindow::render(const gfx::Graphics& gfx) {
+  if (!(::GetWindowLong(m_hwnd, GWL_STYLE) & WS_VISIBLE))
+    return;
+
   if (m_fHasFocus)
     g_oCaret.Hide();
 
   {
     gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-    m_pPage->Render(gfx, m_hwnd);
+    m_pPage->Render(gfx);
   }
 
   {
@@ -1294,10 +1292,12 @@ Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
         return 0;
     }
 
-    Page oPage(m_rc);
+    Page oPage;
+    gfx::RectF page_rect(m_rc);
     for (;;)
     {
-        Page::Line* pLine = oPage.FormatLine(gfx, *selection_, lStart );
+        auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
+                                            lStart);
 
         Posn lEnd = pLine->GetEnd();
         if (lPosn < lEnd) return pLine->GetStart();

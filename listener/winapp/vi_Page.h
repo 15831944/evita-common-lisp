@@ -43,10 +43,19 @@ class Page {
       private: HANDLE  m_hObjHeap;
       private: Line*   m_pFirst;
       private: Line*   m_pLast;
+      private: gfx::RectF rect_;
 
       public: DisplayBuffer();
       public: DisplayBuffer(const DisplayBuffer&);
       public: ~DisplayBuffer();
+
+      public: float bottom() const { return rect_.bottom; }
+      public: float height() const { return rect_.height(); }
+      public: float left() const { return rect_.left; }
+      public: const gfx::RectF& rect() const { return rect_; }
+      public: float right() const { return rect_.right; }
+      public: float top() const { return rect_.top; }
+      public: float width() const { return rect_.width(); }
 
       public: void   Append(Line*);
       public: void*  Alloc(size_t);
@@ -56,7 +65,7 @@ class Page {
       public: Line*  GetLast()   const { return m_pLast; }
       public: Line*  NewLine();
       public: void   Prepend(Line*);
-      public: HANDLE Reset();
+      public: HANDLE Reset(const gfx::RectF& page_rect);
       public: Line*  ScrollDown();
       public: Line*  ScrollUp();
   };
@@ -134,8 +143,6 @@ class Page {
   public: Color   m_crSelFg;
   public: Color   m_crSelBg;
 
-    // Page dimension
-  public: gfx::RectF m_rc;
   public: Color   m_crBackground;
 
   private: Posn    m_lStart;
@@ -145,9 +152,8 @@ class Page {
   private: DisplayBuffer  m_oScreenBuf;
 
     // Page ctor
-  public: Page(RECT rc) :
+  public: Page() :
       m_pBuffer(NULL),
-      m_rc(rc),
       m_lStart(0),
       m_lEnd(0),
       m_nModfTick(0),
@@ -161,7 +167,8 @@ class Page {
   public: Line* FindLine(Posn) const;
   public: void Format(const gfx::Graphics&, gfx::RectF, const Selection&,
                       Posn);
-  public: Line* FormatLine(const gfx::Graphics&, const Selection&, Posn);
+  public: Line* FormatLine(const gfx::Graphics& gfx, const gfx::RectF& page_rect,
+                           const Selection&, Posn start);
 
     // [G]
   public: Edit::Buffer* GetBuffer()    const { return m_pBuffer; }
@@ -171,7 +178,8 @@ class Page {
   public: Posn    GetEnd()       const { return m_lEnd; }
 
     // [I]
-  public:  bool IsDirty(RECT, const Selection&, bool = false) const;
+  public:  bool IsDirty(const Rect& page_rect, const Selection&,
+                        bool is_selection_active = false) const;
 
     // [M]
   public: void  MakePosnVisible(Posn);
@@ -179,12 +187,11 @@ class Page {
   public: gfx::RectF MapPosnToPoint(const gfx::Graphics&, Posn) const;
 
     // [R]
-  public: void Render(const gfx::Graphics&, const gfx::RectF&) const;
-  public: bool Render(const gfx::Graphics&, HWND);
+  public: bool Render(const gfx::Graphics&);
 
     // [S]
   public: bool ScrollDown(const gfx::Graphics&);
-  public: bool ScrollToPosn(const gfx::Graphics&, Posn);
+  public: bool ScrollToPosn(const gfx::Graphics&, Posn target_position);
   public: bool ScrollUp(const gfx::Graphics&);
 
     ////////////////////////////////////////////////////////////
@@ -198,7 +205,7 @@ class Page {
     // [F]
   private: void fillBottom(const gfx::Graphics&, float top) const;
   private: void fillRight(const gfx::Graphics&, const Line*, float) const;
-  private: void formatAux(const gfx::Graphics&, Posn);
+  private: void formatAux(const gfx::Graphics&, const gfx::RectF, Posn);
 
     // [I]
   private: bool isPosnVisible(Posn) const;
@@ -209,7 +216,6 @@ class Page {
 
   // [R]
   public: void Reset();
-  public: void Resize(const RECT& rc);
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_formatter_h)
