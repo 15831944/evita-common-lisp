@@ -33,7 +33,7 @@ extern HWND g_hwndActiveDialog;
 namespace Command
 {
     uint TranslateKey(uint);
-} // Command
+}
 
 namespace {
 //////////////////////////////////////////////////////////////////////
@@ -44,40 +44,39 @@ namespace {
 //  Represents caret in per-thread queue. To blink caret, we must track
 //  caret size. If we call CreateCaret, caret doesn't blink.
 //
-class Caret
-{
+class Caret {
     SIZE    m_size;
     POINT   m_pt;
     HWND    m_hwnd;
     bool    m_fShow;
 
     public: Caret() :
-        m_hwnd(NULL),
+        m_hwnd(nullptr),
         m_fShow(false) {}
 
     public: void Destroy()
     {
-        m_hwnd = NULL;
+        m_hwnd = nullptr;
         ::DestroyCaret();
         #if DEBUG_CARET
             DEBUG_PRINTF("%p\n", this);
         #endif // DEBUG_CARET
         m_size.cx = -1;
         m_pt.x = -1;
-    } // Destroy
+    }
 
     // Hide - Hide caret
     public: void Hide()
     {
-        if (NULL == m_hwnd) return;
-        if (! m_fShow) return;
+        if (nullptr == m_hwnd) return;
+        if (!m_fShow) return;
         #if DEBUG_CARET
             DEBUG_PRINTF("%p\n", this);
         #endif // DEBUG_CARET
 
         ::HideCaret(m_hwnd);
         m_fShow = false;
-    } // Hide
+    }
 
     // IsDirty - Returns true if position or size of caret is changed
     // since last show.
@@ -108,7 +107,7 @@ class Caret
         }
 
         return false;
-    } // isDirty
+    }
 
     // Show - Show caret at pt with size.
     public: void Show(HWND hwnd, SIZE size, POINT pt)
@@ -117,14 +116,14 @@ class Caret
         {
             m_hwnd = hwnd;
             m_size = size;
-            ::CreateCaret(m_hwnd, NULL, size.cx, size.cy);
+            ::CreateCaret(m_hwnd, nullptr, size.cx, size.cy);
             #if DEBUG_CARET
             {
-                DEBUG_PRINTF("Create %dx%d\r\n", 
+                DEBUG_PRINTF("Create %dx%d\r\n",
                     size.cx, size.cy);
             }
             #endif // DEBUG_CARET
-        } // if
+        }
 
         if (m_pt.x != pt.x || m_pt.y != pt.y)
         {
@@ -132,52 +131,41 @@ class Caret
             ::SetCaretPos(m_pt.x, m_pt.y);
             #if DEBUG_CARET
             {
-                DEBUG_PRINTF("SetCaretPos (%d, %d)\r\n", 
-                    pt.x, pt.y );
+                DEBUG_PRINTF("SetCaretPos (%d, %d)\r\n",
+                    pt.x, pt.y);
             }
             #endif // DEBUG_CARET
-        } // if
+        }
 
         #if DEBUG_CARET
-            DEBUG_PRINTF("ShowCaret: (%d, %d) %dx%d\n", 
-                m_pt.x, m_pt.y, m_size.cx, m_size.cy );
+            DEBUG_PRINTF("ShowCaret: (%d, %d) %dx%d\n",
+                m_pt.x, m_pt.y, m_size.cx, m_size.cy);
         #endif // DEBUG_CARET
         ::ShowCaret(m_hwnd);
         m_fShow = true;
-    } // Show
-}; // Caret
+    }
+};
 
 Caret g_oCaret;
 
-enum MyTimerId
-{
-    MyTimerId_AutoScroll = 1,
-    MyTimerId_Blink      = 2,
-}; // MyTimerId
+enum MyTimerId {
+  MyTimerId_AutoScroll = 1,
+  MyTimerId_Blink      = 2,
+};
 
 static int s_active_tick;
 
 } // namespace
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::AutoScroll::Continue
-//
-void TextEditWindow::AutoScroll::Continue(HWND hwnd)
-{
-    #if DEBUG_AUTOSCROLL
-        DEBUG_PRINTF("\n");
-    #endif // DEBUG_AUTOSCROLL
+void TextEditWindow::AutoScroll::Continue(HWND hwnd) {
+  #if DEBUG_AUTOSCROLL
+    DEBUG_PRINTF("\n");
+  #endif // DEBUG_AUTOSCROLL
 
-    m_nTimerId = MyTimerId_AutoScroll;
-    ::SetTimer(hwnd, m_nTimerId, 50, NULL);
-} // TextEditWindow::AutoScroll::Continue
+  m_nTimerId = MyTimerId_AutoScroll;
+  ::SetTimer(hwnd, m_nTimerId, 50, nullptr);
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::AutoScroll::Start
-//
 void TextEditWindow::AutoScroll::Start(HWND hwnd, int iDir)
 {
     if (0 == m_nTimerId)
@@ -187,28 +175,20 @@ void TextEditWindow::AutoScroll::Start(HWND hwnd, int iDir)
     }
 
     m_iDirection = iDir;
-} // TextEditWindow::AutoScroll::Start
+}
 
+void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
+  if (!m_nTimerId)
+    return;
 
-// TextEditWindow::AutoScroll::Stop
-void TextEditWindow::AutoScroll::Stop(HWND hwnd)
-{
-    if (0 != m_nTimerId)
-    {
-        #if DEBUG_AUTOSCROLL
-            DEBUG_PRINTF("id=%d\n", m_nTimterid);
-        #endif // DEBUG_AUTOSCROLL
+  #if DEBUG_AUTOSCROLL
+    DEBUG_PRINTF("id=%d\n", m_nTimterid);
+  #endif // DEBUG_AUTOSCROLL
 
-        ::KillTimer(hwnd, m_nTimerId);
-        m_nTimerId = 0;
-    }
-} // TextEditWindow::AutoScroll::Stop
+  ::KillTimer(hwnd, m_nTimerId);
+  m_nTimerId = 0;
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow ctor
-//
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
     : m_eDragMode(DragMode_None),
       m_fBlink(false),
@@ -236,65 +216,45 @@ TextEditWindow::~TextEditWindow() {
 }
 
 void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
-    m_pBlink->SetRange(lPosn, lPosn);
-    m_fBlink = true;
-    redraw();
-    if (0 == m_nBlinkTimerId)
-    {
-        m_nBlinkTimerId = MyTimerId_Blink; 
-        ::SetTimer(m_hwnd, m_nBlinkTimerId, nMillisecond, NULL);
-    }
-} // TextEditWindow::Blink
+  m_pBlink->SetRange(lPosn, lPosn);
+  m_fBlink = true;
+  redraw();
+  if (!m_nBlinkTimerId) {
+    m_nBlinkTimerId = MyTimerId_Blink;
+    ::SetTimer(m_hwnd, m_nBlinkTimerId, nMillisecond, nullptr);
+  }
+}
 
+Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal) {
+  if (xGoal < 0)
+    return lGoal;
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::computeGoalX
-//
-Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal)
-{
-    when (xGoal < 0) return lGoal;
+  Page::Line* pLine = nullptr;
 
-    Page::Line* pLine = NULL;
+  if (!m_pPage->IsDirty(m_rc, *selection_))
+    pLine = m_pPage->FindLine(lGoal);
 
-    if (! m_pPage->IsDirty(m_rc, *selection_))
-    {
-        pLine = m_pPage->FindLine(lGoal);
-    }
+  if (pLine)
+    return pLine->MapXToPosn(*m_gfx, xGoal);
 
-    if (NULL != pLine) 
-    {
-        return pLine->MapXToPosn(*m_gfx, static_cast<float>(xGoal));
-    }
-    else
-    {
-        Posn lStart = GetBuffer()->ComputeStartOf(Unit_Paragraph, lGoal);
+  auto lStart = GetBuffer()->ComputeStartOf(Unit_Paragraph, lGoal);
+  Page oPage;
+  gfx::RectF page_rect(m_rc);
+  for (;;) {
+    auto const pLine = oPage.FormatLine(*m_gfx, page_rect,
+                                        *selection_, lStart);
+    auto const lEnd = pLine->GetEnd();
+    if (lGoal < lEnd)
+      return pLine->MapXToPosn(*m_gfx, xGoal);
+    lStart = lEnd;
+  }
+}
 
-        Page oPage;
-        gfx::RectF page_rect(m_rc);
-        for (;;)
-        {
-            auto const pLine = oPage.FormatLine(*m_gfx, page_rect,
-                                                *selection_, lStart);
-
-            Posn lEnd = pLine->GetEnd();
-            if (lGoal < lEnd)
-              return pLine->MapXToPosn(*m_gfx, static_cast<float>(xGoal));
-            lStart = lEnd;
-        } // for
-    } // if
-} // TextEditWindow::computeGoalX
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::ComputeMotion
-//
 Count TextEditWindow::ComputeMotion(
     Unit  eUnit,
     Count n,
     const gfx::PointF& pt,
-    Posn* inout_lPosn )
+    Posn* inout_lPosn) 
 {
     switch (eUnit)
     {
@@ -309,7 +269,7 @@ Count TextEditWindow::ComputeMotion(
                 lGoal = EndOfLine(lGoal);
                 if (lGoal >= lBufEnd) break;
                 lGoal += 1;
-            } // for k
+            }
 
             *inout_lPosn = computeGoalX(pt.x, min(lGoal, lBufEnd));
             return k;
@@ -326,17 +286,17 @@ Count TextEditWindow::ComputeMotion(
                 lStart = StartOfLine(lStart);
                 if (lStart <= lBufStart) break;
                 lStart -= 1;
-            } // for k
+            }
 
             *inout_lPosn = computeGoalX(pt.x, max(lStart, lBufStart));
             return k;
-        } // if
+        }
         return 0;
 
     case Unit_Screen:
     {
         Count k = LargeScroll(0, n, false);
-        if (k > 0) 
+        if (k > 0)
         {
             Posn lStart = m_pPage->GetStart();
             m_pViewRange->SetRange(lStart, lStart);
@@ -353,7 +313,7 @@ Count TextEditWindow::ComputeMotion(
             k = 1;
         }
         return k;
-    } // Screen
+    }
 
     case Unit_Window:
         if (n > 0)
@@ -365,38 +325,28 @@ Count TextEditWindow::ComputeMotion(
         {
             *inout_lPosn = GetStart();
             return 1;
-        } // if
+        }
         return 0;
 
     default:
         return GetBuffer()->ComputeMotion(eUnit, n, inout_lPosn);
-    } // switch unit
-} // TextEditWindow::ComputeMotion
+    }
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::EndOfLine
-//
 Posn TextEditWindow::EndOfLine(Posn lPosn)
 {
-    if (! m_pPage->IsDirty(m_rc, *selection_))
+    if (!m_pPage->IsDirty(m_rc, *selection_))
     {
         Page::Line* pLine = m_pPage->FindLine(lPosn);
-        if (NULL != pLine) return pLine->GetEnd() - 1;
-    } // if
+        if (nullptr != pLine) return pLine->GetEnd() - 1;
+    }
 
     const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
     if (lPosn >= lBufEnd) return lBufEnd;
 
     return endOfLineAux(*m_gfx, lPosn);
-} // TextEditWindow::EndOfLine
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::endOfLineAux
-//
 Posn TextEditWindow::endOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
 {
     const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
@@ -406,79 +356,50 @@ Posn TextEditWindow::endOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
     gfx::RectF page_rect(m_rc);
     Posn lStart = selection_->GetBuffer()->ComputeStartOf(
         Unit_Paragraph,
-        lPosn );
+        lPosn);
     for (;;)
     {
         auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
                                             lStart);
         lStart = pLine->GetEnd();
         if (lPosn < lStart) return lStart - 1;
-    } // for
-} // TextEditWindow::endOfLineAux
+    }
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::format
-//
 void TextEditWindow::format(const gfx::Graphics& gfx, Posn lStart) {
   m_pPage->Format(gfx, gfx::RectF(m_rc), *selection_, lStart);
-} // TextEditWindow::format
+}
 
-
-// TextEditWindow::GetBuffer()
 Buffer* TextEditWindow::GetBuffer() const
 {
     return selection_->GetBuffer();
-} // TextEditWindow::GetBuffer
+}
 
-
-// TextEditWindow::GetColumn
 Count TextEditWindow::GetColumn(Posn lPosn)
 {
     Posn lStart = StartOfLine(lPosn);
     return lPosn - lStart;
-} // TextEditWindow::GetColumn
+}
 
-
-// TextEditWindow::GetEnd()
-//  For Selection.MoveDown Screen
+// For Selection.MoveDown Screen
 Posn TextEditWindow::GetEnd()
 {
     updateScreen();
     return m_pPage->GetEnd();
-} // TextEditWindow::GetEnd
+}
 
+HWND TextEditWindow::GetScrollBarHwnd(int nBar) const {
+  if (nBar == SB_VERT)
+    return m_oVertScrollBar.GetHwnd();
+  return nullptr;
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::GetScrollBarHwnd
-//
-HWND TextEditWindow::GetScrollBarHwnd(int nBar) const
-{
-    switch (nBar)
-    {
-    case SB_VERT:
-        return m_oVertScrollBar.GetHwnd();
-    } // switch
+//For Selection.MoveUp Screen
+Posn TextEditWindow::GetStart() {
+  updateScreen();
+ return m_pPage->GetStart();
+}
 
-    return NULL;
-} // TextEditWindow::GetScrollBarHwnd
-
-
-// TextEditWindow::GetStart()
-//  For Selection.MoveUp Screen
-Posn TextEditWindow::GetStart()
-{
-    updateScreen();
-    return m_pPage->GetStart();
-} // TextEditWindow::GetStart
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::LargeScroll
-//
 int TextEditWindow::LargeScroll(int, int iDy, bool fRender)
 {
     updateScreen();
@@ -500,9 +421,9 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender)
             {
 
                 DEBUG_PRINTF("scroll down lStart=%d\n", lStart);
-                if (! m_pPage->ScrollDown(*m_gfx)) break;
+                if (!m_pPage->ScrollDown(*m_gfx)) break;
             } while (m_pPage->GetEnd() != lStart);
-        } // for k
+        }
 
         if (fRender && k > 0) render(*m_gfx);
         return k;
@@ -517,7 +438,7 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender)
             if (lStart >= lBufEnd) break;
             DEBUG_PRINTF("scroll up lStart=%d\n", lStart);
             format(*m_gfx, lStart);
-        } // for k
+        }
 
         if (fRender && k > 0) render(*m_gfx);
         return k;
@@ -525,51 +446,27 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender)
     else
     {
         return 0;
-    } // if
-} // TextEditWindow::LargeScroll
+    }
+}
 
+Command::KeyBindEntry* TextEditWindow::MapKey(uint nKey) {
+  return GetBuffer()->MapKey(nKey);
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::MapKey
-//
-Command::KeyBindEntry* TextEditWindow::MapKey(uint nKey)
-{
-    return GetBuffer()->MapKey(nKey);
-} // TextEditWindow::MapKey
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::MakeSelectionVisible
-//
 void TextEditWindow::MakeSelectionVisible()
 {
     DEBUG_PRINTF("%p [%d,%d]\n",
-        this, selection_->GetStart(), selection_->GetEnd() );
+        this, selection_->GetStart(), selection_->GetEnd());
 
     m_lCaretPosn = -1;
     redraw(true);
-} // TextEditWindow::MakePosnVisible
+}
 
+Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt) {
+  updateScreen();
+  return m_pPage->MapPointToPosn(*m_gfx, pt);
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::MapPointToPosn
-//
-// Description:
-//  Maps window position to buffer position.
-Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt)
-{
-    updateScreen();
-    return m_pPage->MapPointToPosn(*m_gfx, pt);
-} // TextEditWindow::MapPointToPosn
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::MapPosnToPoint
-//
 // Description:
 //  Maps position specified buffer position and returns height
 //  of caret, If specified buffer position isn't in window, this function
@@ -583,10 +480,6 @@ gfx::RectF TextEditWindow::MapPosnToPoint(Posn lPosn) {
   }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::OnIdle
-//
 bool TextEditWindow::OnIdle(uint count) {
   auto const more = GetBuffer()->OnIdle(count);
 
@@ -599,19 +492,15 @@ bool TextEditWindow::OnIdle(uint count) {
   return more;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::onMessage
-//
 LRESULT TextEditWindow::onMessage(
     UINT    uMsg,
     WPARAM  wParam,
-    LPARAM  lParam )
+    LPARAM  lParam)
 {
     if (WM_SYSTIMER == uMsg)  // WM_SYSTIMER for blinking caret
     {
         DEBUG_PRINTF("WM_SYSTIMER %p\r\n", this);
-    } // if
+    }
 
     switch (uMsg)
     {
@@ -623,12 +512,12 @@ LRESULT TextEditWindow::onMessage(
         {
             m_fBlink = false;
             Application::Get()->Execute(
-                this, 
+                this,
                 wch,
-                HIWORD(lParam) & KF_REPEAT );
+                HIWORD(lParam) & KF_REPEAT);
         }
         break;
-    } // WM_CAHR
+    }
 
     case WM_DESTROY:
         #if DEBUG_DESTROY
@@ -656,7 +545,7 @@ LRESULT TextEditWindow::onMessage(
         {
             DEBUG_PRINTF("WM_KEYDOWN VKey=0x%0X 0x%04X 0x%04X\r\n",
                 wParam,
-                HIWORD(lParam), LOWORD(lParam) );
+                HIWORD(lParam), LOWORD(lParam));
         }
         #endif
 
@@ -669,11 +558,11 @@ LRESULT TextEditWindow::onMessage(
             Application::Get()->Execute(
                 this,
                 nKey,
-                HIWORD(lParam) & KF_REPEAT );
+                HIWORD(lParam) & KF_REPEAT);
             return 0;
-        } // if
+        }
         break;
-    } // WM_KEYDOWN
+    }
 
     case WM_KILLFOCUS:
         #if DEBUG_FOCUS
@@ -692,7 +581,7 @@ LRESULT TextEditWindow::onMessage(
         Posn lPosn = MapPointToPosn(pt);
         if (lPosn >= 0) selectWord(lPosn);
         return 0;
-    } // WM_LBUTTONDBLCLK
+    }
 
     ////////////////////////////////////////////////////////////
     //
@@ -707,18 +596,18 @@ LRESULT TextEditWindow::onMessage(
         {
             // Click outside window. We do nothing.
             break;
-        } // if
+        }
 
         #if DEBUG_FOCUS
             DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
         #endif
 
-        if (! m_fHasFocus)
+        if (!m_fHasFocus)
         {
             ::SetFocus(m_hwnd);
 
             if (lPosn >= GetSelection()->GetStart() &&
-                lPosn <  GetSelection()->GetEnd() )
+                lPosn <  GetSelection()->GetEnd())
             {
                 return 0;
             }
@@ -737,7 +626,7 @@ LRESULT TextEditWindow::onMessage(
         }
 
         return 0;
-    } // WM_LBUTTONDOWN
+    }
 
     case WM_LBUTTONUP:
     {
@@ -747,7 +636,7 @@ LRESULT TextEditWindow::onMessage(
             stopDrag();
         }
         return 0;
-    } // WM_LBUTTONUP
+    }
 
     case WM_MOUSEMOVE:
     {
@@ -755,7 +644,7 @@ LRESULT TextEditWindow::onMessage(
         {
             // We have nothing to do if mouse isn't dragged.
             return 0;
-        } // if
+        }
 
         if (::GetCapture() != m_hwnd)
         {
@@ -769,7 +658,7 @@ LRESULT TextEditWindow::onMessage(
         if (lPosn >= 0)
         {
             selection_->MoveTo(lPosn, true);
-        } // if
+        }
 
         #if DEBUG_FORMAT
         {
@@ -790,7 +679,7 @@ LRESULT TextEditWindow::onMessage(
             m_oAutoScroll.Stop(m_hwnd);
         }
         return 0;
-    } // WM_MOUSEMOVE
+    }
 
     case WM_MOUSEWHEEL:
       SmallScroll(0, GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? -2 : 2);
@@ -833,7 +722,7 @@ LRESULT TextEditWindow::onMessage(
     case WM_SETCURSOR:
         if (HTCLIENT == LOWORD(lParam))
         {
-            ::SetCursor(::LoadCursor(NULL, MAKEINTRESOURCE(IDC_IBEAM)));
+            ::SetCursor(::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM)));
             return 1;
         }
         break;
@@ -853,7 +742,7 @@ LRESULT TextEditWindow::onMessage(
         #if DEBUG_RESIZE
             DEBUG_PRINTF("WM_SIZE %p %dx%d\n",
                 this,
-                LOWORD(lParam), HIWORD(lParam) );
+                LOWORD(lParam), HIWORD(lParam));
         #endif
         return 0;
 
@@ -861,7 +750,7 @@ LRESULT TextEditWindow::onMessage(
     {
         #if DEBUG_AUTOSCROLL
         DEBUG_PRINTF("WM_TIMER: %d dir=%d\n",
-            wParam, m_oAutoScroll.m_iDirection );
+            wParam, m_oAutoScroll.m_iDirection);
         #endif // DEBUG_AUTOSCROLL
 
         switch (wParam)
@@ -892,7 +781,7 @@ LRESULT TextEditWindow::onMessage(
                 {
                     m_oAutoScroll.Continue(m_hwnd);
                 }
-            } // if
+            }
             break;
 
         case MyTimerId_Blink:
@@ -900,9 +789,9 @@ LRESULT TextEditWindow::onMessage(
             m_nBlinkTimerId = 0;
             m_fBlink = false;
             break;
-        } // switch id
+        }
         break;
-    } // WM_TIMER
+    }
 
     case WM_VSCROLL:
      onVScroll(LOWORD(wParam));
@@ -918,14 +807,14 @@ LRESULT TextEditWindow::onMessage(
       #if DEBUG_REDRAW || DEBUG_RESIZE
         DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
                      this, wp->flags,
-                     wp->cx, wp->cy, wp->x, wp->y );
+                     wp->cx, wp->cy, wp->x, wp->y);
       #endif
       ::GetClientRect(m_hwnd, &m_rc);
       m_gfx->Resize(m_rc);
       m_pPage->Reset();
       redraw();
       return 0;
-    } // WM_WINDOWPOSCHANGED
+    }
 
     #if SUPPORT_IME
     case WM_IME_COMPOSITION:
@@ -942,7 +831,7 @@ LRESULT TextEditWindow::onMessage(
             uint cb = setReconvert(
                 reinterpret_cast<RECONVERTSTRING*>(lParam),
                 GetSelection()->GetStart(),
-                GetSelection()->GetEnd() );
+                GetSelection()->GetEnd());
             return cb;
         }
         break;
@@ -954,7 +843,7 @@ LRESULT TextEditWindow::onMessage(
         break;
 
     case WM_IME_STARTCOMPOSITION:
-        if (! m_fImeTarget)
+        if (!m_fImeTarget)
         {
             m_lImeStart  = GetSelection()->GetStart();
             m_lImeEnd    = m_lImeStart;
@@ -962,16 +851,11 @@ LRESULT TextEditWindow::onMessage(
         }
         return 0;
     #endif // SUPPORT_IME
-    } // switch uMsg
+    }
 
     return BaseWindow::onMessage(uMsg, wParam, lParam);
-} // TextEditWindow::onMessage
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::onVScroll
-//
 void TextEditWindow::onVScroll(uint nCode)
 {
     switch (nCode)
@@ -1009,22 +893,13 @@ void TextEditWindow::onVScroll(uint nCode)
             render(*m_gfx);
         }
         break;
-    } // SB_THUMBTRACK
+    }
 
     default:
         return;
-    } // switch nCode
-} // TextEditWindow::onVScroll
+    }
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::redraw
-//
-// Called by:
-
-//  TextEditWindow::OnIdle
-//  TextEditWindow::onMessage WM_WINDOWPOSCHANGED
-//
 void TextEditWindow::redraw() {
   auto fSelectionActive = m_fHasFocus;
 
@@ -1102,7 +977,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
     } else if (m_pPage->GetStart() != lStart) {
         #if DEBUG_REDRAW
         DEBUG_PRINTF("Page %p change start %d to %d\n",
-            m_pPage, m_pPage->GetStart(), lStart );
+            m_pPage, m_pPage->GetStart(), lStart);
         #endif // DEBUG_REDRAW
         format(*m_gfx, startOfLineAux(*m_gfx, lStart));
     }
@@ -1161,41 +1036,19 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
   g_oCaret.Show(m_hwnd, size, pt);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::selectWord
-//
-// Description:
-//  Selects word at lPosn and set end point is active.
-//
 void TextEditWindow::selectWord(Posn lPosn) {
-    Selection* pSelection = GetSelection();
-    pSelection->SetStart(lPosn);
-    pSelection->StartOf(Unit_Word);
-    pSelection->EndOf(Unit_Word, true);
-    pSelection->SetStartIsActive(false);
-} // TextEditWindow::selectWord
+  auto const pSelection = GetSelection();
+  pSelection->SetStart(lPosn);
+  pSelection->StartOf(Unit_Word);
+  pSelection->EndOf(Unit_Word, true);
+  pSelection->SetStartIsActive(false);
+}
 
+void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
+  if (nBar == SB_VERT)
+    m_oVertScrollBar.Set(hwnd, hwnd == *this ? SB_VERT : SB_CTL);
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::SetScrollBar
-//
-void TextEditWindow::SetScrollBar(HWND hwnd, int nBar)
-{
-    switch (nBar)
-    {
-    case SB_VERT:
-        m_oVertScrollBar.Set(hwnd, hwnd == *this ? SB_VERT : SB_CTL);
-        break;
-    } // switch
-} // TextEditWindow::SetScrollBar
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::SmallScroll
-//
 int TextEditWindow::SmallScroll(int, int iDy)
 {
     updateScreen();
@@ -1211,7 +1064,7 @@ int TextEditWindow::SmallScroll(int, int iDy)
         {
             if (lStart == lBufStart) break;
             lStart = startOfLineAux(*m_gfx, lStart - 1);
-        } // for k
+        }
 
         if (k > 0)
         {
@@ -1235,13 +1088,13 @@ int TextEditWindow::SmallScroll(int, int iDy)
                 m_pPage->ScrollToPosn(*m_gfx, lBufEnd);
                 k += 1;
                 break;
-            } // if
+            }
 
-            if (! m_pPage->ScrollUp(*m_gfx))
+            if (!m_pPage->ScrollUp(*m_gfx))
             {
                 break;
-            } // if
-        } // for k
+            }
+        }
 
         if (k > 0)
         {
@@ -1253,40 +1106,28 @@ int TextEditWindow::SmallScroll(int, int iDy)
     else
     {
         return 0;
-    } // if
-} // TextEditWindow::SmallScroll
+    }
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::StartOfLine
-//
 Posn TextEditWindow::StartOfLine(Posn lPosn) {
-    if (lPosn <= 0)
-      return 0;
-    return startOfLineAux(*m_gfx, lPosn);
-} // TextEditWindow::StartOfLine
+  return lPosn <= 0 ? 0 : startOfLineAux(*m_gfx, lPosn);
+}
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::startOfLineAux
-//
 // See Also:
 //  EditPange::endOfLineAux
 // Description:
 //  Returns start position of window line of specified position.
 Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
 {
-    if (! m_pPage->IsDirty(m_rc, *selection_))
+    if (!m_pPage->IsDirty(m_rc, *selection_))
     {
         Page::Line* pLine = m_pPage->FindLine(lPosn);
-        if (NULL != pLine) return pLine->GetStart();
-    } // if
+        if (nullptr != pLine) return pLine->GetStart();
+    }
 
     Posn lStart = selection_->GetBuffer()->ComputeStartOf(
         Unit_Paragraph,
-        lPosn );
+        lPosn);
     if (0 == lStart)
     {
         return 0;
@@ -1302,25 +1143,14 @@ Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
         Posn lEnd = pLine->GetEnd();
         if (lPosn < lEnd) return pLine->GetStart();
         lStart = lEnd;
-    } // for
-} // TextEditWindow::startOfLineAux
+    }
+}
 
+void TextEditWindow::stopDrag() {
+  m_oAutoScroll.Stop(m_hwnd);
+ m_eDragMode = DragMode_None;
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::stopDrag
-//
-void TextEditWindow::stopDrag()
-{
-    m_oAutoScroll.Stop(m_hwnd);
-    m_eDragMode = DragMode_None;
-} // TextEditWindow::stopDrag
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::updateScreen
-//
 void TextEditWindow::updateScreen() {
   if (!m_pPage->IsDirty(m_rc, *selection_))
     return;
@@ -1333,13 +1163,9 @@ void TextEditWindow::updateScreen() {
   format(*m_gfx, lStart);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::updateScrollBar
-//
 void TextEditWindow::updateScrollBar()
 {
-    if (NULL == m_pPage->GetBuffer()) return;
+    if (nullptr == m_pPage->GetBuffer()) return;
 
     Posn lBufEnd = m_pPage->GetBuffer()->GetEnd() + 1;
 
@@ -1360,8 +1186,7 @@ void TextEditWindow::updateScrollBar()
     }
 
     m_oVertScrollBar.SetInfo(&oInfo, true);
-} // TextEditWindow::updateScrollBar
-
+}
 
 #if SUPPORT_IME
 
@@ -1378,28 +1203,24 @@ StyleValues g_pImeStyleTargetNotConverted;
 
 #define GCS_COMPSTRATTR (GCS_COMPSTR | GCS_COMPATTR | GCS_CURSORPOS)
 
-class Imc
-{
-    private: HWND m_hwnd;
-    private: HIMC m_himc;
+class Imc {
+  private: HWND m_hwnd;
+  private: HIMC m_himc;
 
-    public: Imc(HWND hwnd) :
-        m_hwnd(hwnd),
-        m_himc(::ImmGetContext(hwnd)) {}
+  public: Imc(HWND hwnd) : m_hwnd(hwnd), m_himc(::ImmGetContext(hwnd)) {}
 
-    public: ~Imc()
-    {
-        if (NULL != m_himc) ::ImmReleaseContext(m_hwnd, m_himc);
-    } // ~Imc
+  public: ~Imc() {
+    if (m_himc)
+      ::ImmReleaseContext(m_hwnd, m_himc);
+  }
 
-    public: operator HIMC() const { return m_himc; }
-}; // Imc
+  public: operator HIMC() const { return m_himc; }
+};
 
-// TextEditWindow::onImeComposition
 void TextEditWindow::onImeComposition(LPARAM lParam)
 {
     Imc imc(m_hwnd);
-    if (imc == NULL) return;
+    if (!imc) return;
 
     Edit::UndoBlock oUndo(GetSelection(), L"IME");
 
@@ -1413,14 +1234,14 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
         {
             GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
             GetSelection()->SetText(L"", 0);
-        } // if
+        }
 
         // Get result string
         long cwch = ::ImmGetCompositionString(
             imc,
             GCS_RESULTSTR,
             rgwch,
-            sizeof(rgwch) ) / sizeof(char16);
+            sizeof(rgwch)) / sizeof(char16);
 
         // Insert result string into buffer
         if (cwch >= 1)
@@ -1431,7 +1252,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
 
             m_lImeStart = m_lImeEnd;
         }
-    } // if GC_RESULTSTR
+    }
 
     // IME has composition string
     if ((lParam & GCS_COMPSTRATTR) == GCS_COMPSTRATTR)
@@ -1442,14 +1263,14 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
             GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
             GetSelection()->SetText(L"", 0);
             m_lImeEnd = m_lImeStart;
-        } // if
+        }
 
         // Get composition string
         long cwch = ::ImmGetCompositionString(
             imc,
             GCS_COMPSTR,
             rgwch,
-            sizeof(rgwch) ) / sizeof(char16);
+            sizeof(rgwch)) / sizeof(char16);
 
         // Get composition attributes
         char rgbAttr[lengthof(rgwch)];
@@ -1457,37 +1278,37 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
             imc,
             GCS_COMPATTR,
             rgbAttr,
-            sizeof(rgbAttr) );
+            sizeof(rgbAttr));
         if (cbAttr != cwch)
         {
             DEBUG_PRINTF("GCCS_COMPATTR\n");
             return;
-        } // if
+        }
 
         long lCursor = ::ImmGetCompositionString(
             imc,
             GCS_CURSORPOS,
-            NULL,
-            0 );
+            nullptr,
+            0);
         if (lCursor < 0)
         {
             DEBUG_PRINTF("GCCS_CURSORPOS\n");
             return;
-        } // if
+        }
 
         uint32 rgnClause[100];
         ::ImmGetCompositionString(
             imc,
             GCS_COMPCLAUSE,
             rgnClause,
-            sizeof(rgnClause) );
+            sizeof(rgnClause));
 
         GetSelection()->SetText(rgwch, cwch);
         GetSelection()->Collapse(Collapse_End);
         m_lImeEnd = GetSelection()->GetEnd();
         GetSelection()->SetRange(
             m_lImeStart + lCursor,
-            m_lImeStart + lCursor );
+            m_lImeStart + lCursor);
 
         if (0 == g_pImeStyleInput.m_rgfMask)
         {
@@ -1541,7 +1362,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
 
             g_pImeStyleTargetNotConverted.m_eDecoration =
                 TextDecoration_None;
-        } // if
+        }
 
         m_fImeTarget = false;
         Posn lEnd = m_lImeStart + cwch;
@@ -1579,14 +1400,14 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
             default:
                 pStyle = &g_pImeStyleInput;
                 break;
-            } // switch attr
+            }
 
             iClause += 1;
             Posn lNext = m_lImeStart + rgnClause[iClause];
             GetBuffer()->SetStyle(lPosn, lNext, pStyle);
             lPosn = lNext;
-        } // for posn
-    } // if GCS_COMPSTRATTR
+        }
+    }
 
     ////////////////////////////////////////////////////////////
     //
@@ -1597,7 +1418,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
     {
         m_fImeTarget = false;
         return;
-    } // if
+    }
 
     // Composition was canceled.
     if (0 == lParam)
@@ -1614,7 +1435,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
                 imc,
                 GCS_COMPSTR,
                 rgwch,
-                sizeof(rgwch) ) / sizeof(char16);
+                sizeof(rgwch)) / sizeof(char16);
             if (cwch >= 1)
             {
                 GetSelection()->SetText(rgwch, cwch);
@@ -1622,14 +1443,10 @@ void TextEditWindow::onImeComposition(LPARAM lParam)
         }
 
         m_lImeEnd = m_lImeStart;
-    } // if
-} // TextEditWindow::onImeComposition
+    }
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::Reconvert
-//
-// Note: 
+// Note:
 //  o IME2000 ignores string after newline.
 //  o We should limit number of characters to be reconverted.
 //
@@ -1637,11 +1454,11 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd)
 {
     BOOL fSucceeded;
 
-    uint cb = setReconvert(NULL, lStart, lEnd);
+    uint cb = setReconvert(nullptr, lStart, lEnd);
     if (0 == cb) return;
 
     char* pb = new char[cb];
-    if (NULL == pb) return;
+    if (nullptr == pb) return;
 
     RECONVERTSTRING* p = reinterpret_cast<RECONVERTSTRING*>(pb);
 
@@ -1654,8 +1471,8 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd)
         SCS_QUERYRECONVERTSTRING,
         p,
         cb,
-        NULL,
-        0 );
+        nullptr,
+        0);
     unless (fSucceeded)
     {
         DEBUG_PRINTF("SCS_QUERYRECONVERTSTRING\n");
@@ -1671,8 +1488,8 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd)
         SCS_SETRECONVERTSTRING,
         p,
         cb,
-        NULL,
-        0 );
+        nullptr,
+        0);
     unless (fSucceeded)
     {
         DEBUG_PRINTF("SCS_SETRECONVERTSTRING\n");
@@ -1681,12 +1498,8 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd)
 
   exit:
     delete[] pb;
-} // TextEditWindow::Reconvert
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::setReconvert
-//
 uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart, Posn lEnd)
 {
     Count cwch = lEnd - lStart;
@@ -1694,7 +1507,7 @@ uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart, Posn lEnd)
 
     uint cb = sizeof(RECONVERTSTRING) + sizeof(char16) * (cwch + 1);
 
-    if (NULL == p) return cb;
+    if (nullptr == p) return cb;
 
     p->dwSize            = cb;
     p->dwVersion         = 0;
@@ -1706,37 +1519,32 @@ uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart, Posn lEnd)
     p->dwTargetStrOffset = p->dwCompStrOffset;
 
     char16* pwch = reinterpret_cast<char16*>(
-        reinterpret_cast<char*>(p) + p->dwStrOffset );
+        reinterpret_cast<char*>(p) + p->dwStrOffset);
 
     GetBuffer()->GetText(pwch, lStart, lEnd);
 
     pwch[cwch] = 0;
 
     return cb;
-} // TextEditWindow::Reconvert
+}
 
-//////////////////////////////////////////////////////////////////////
-//
-// TextEditWindow::showImeCaret
-//  Set left top coordinate of IME candiate window.
-//
-BOOL TextEditWindow::showImeCaret(SIZE sz, POINT pt)
-{
-    Imc imc(m_hwnd);
-    if (imc == NULL) return FALSE;
+// Set left top coordinate of IME candiate window.
+BOOL TextEditWindow::showImeCaret(SIZE sz, POINT pt) {
+  Imc imc(m_hwnd);
+  if (!imc)
+    return FALSE;
 
-    CANDIDATEFORM oCF;
-    oCF.dwIndex         = 0;
-    oCF.dwStyle         = CFS_EXCLUDE;
-    oCF.ptCurrentPos.x  = pt.x;
-    oCF.ptCurrentPos.y  = pt.y + sz.cy;
+  CANDIDATEFORM oCF;
+  oCF.dwIndex         = 0;
+  oCF.dwStyle         = CFS_EXCLUDE;
+  oCF.ptCurrentPos.x  = pt.x;
+  oCF.ptCurrentPos.y  = pt.y + sz.cy;
+  oCF.rcArea.left     = pt.x;
+  oCF.rcArea.top      = pt.y;
+  oCF.rcArea.right    = pt.x;
+  oCF.rcArea.bottom   = pt.y + sz.cy;
 
-    oCF.rcArea.left     = pt.x;
-    oCF.rcArea.top      = pt.y;
-    oCF.rcArea.right    = pt.x;
-    oCF.rcArea.bottom   = pt.y + sz.cy;
-
-    return ::ImmSetCandidateWindow(imc, &oCF);
-} // TextEditWindow::showImeCaret
+  return ::ImmSetCandidateWindow(imc, &oCF);
+}
 
 #endif // SUPPORT_IME
