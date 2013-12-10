@@ -14,9 +14,9 @@
 #define DEBUG_FOCUS      0
 #define DEBUG_IDLE       0
 #define DEBUG_KEY        0
-#define DEBUG_PAINT      1
+#define DEBUG_PAINT      _DEBUG
 #define DEBUG_REDRAW     0
-#define DEBUG_RESIZE     1
+#define DEBUG_RESIZE     _DEBUG
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -919,7 +919,7 @@ LRESULT TextEditWindow::onMessage(
       #endif
       ::GetClientRect(m_hwnd, &m_rc);
       m_gfx->Resize(m_rc);
-      m_pPage->Reset();
+      m_pPage->Resize(m_rc);
       #if 0
       {
         gfx::Graphics::DrawingScope drawing_scope(*m_gfx);

@@ -209,6 +209,7 @@ class Page {
 
   // [R]
   public: void Reset();
+  public: void Resize(const RECT& rc);
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_formatter_h)

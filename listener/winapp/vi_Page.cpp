@@ -1624,6 +1624,12 @@ void Page::Reset() {
   m_oScreenBuf.Reset();
 }
 
+void Page::Resize(const RECT& rc) {
+  m_rc = gfx::RectF(rc);
+  Reset();
+  m_oScreenBuf.Reset();
+}
+
 bool Page::ScrollDown(const gfx::Graphics& gfx) {
   if (!m_lStart) {
     // This page shows start of buffer.
