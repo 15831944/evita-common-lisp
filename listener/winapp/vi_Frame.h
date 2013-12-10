@@ -74,6 +74,7 @@ class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
   public: bool  Activate();
   public: void AddPane(Pane*);
   private: void AddTab(Pane*);
+  private: void AdoptPane(Pane*);
 
   // [C]
   private: bool canClose();

@@ -107,36 +107,39 @@ bool Frame::Activate() {
 
 void Frame::AddPane(Pane* const pane) {
   ASSERT(!!pane);
-
-  auto const current_owner_frame = pane->GetFrame();
-  if (!current_owner_frame) {
-    ASSERT(!pane->IsRealized());
-    m_oPanes.Append(this, pane);
-    if (IsRealized()) {
-      pane->Realize();
-      AddTab(pane);
-    }
-    return;
+  ASSERT(!pane->GetFrame());
+  ASSERT(!pane->IsRealized());
+  m_oPanes.Append(this, pane);
+  if (IsRealized()) {
+    pane->Realize();
+    AddTab(pane);
   }
+}
 
-  ASSERT(IsRealized());
-
-  if (current_owner_frame == this)
-    return;
-
+void Frame::AdoptPane(Pane* const pane) {
+  ASSERT(!!pane);
   ASSERT(pane->IsRealized());
 
-  auto const tab_index = current_owner_frame->getTabFromPane(pane);
-  ASSERT(tab_index >= 0);
-  current_owner_frame->m_oPanes.Delete(pane);
-  TabCtrl_DeleteItem(current_owner_frame->m_hwndTabBand, tab_index);
+  auto const frame = pane->GetFrame();
+  ASSERT(!!frame);
+  ASSERT(frame != this);
+  ASSERT(frame->IsRealized());
 
+  auto const tab_index = frame->getTabFromPane(pane);
+  ASSERT(tab_index >= 0);
+  TabCtrl_DeleteItem(frame->m_hwndTabBand, tab_index);
+
+  frame->m_oPanes.Delete(pane);
   m_oPanes.Append(this, pane);
+
+  if (!IsRealized())
+    return;
+
+  pane->Hide();
   pane->DidChangeOwnerFrame();
   AddTab(pane);
-
-  if (current_owner_frame->m_oPanes.IsEmpty())
-    current_owner_frame->Destroy();
+  if (frame->m_oPanes.IsEmpty())
+    frame->Destroy();
 }
 
 void Frame::AddTab(Pane* const pane) {
@@ -493,8 +496,12 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       CompositionState::Update(m_hwnd);
       gfx_->Init(m_hwnd);
 
+      ASSERT(!m_oPanes.IsEmpty());
       for (auto& pane: m_oPanes) {
-        pane.Realize();
+        if (pane.IsRealized())
+          pane.DidChangeOwnerFrame();
+        else
+          pane.Realize();
         AddTab(&pane);
       }
 
@@ -816,10 +823,7 @@ bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
     case kDrop:
       if (this == pFrom)
         break;
-
-      // We should hide pane to be moved, because AddPane() will show it.
-      pPane->Hide();
-      AddPane(pPane);
+      AdoptPane(pPane);
       break;
 
     case kHover:
@@ -827,8 +831,8 @@ bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
 
     case kThrow: {
       auto const pNewFrame = Application::Get()->CreateFrame();
+      pNewFrame->AdoptPane(pPane);
       pNewFrame->Realize();
-      pNewFrame->AddPane(pPane);
       break;
     }
 
