@@ -1529,9 +1529,6 @@ class LineCopier {
     auto present_start = FindSameLine(new_start);
     if (!present_start)
       return LineWithTop();
-    if (present_start.line_top() == new_start.line_top())
-      return new_start.Next();
-
     auto new_last = new_start;
     auto new_runner = new_start.Next();
     auto present_runner = present_start.Next();
