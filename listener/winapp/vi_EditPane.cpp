@@ -731,8 +731,9 @@ void EditPane::LayoutBox::Replace(Box& new_box, Box& old_box) {
 void EditPane::LayoutBox::UpdateSplitters() {
   if (is_removed() || !edit_pane_->is_showed())
     return;
-  gfx::Graphics::DrawingScope drawing_scope(edit_pane_->frame().gfx());
-  DrawSplitters(edit_pane_->frame().gfx());
+  auto& gfx = edit_pane_->frame().gfx();
+  gfx::Graphics::DrawingScope drawing_scope(gfx);
+  DrawSplitters(gfx);
 }
 
 // LeafBox
@@ -759,8 +760,8 @@ void EditPane::LeafBox::Destroy() {
 
 void EditPane::LeafBox::DidChangeOwnerFrame() {
   if (m_hwndVScrollBar)
-    ::SetParent(m_hwndVScrollBar, *edit_pane_->GetFrame());
-  ::SetParent(*m_pWindow, *edit_pane_->GetFrame());
+    ::SetParent(m_hwndVScrollBar, edit_pane_->frame());
+  ::SetParent(*m_pWindow, edit_pane_->frame());
 }
 
 void EditPane::LeafBox::DetachWindow() {
@@ -1212,9 +1213,8 @@ void EditPane::SplitterController::Stop() {
   ASSERT(!m_pBox);
 }
 
-EditPane::EditPane(Frame* frame, Buffer* pBuffer, Posn lStart)
+EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
-      frame_(frame),
       root_box_(*new VerticalLayoutBox(this, nullptr)),
       splitter_controller_(new SplitterController()),
       showed_(false) {
@@ -1226,6 +1226,11 @@ EditPane::EditPane(Frame* frame, Buffer* pBuffer, Posn lStart)
 
 EditPane::~EditPane() {
   root_box_->Removed();
+}
+
+Frame& EditPane::frame() const {
+  ASSERT(GetFrame());
+  return *GetFrame();
 }
 
 void EditPane::Activate() {
@@ -1247,10 +1252,9 @@ void EditPane::Destroy() {
 
 void EditPane::DidChangeOwnerFrame() {
  root_box_->DidChangeOwnerFrame();
- frame_ = GetFrame();
- auto const rect = GetFrame()->GetPaneRect();
+ auto const rect = frame().GetPaneRect();
  if (showed_) {
-   gfx::Graphics::DrawingScope drawing_scope(GetFrame()->gfx());
+   gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
    Resize(rect);
  } else {
    Resize(rect);
@@ -1398,12 +1402,14 @@ void EditPane::OnLeftButtonDown(uint, const Point& point) {
   switch (result.type) {
     case HitTestResult::HSplitter:
     case HitTestResult::VSplitter:
-      splitter_controller_->Start(*frame_, SplitterController::State_Drag,
+      splitter_controller_->Start(frame(),
+                                  SplitterController::State_Drag,
                                   *result.box);
       break;
 
     case HitTestResult::VSplitterBig:
-      splitter_controller_->Start(*frame_, SplitterController::State_DragSingle,
+      splitter_controller_->Start(frame(),
+                                  SplitterController::State_DragSingle,
                                   *result.box);
       break;
   }
@@ -1420,7 +1426,7 @@ void EditPane::OnMouseMove(uint, const Point& point) {
 void EditPane::Realize() {
   ASSERT(!IsRealized());
   m_eState = State_Realized;
-  m_rc = frame_->GetPaneRect();
+  m_rc = frame().GetPaneRect();
   root_box_->Realize(this, m_rc);
 }
 
@@ -1453,12 +1459,12 @@ void EditPane::setupStatusBar() {
   };
 
   int rgiRight[ARRAYSIZE(rgiWidth)];
-  auto iRight = GetFrame()->GetCxStatusBar();
+  auto iRight = frame().GetCxStatusBar();
   for (auto i = 0u; i < ARRAYSIZE(rgiRight); i++) {
     rgiRight[ARRAYSIZE(rgiRight) - i - 1] = iRight;
     iRight -= rgiWidth[i];
   }
-  GetFrame()->SetStatusBarParts(rgiRight, lengthof(rgiRight));
+  frame().SetStatusBarParts(rgiRight, lengthof(rgiRight));
 }
 
 void EditPane::Show() {
@@ -1516,7 +1522,7 @@ void EditPane::UpdateStatusBar() {
 
   auto const pBuffer = GetActiveWindow()->GetBuffer();
 
-  GetFrame()->ShowMessage(
+  frame().ShowMessage(
       MessageLevel_Idle,
       (
         pBuffer->IsNotReady()
@@ -1526,16 +1532,16 @@ void EditPane::UpdateStatusBar() {
                 : 0
      ));
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_Mode,
       pBuffer->GetMode()->GetName());
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_CodePage,
       L"CP%u",
       pBuffer->GetCodePage());
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_Newline,
       k_rgwszNewline[pBuffer->GetNewline()]);
 
@@ -1546,19 +1552,19 @@ void EditPane::UpdateStatusBar() {
   Selection::Information oInfo;
   pSelection->GetInformation(&oInfo);
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_LineNumber,
       L"Ln %d%s",
       oInfo.m_lLineNum,
       oInfo.m_fLineNum ? L"" : L"+");
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_Column,
       L"Cn %d%s",
       oInfo.m_lColumn,
       oInfo.m_fColumn ? L"" : L"+");
 
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_Posn,
       L"Ch %d",
       pSelection->IsStartActive() ?
@@ -1566,7 +1572,7 @@ void EditPane::UpdateStatusBar() {
 
   // FIXME 2007-07-25 yosi@msn.com We need to show "OVR" if
   // we are in overwrite mode.
-  GetFrame()->SetStatusBarf(
+  frame().SetStatusBarf(
       StatusBarPart_Insert,
       pBuffer->IsReadOnly() ? L"R/O" : L"INS",
       pBuffer->GetStart());

@@ -325,7 +325,7 @@ void Frame::onDropFiles(HDROP const hDrop) {
     }
 
     if (!pPane) {
-      pPane = new EditPane(this, pBuffer);
+      pPane = new EditPane(pBuffer);
       AddPane(pPane);
     }
 
@@ -949,7 +949,7 @@ bool Frame::ShowBuffer(Buffer* const pBuffer) {
     }
   }
 
-  auto const pPane = new EditPane(this, pBuffer);
+  auto const pPane = new EditPane(pBuffer);
   AddPane(pPane);
   pPane->Activate();
   return true;

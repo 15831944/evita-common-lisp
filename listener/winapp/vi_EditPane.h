@@ -59,7 +59,6 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   };
 
   private: State m_eState;
-  private: Frame* frame_;
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: const base::OwnPtr<SplitterController> splitter_controller_;
   private: Windows m_oWindows;
@@ -67,10 +66,10 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: bool showed_;
 
   // ctro/dtor
-  public: EditPane(Frame*, Buffer*, Posn = 0);
+  public: explicit EditPane(Buffer*, Posn = 0);
   public: virtual ~EditPane();
 
-  public: Frame& frame() const { return *frame_; }
+  public: Frame& frame() const;
   public: bool is_showed() const { return showed_; }
 
   // [A]

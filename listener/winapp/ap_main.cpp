@@ -204,7 +204,7 @@ static int MainLoop(EnumArg* pEnumArg) {
   while (!pEnumArg->AtEnd()) {
     auto const  pwszArg = pEnumArg->Get();
     auto const buffer = Application::Get()->Load(pwszArg);
-    auto const pane = new EditPane(&frame, buffer);
+    auto const pane = new EditPane(buffer);
     frame.AddPane(pane);
     pEnumArg->Next();
   }
@@ -219,7 +219,7 @@ static int MainLoop(EnumArg* pEnumArg) {
     #endif // USE_LISTENER
 
     Application::Get()->InternalAddBuffer(buffer);
-    auto const pane = new EditPane(&frame, buffer);
+    auto const pane = new EditPane(buffer);
     frame.AddPane(pane);
   }
   frame.Realize();

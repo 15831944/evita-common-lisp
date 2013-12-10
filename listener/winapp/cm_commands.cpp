@@ -728,14 +728,14 @@ static void newFile(const Context* pCtx, bool fNewFrame)
     if (fNewFrame)
     {
         Frame* pFrame = Application::Get()->CreateFrame();
-        EditPane* pPane = new EditPane(pFrame, pBuffer);
+        EditPane* pPane = new EditPane(pBuffer);
         pFrame->AddPane(pPane);
         pFrame->Realize();
     }
     else
     {
         Frame* pFrame = pCtx->GetFrame();
-        EditPane* pPane = new EditPane(pFrame, pBuffer);
+        EditPane* pPane = new EditPane(pBuffer);
         pFrame->AddPane(pPane);
     }
 } // NewFile
@@ -762,7 +762,7 @@ DEFCOMMAND(NewFrame)
 
     Frame* pFrame = Application::Get()->CreateFrame();
 
-    EditPane* pPane = new EditPane(pFrame, pSelection->GetBuffer());
+    EditPane* pPane = new EditPane(pSelection->GetBuffer());
     pFrame->AddPane(pPane);
     pFrame->Realize();
 
@@ -793,7 +793,7 @@ DEFCOMMAND(NewFrameAndClose)
 
     Frame* pFrame = Application::Get()->CreateFrame();
 
-    EditPane* pPane = new EditPane(pFrame, pSelection->GetBuffer());
+    EditPane* pPane = new EditPane(pSelection->GetBuffer());
     pFrame->AddPane(pPane);
     pFrame->Realize();
 
@@ -949,7 +949,7 @@ static void openFile(const Context* pCtx, bool fNewFrame)
     if (fNewFrame)
     {
         Frame* pFrame = Application::Get()->CreateFrame();
-        EditPane* pPane = new EditPane(pFrame, pBuffer);
+        EditPane* pPane = new EditPane(pBuffer);
         pFrame->AddPane(pPane);
         pFrame->Realize();
     }
@@ -973,7 +973,7 @@ static void openFile(const Context* pCtx, bool fNewFrame)
 
         if (NULL == pPane)
         {
-            pPane = new EditPane(pFrame, pBuffer);
+            pPane = new EditPane(pBuffer);
             pFrame->AddPane(pPane);
         }
 
@@ -1364,7 +1364,7 @@ DEFCOMMAND(ValidateIntervals)
         { return; }
 
     auto const frame = pCtx->GetFrame();
-    frame->AddPane(new EditPane(frame, pLogBuf));
+    frame->AddPane(new EditPane(pLogBuf));
 } // ValidateIntervals
 
 static char16 s_rgwchGraphKey[256];

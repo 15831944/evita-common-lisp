@@ -363,7 +363,7 @@ void IoManager::visitFile(const char16* pwsz)
 
     if (NULL == pPane)
     {
-        pPane = new EditPane(pFrame, pBuffer);
+        pPane = new EditPane(pBuffer);
         pFrame->AddPane(pPane);
     }
 
