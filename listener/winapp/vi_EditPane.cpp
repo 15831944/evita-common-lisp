@@ -1462,9 +1462,9 @@ void EditPane::setupStatusBar() {
 }
 
 void EditPane::Show() {
+  DEBUG_PRINTF("%p %ls\n", this, GetName());
   ASSERT(m_eState == State_Realized);
-  if (showed_)
-    return;
+  ASSERT(!showed_);
   showed_ = true;
   root_box_->Show();
   root_box_->UpdateSplitters();

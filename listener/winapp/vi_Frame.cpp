@@ -814,9 +814,12 @@ bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
 
   switch (eAction) {
     case kDrop:
-      if (this != pFrom) {
-        AddPane(pPane);
-      }
+      if (this == pFrom)
+        break;
+
+      // We should hide pane to be moved, because AddPane() will show it.
+      pPane->Hide();
+      AddPane(pPane);
       break;
 
     case kHover:
