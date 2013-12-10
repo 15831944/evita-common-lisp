@@ -281,8 +281,8 @@ class DpiHandler {
   private: SizeF dpi_;
   private: SizeF pixel_in_dip_;
   public: SizeF AlignToPixel(const SizeF& size) const;
+  public: SizeF CeilToPixel(const SizeF& size) const;
   public: SizeF FloorToPixel(const SizeF& size) const;
-  public: SizeF RoundToPixel(const SizeF& size) const;
   protected: void UpdateDpi(const SizeF&);
 };
 
@@ -310,8 +310,8 @@ class FactorySet : public RefCounted_<FactorySet>,
   public: static SizeF AlignToPixel(const SizeF& size) {
     return instance().DpiHandler::AlignToPixel(size);
   }
-  public: static SizeF RoundToPixel(const SizeF& size) {
-    return instance().DpiHandler::RoundToPixel(size);
+  public: static SizeF CeilToPixel(const SizeF& size) {
+    return instance().DpiHandler::CeilToPixel(size);
   }
 };
 

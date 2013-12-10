@@ -149,7 +149,7 @@ base::ComPtr<IDWriteTextFormat> CreateTextFormat(
     const FactorySet&,
     const LOGFONT& log_font) {
   ASSERT(log_font.lfHeight < 0);
-  auto size = FactorySet::RoundToPixel(
+  auto size = FactorySet::CeilToPixel(
       SizeF(0.0f, static_cast<float>(-log_font.lfHeight) * 96.0f / 72.0f));
   base::ComPtr<IDWriteTextFormat> text_format;
   COM_VERIFY(FactorySet::dwrite().CreateTextFormat(
@@ -229,14 +229,14 @@ SizeF DpiHandler::AlignToPixel(const SizeF& size) const {
                MultipleOf(size.height, pixel_in_dip_.height));
 }
 
+SizeF DpiHandler::CeilToPixel(const SizeF& size) const {
+  return SizeF(::ceilf(size.width * pixel_in_dip_.width),
+               ::ceilf(size.height * pixel_in_dip_.height));
+}
+
 SizeF DpiHandler::FloorToPixel(const SizeF& size) const {
   return SizeF(::floorf(size.width * pixel_in_dip_.width),
                ::floorf(size.height * pixel_in_dip_.height));
-}
-
-SizeF DpiHandler::RoundToPixel(const SizeF& size) const {
-  return SizeF(::ceilf(size.width * pixel_in_dip_.width),
-               ::ceilf(size.height * pixel_in_dip_.height));
 }
 
 void DpiHandler::UpdateDpi(const SizeF& dpi) {

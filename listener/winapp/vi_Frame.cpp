@@ -868,7 +868,7 @@ void Frame::Realize() {
   auto& font = *FontSet::Get(&g_DefaultStyle)->FindFont('x');
   gfx::SizeF size(font.GetCharWidth('M') * cColumns,
                   font.height() * cRows);
-  gfx::RectF rect(gfx::PointF(), gfx::FactorySet::RoundToPixel(size));
+  gfx::RectF rect(gfx::PointF(), gfx::FactorySet::AlignToPixel(size));
   RECT rc = rect;
   ::AdjustWindowRectEx(&rc, dwStyle, TRUE, dwExStyle);
   rc.right += ::GetSystemMetrics(SM_CXVSCROLL) + 10;
