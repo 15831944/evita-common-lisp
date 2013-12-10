@@ -44,15 +44,13 @@ float AlignHeightToPixel(const gfx::Graphics& gfx, float height) {
   return gfx.AlignToPixel(gfx::SizeF(0.0f, height)).height;
 }
 
-#if 0
-float AlignWidthToPixel(const gfx::Graphics& gfx, float width) {
-  return gfx.AlignToPixel(gfx::SizeF(width, 0.0f)).width;
-}
-#else
 float AlignWidthToPixel(const gfx::Graphics&, float width) {
   return width;
 }
-#endif
+
+float FloorWidthToPixel(const gfx::Graphics& gfx, float width) {
+  return gfx.FloorToPixel(gfx::SizeF(width, 0.0f)).width;
+}
 
 inline gfx::ColorF ColorToColorF(Color color) {
   COLORREF const cr = color;
@@ -462,15 +460,15 @@ class TextCell : public Cell {
     auto const cwch = lPosn - m_lStart;
     if (!cwch)
       return 0;
-    return AlignWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, cwch));
+    return FloorWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, cwch));
   }
 
-    public: virtual Posn MapXToPosn(const gfx::Graphics& gfx,
+  public: virtual Posn MapXToPosn(const gfx::Graphics& gfx,
                                   float x) const override final {
     if (x >= m_cx)
       return m_lEnd;
     for (uint k = 1; k <= m_cwch; ++k) {
-      auto const cx = AlignWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, k));
+      auto const cx = FloorWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, k));
       if (x < cx)
         return m_lStart + k - 1;
     }

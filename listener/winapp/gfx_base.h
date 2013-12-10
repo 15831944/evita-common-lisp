@@ -281,6 +281,7 @@ class DpiHandler {
   private: SizeF dpi_;
   private: SizeF pixel_in_dip_;
   public: SizeF AlignToPixel(const SizeF& size) const;
+  public: SizeF FloorToPixel(const SizeF& size) const;
   public: SizeF RoundToPixel(const SizeF& size) const;
   protected: void UpdateDpi(const SizeF&);
 };

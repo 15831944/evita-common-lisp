@@ -229,6 +229,11 @@ SizeF DpiHandler::AlignToPixel(const SizeF& size) const {
                MultipleOf(size.height, pixel_in_dip_.height));
 }
 
+SizeF DpiHandler::FloorToPixel(const SizeF& size) const {
+  return SizeF(::floorf(size.width * pixel_in_dip_.width),
+               ::floorf(size.height * pixel_in_dip_.height));
+}
+
 SizeF DpiHandler::RoundToPixel(const SizeF& size) const {
   return SizeF(::ceilf(size.width * pixel_in_dip_.width),
                ::ceilf(size.height * pixel_in_dip_.height));
