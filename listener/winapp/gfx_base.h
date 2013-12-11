@@ -279,7 +279,8 @@ class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
 
 class DpiHandler {
   private: SizeF dpi_;
-  private: SizeF pixel_in_dip_;
+  private: SizeF pixels_per_dip_;
+  public: const SizeF& pixels_per_dip() const { return pixels_per_dip_; }
   public: SizeF AlignToPixel(const SizeF& size) const;
   public: SizeF CeilToPixel(const SizeF& size) const;
   public: SizeF FloorToPixel(const SizeF& size) const;
