@@ -1006,6 +1006,9 @@ Page::Page()
       m_crBackground(0) {
 }
 
+Page::~Page() {
+}
+
 bool Page::IsDirty(const Rect& rc, const Selection& selection,
                    bool fSelection) const {
   if (!m_pBuffer) {
