@@ -116,6 +116,7 @@ class DoubleLinkedNode_
 
     public: Item_* GetNext() const { return m_pNext; }
     public: Item_* GetPrev() const { return m_pPrev; }
+    protected: void Reset() { m_pNext = m_pPrev = nullptr; }
 }; // DoubleLinkedNode_
 
 
@@ -207,6 +208,10 @@ class DoubleLinkedList_
 
         return pItem;
     } // Delete
+
+    public: void DeleteAll() {
+      m_pFirst = m_pLast = nullptr;
+    }
 
     // [E]
     public: class Enum
@@ -345,6 +350,17 @@ class DoubleLinkedList_
     Iterator end() { return Iterator(*this, nullptr); }
     ConstIterator begin() const { return ConstIterator(*this, m_pFirst); }
     ConstIterator end() const { return ConstIterator(*this, nullptr); }
+
+    public: Item_* Prepend(Item_* item) {
+      auto const cons = static_cast<Cons_*>(item);
+      cons->m_pPrev = nullptr;
+      cons ->m_pNext = m_pFirst;
+      if (!m_pLast)
+        m_pLast = item;
+      if (m_pFirst)
+        static_cast<Cons_*>(m_pFirst)->m_pPrev= item;
+      return m_pFirst = item;
+    }
 }; // DoubleLinkedList_
 
 
