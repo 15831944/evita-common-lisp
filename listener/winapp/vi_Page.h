@@ -39,30 +39,31 @@ class Page {
   public: class Line;
 
   private: class DisplayBuffer {
+      private: typedef DoubleLinkedList_<Line, DisplayBuffer> Lines;
       private: float   m_cy;
       private: HANDLE  m_hObjHeap;
-      private: Line*   m_pFirst;
-      private: Line*   m_pLast;
+      private: Lines lines_;
       private: gfx::RectF rect_;
-
+  
       public: DisplayBuffer();
       public: DisplayBuffer(const DisplayBuffer&);
       public: ~DisplayBuffer();
-
+  
       public: float bottom() const { return rect_.bottom; }
       public: float height() const { return rect_.height(); }
       public: float left() const { return rect_.left; }
+      public: const Lines& lines() const { return lines_; }
       public: const gfx::RectF& rect() const { return rect_; }
       public: float right() const { return rect_.right; }
       public: float top() const { return rect_.top; }
       public: float width() const { return rect_.width(); }
-
+  
       public: void   Append(Line*);
       public: void*  Alloc(size_t);
-      public: Line*  GetFirst()  const { return m_pFirst; }
+      public: Line*  GetFirst()  const { return lines_.GetFirst(); }
       public: HANDLE GetHeap()   const { return m_hObjHeap; }
       public: float  GetHeight() const { return m_cy; }
-      public: Line*  GetLast()   const { return m_pLast; }
+      public: Line*  GetLast()   const { return lines_.GetLast(); }
       public: Line*  NewLine();
       public: void   Prepend(Line*);
       public: HANDLE Reset(const gfx::RectF& page_rect);
@@ -71,7 +72,8 @@ class Page {
   };
 
   // Line
-  public: class Line : public ObjectInHeap {
+  public: class Line : public DoubleLinkedNode_<Line, DisplayBuffer>,
+                       public ObjectInHeap {
     friend class Page;
     friend class DisplayBuffer;
     friend class PageInternal::Formatter;
@@ -86,30 +88,17 @@ class Page {
     private: Posn           m_lStart;
     private: Posn           m_lEnd;
     private: Cell*          m_pCell;
-    private: Line*          m_pNext;
-    private: Line*          m_pPrev;
     private: char16*        m_pwch;
 
-    public: Line(HANDLE hHeap) :
-        m_iHeight(0),
-        m_iWidth(0),
-        m_hObjHeap(hHeap),
-        m_lEnd(0),
-        m_lStart(0),
-        m_nHash(0),
-        m_pCell(NULL),
-        m_pNext(NULL),
-        m_pPrev(NULL) {}
+    public: Line(HANDLE hHeap);
 
-        public: void  Discard();
+    public: void  Discard();
     public: Line* Copy(HANDLE hHeap) const;
     public: bool  Equal(const Line*) const;
     public: void  Fix(float dscent);
     public: Cell* GetCell()   const { return m_pCell; }
     public: Posn  GetEnd()    const { return m_lEnd; }
     public: float GetHeight() const { return m_iHeight; }
-    public: Line* GetNext()   const { return m_pNext; }
-    public: Line* GetPrev()   const { return m_pPrev; }
     public: Posn  GetStart()  const { return m_lStart; }
     public: float GetWidth()  const { return m_iWidth; }
     public: uint  Hash() const;
@@ -118,24 +107,9 @@ class Page {
     public: void  Reset();
   }; // Line
 
-    // EnumLine
-  private: class EnumLine {
-      Line*   m_pRunner;
-
-        public: EnumLine(const DisplayBuffer& r) :
-          m_pRunner(r.GetFirst()) {}
-
-        public: bool AtEnd() const { return NULL == m_pRunner; }
-      public: Line* Get() const { ASSERT(! AtEnd()); return m_pRunner; }
-
-        public: void Next()
-          { ASSERT(! AtEnd()); m_pRunner = m_pRunner->m_pNext; }
-  }; // EnumLine
-
   // Buffer
-  public: Edit::Buffer*   m_pBuffer;
-  private: Count          m_nModfTick;
-
+  public: Edit::Buffer* m_pBuffer;
+  private: Count m_nModfTick;
 
   // Selection
   public: Posn    m_lSelStart;;
@@ -151,17 +125,7 @@ class Page {
   private: DisplayBuffer  m_oFormatBuf;
   private: DisplayBuffer  m_oScreenBuf;
 
-    // Page ctor
-  public: Page() :
-      m_pBuffer(NULL),
-      m_lStart(0),
-      m_lEnd(0),
-      m_nModfTick(0),
-      m_lSelStart(0),
-      m_lSelEnd(0),
-      m_crSelFg(0),
-      m_crSelBg(0),
-      m_crBackground(0) {}
+  public: Page();
 
     // [F]
   public: Line* FindLine(Posn) const;
