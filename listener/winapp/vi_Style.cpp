@@ -99,12 +99,22 @@ class Font::FontImpl {
     ASSERT(num_chars);
     const auto glyph_indexes = GetGlyphIndexes(chars, num_chars);
 
+    std::vector<float> glyph_advances(num_chars);
+    {
+      const auto glyph_metrics = GetGlyphMetrics(glyph_indexes);
+      auto metrics_it = glyph_metrics.begin();
+      for (auto& it: glyph_advances) {
+        it = ConvertToDip(metrics_it->advanceWidth);
+        ++metrics_it;
+      }
+    }
+
     DWRITE_GLYPH_RUN glyph_run;
     glyph_run.fontFace = *font_face_;
     glyph_run.fontEmSize = em_size_;
     glyph_run.glyphCount = glyph_indexes.size();
     glyph_run.glyphIndices = &glyph_indexes[0];
-    glyph_run.glyphAdvances = nullptr; //&glyph_advances[0];
+    glyph_run.glyphAdvances = &glyph_advances[0];
     glyph_run.glyphOffsets = nullptr;
     glyph_run.isSideways = false;
     glyph_run.bidiLevel = 0;
