@@ -313,6 +313,7 @@ void Graphics::Init(HWND hwnd) {
   SizeF dpi;
   render_target_->GetDpi(&dpi.width, &dpi.height);
   UpdateDpi(dpi);
+  render_target_->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
 }
 
 void Graphics::Resize(const RECT& rc) const {
