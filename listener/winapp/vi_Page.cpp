@@ -99,20 +99,26 @@ enum CellKind {
 //
 // Cell
 //
-class Cell : public ObjectInHeap {
-  public: Cell* m_pNext;
+class Cell
+    : public DoubleLinkedNode_<Cell, Page::Line>,
+      public ObjectInHeap {
   public: float m_cx;
   public: float m_cy;
 
   protected: Color m_crBackground;
 
   public: Cell(Color cr, float cx, float cy)
-      : m_pNext(nullptr),
-        m_crBackground(cr),
+      : m_crBackground(cr),
         m_cx(cx),
         m_cy(cy) {
     ASSERT(cx >= 1);
     ASSERT(cy >= 1);
+  }
+
+  public: explicit Cell(const Cell& other)
+      : m_crBackground(other.m_crBackground),
+        m_cx(other.m_cx),
+        m_cy(other.m_cy) {
   }
 
   public: virtual Cell* Copy(HANDLE, char16*) const = 0;
@@ -170,23 +176,8 @@ class Cell : public ObjectInHeap {
 
 //////////////////////////////////////////////////////////////////////
 //
-// EnumCell
+// FillerCell
 //
-class EnumCell {
-  private: Cell*   m_pRunner;
-
-  public: EnumCell(const Page::Line* p)
-    : m_pRunner(p->GetCell()) {
-  }
-
-  public: bool AtEnd() const { return !m_pRunner; }
-  public: Cell* Get() const { ASSERT(!AtEnd()); return m_pRunner; }
-
-  public: void Next() {
-    ASSERT(!AtEnd()); m_pRunner = m_pRunner->m_pNext;
-  }
-};
-
 class FillerCell final : public Cell {
   public: FillerCell(Color cr, float cx, float cy)
       : Cell(cr, cx, cy) {
@@ -689,8 +680,6 @@ bool Formatter::FormatLine(Page::Line* pLine) {
   auto fMoreContents = true;
   pLine->m_lStart = m_oEnumCI.GetPosn();
   m_oCharSink.Reset();
-  auto ppPrevCell = &pLine->m_pCell;
-  *ppPrevCell = nullptr;
 
   auto x = m_pPage->m_oFormatBuf.left();
   auto iDescent = 0.0f;
@@ -704,17 +693,15 @@ bool Formatter::FormatLine(Page::Line* pLine) {
 
     pCell = new(m_hObjHeap) FillerCell(m_pPage->m_crBackground,
                                        cxLeftMargin, cyMinHeight);
-
-    *ppPrevCell = pCell;
-    ppPrevCell = &pCell->m_pNext;
+    pLine->cells().Append(pCell);
     x += cxLeftMargin;
   }
 
   for (;;) {
     if (m_oEnumCI.AtEnd()) {
-        pCell = formatMarker(MarkerCell::Kind_Eob);
-        fMoreContents = false;
-        break;
+      pCell = formatMarker(MarkerCell::Kind_Eob);
+      fMoreContents = false;
+      break;
     }
 
     auto const wch = m_oEnumCI.GetChar();
@@ -735,11 +722,10 @@ bool Formatter::FormatLine(Page::Line* pLine) {
 
     m_oEnumCI.Next();
 
-    if (ppPrevCell == &pCell->m_pNext) {
+    if (pLine->cells().GetLast() == pCell) {
       x -= cx;
     } else {
-      *ppPrevCell = pCell;
-      ppPrevCell = &pCell->m_pNext;
+      pLine->cells().Append(pCell);
     }
 
     x += pCell->m_cx;
@@ -752,11 +738,7 @@ bool Formatter::FormatLine(Page::Line* pLine) {
   //   o end of line:   End-Of-Line MarkerCell
   //   o wrapped line:  Warp MarkerCEll
   ASSERT(pCell);
-  ASSERT(!*ppPrevCell);
-  ASSERT(ppPrevCell != &pCell->m_pNext);
-
-  *ppPrevCell = pCell;
-  ppPrevCell = &pCell->m_pNext;
+  pLine->cells().Append(pCell);
 
   x += pCell->m_cx;
   iDescent = max(pCell->GetDescent(), iDescent);
@@ -1179,14 +1161,13 @@ Posn Page::MapPointToPosn(const gfx::Graphics& gfx, gfx::PointF pt) const {
       return line.GetStart();
 
     auto lPosn = line.GetEnd() - 1;
-    foreach (EnumCell, oEnum, &line) {
-      const auto* const pCell = oEnum.Get();
+    for (const auto& cell: line.cells()) {
       auto x = pt.x - xCell;
-      xCell += pCell->m_cx;
-      auto lMap = pCell->MapXToPosn(gfx, x);
+      xCell += cell.m_cx;
+      auto lMap = cell.MapXToPosn(gfx, x);
       if (lMap >= 0)
         lPosn = lMap;
-      if (x >= 0 && x < pCell->m_cx)
+      if (x >= 0 && x < cell.m_cx)
         break;
     }
     return lPosn;
@@ -1207,14 +1188,13 @@ gfx::RectF Page::MapPosnToPoint(const gfx::Graphics& gfx, Posn lPosn) const {
   for (const auto& line: m_oFormatBuf.lines()) {
     if (lPosn >= line.m_lStart && lPosn < line.m_lEnd) {
         auto x = m_oFormatBuf.left();
-        foreach (EnumCell, oEnum, &line) {
-          auto const pCell = oEnum.Get();
-          float cx = pCell->MapPosnToX(gfx, lPosn);
+        for (const auto& cell: line.cells()) {
+          float cx = cell.MapPosnToX(gfx, lPosn);
           if (cx >= 0) {
             return gfx::RectF(gfx::PointF(x + cx, y),
-                              gfx::SizeF(pCell->m_cx, pCell->m_cy));
+                              gfx::SizeF(cell.m_cx, cell.m_cy));
           }
-          x += pCell->m_cx;
+          x += cell.m_cx;
         }
     }
     y += line.GetHeight();
@@ -1715,25 +1695,27 @@ Page::Line::Line(HANDLE hHeap)
       m_hObjHeap(hHeap),
       m_lEnd(0),
       m_lStart(0),
-      m_nHash(0),
-      m_pCell(NULL) {
+      m_nHash(0) {
+}
+
+Page::Line::Line(const Line& other, HANDLE hHeap)
+    : m_cwch(other.m_cwch),
+      m_nHash(other.m_nHash),
+      m_hObjHeap(hHeap),
+      m_iHeight(other.m_iHeight),
+      m_iWidth(other.m_iWidth),
+      m_lStart(other.m_lStart),
+      m_lEnd(other.m_lEnd),
+      m_pwch(reinterpret_cast<char16*>(
+                ::HeapAlloc(m_hObjHeap, 0, sizeof(char16) * m_cwch))) {
+  myCopyMemory(m_pwch, other.m_pwch, sizeof(char16) * m_cwch);
 }
 
 Page::Line* Page::Line::Copy(HANDLE hHeap) const {
-  auto const pLine = new(hHeap) Line(*this);
-
-  pLine->m_pwch = reinterpret_cast<char16*>(
-      ::HeapAlloc(hHeap, 0, sizeof(char16) * m_cwch));
-
-  myCopyMemory(pLine->m_pwch, m_pwch, sizeof(char16) * m_cwch);
-
-  auto ppPrev = &pLine->m_pCell;
-  auto const pwch = pLine->m_pwch;
-  foreach (EnumCell, oEnum, this) {
-    const auto* const pCell = oEnum.Get();
-    auto const pCopy = pCell->Copy(hHeap, pwch);
-    *ppPrev = pCopy;
-    ppPrev = &pCopy->m_pNext;
+  auto const pLine = new(hHeap) Line(*this, hHeap);
+  for (const auto& cell: cells()) {
+    auto const copy = cell.Copy(hHeap, pLine->m_pwch);
+    pLine->cells_.Append(copy);
   }
   return pLine;
 }
@@ -1744,19 +1726,18 @@ void Page::Line::Discard() {
   ::HeapFree(m_hObjHeap, 0, this);
 }
 
-bool Page::Line::Equal(const Line* pLine2) const
-{
-    if (Hash() != pLine2->Hash()) return false;
-    EnumCell oEnum2(pLine2);
-    foreach (EnumCell, oEnum, this)
-    {
-        Cell* pCell = oEnum.Get();
-        if (oEnum2.AtEnd()) return false;
-        Cell* pCell2 = oEnum2.Get();
-        oEnum2.Next();
-        if (!pCell->Equal(pCell2)) return false;
-    }
-    return oEnum2.AtEnd();
+bool Page::Line::Equal(const Line* other) const {
+  if (Hash() != other->Hash())
+    return false;
+  auto other_it = other->cells().begin();
+  for (const auto& cell: cells()) {
+    if (other_it == other->cells_.end())
+      return false;
+    if (!cell.Equal(&*other_it))
+      return false;
+    ++other_it;
+  }
+  return true;
 }
 
 // o Assign real pointer to m_pwch.
@@ -1764,12 +1745,11 @@ bool Page::Line::Equal(const Line* pLine2) const
 void Page::Line::Fix(float iDescent) {
   auto const pwch = m_pwch;
   auto cx = 0.0f;
-  foreach (EnumCell, oEnum, this) {
-    auto const pCell = oEnum.Get();
-    auto const lEnd = pCell->Fix(pwch, m_iHeight, iDescent);
+  for (auto& cell: cells()) {
+    auto const lEnd = cell.Fix(pwch, m_iHeight, iDescent);
     if (lEnd >= 0)
       m_lEnd = lEnd;
-    cx += pCell->GetWidth();
+    cx += cell.GetWidth();
   }
   m_iWidth  = cx;
 }
@@ -1777,10 +1757,9 @@ void Page::Line::Fix(float iDescent) {
 uint Page::Line::Hash() const {
   if (m_nHash)
     return m_nHash;
-  foreach (EnumCell, oEnum, this) {
-    auto const pCell = oEnum.Get();
+  for (const auto& cell: cells()) {
     m_nHash <<= 5;
-    m_nHash ^= pCell->Hash();
+    m_nHash ^= cell.Hash();
     m_nHash >>= 3;
   }
   return m_nHash;
@@ -1789,14 +1768,13 @@ uint Page::Line::Hash() const {
 Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
   auto xCell = 0.0f;
   auto lPosn = GetEnd() - 1;
-  foreach (EnumCell, oEnum, this) {
-    auto const pCell = oEnum.Get();
+  for (const auto& cell: cells()) {
     auto const x = xGoal - xCell;
-    xCell += pCell->m_cx;
-    auto const lMap = pCell->MapXToPosn(gfx, x);
+    xCell += cell.m_cx;
+    auto const lMap = cell.MapXToPosn(gfx, x);
     if (lMap >= 0)
       lPosn = lMap;
-    if (x >= 0 && x < pCell->m_cx)
+    if (x >= 0 && x < cell.m_cx)
       break;
   }
   return lPosn;
@@ -1805,11 +1783,10 @@ Posn Page::Line::MapXToPosn(const gfx::Graphics& gfx, float xGoal) const {
 void Page::Line::Render(const gfx::Graphics& gfx,
                         const gfx::PointF& left_top) const {
   auto x = left_top.x;
-  foreach (EnumCell, oEnum, this) {
-    auto const pCell = oEnum.Get();
-    gfx::RectF rect(x, left_top.y, x + pCell->m_cx,
-                    ::ceilf(left_top.y + pCell->m_cy));
-    pCell->Render(gfx, rect);
+  for (auto const& cell: cells()) {
+    gfx::RectF rect(x, left_top.y, x + cell.m_cx,
+                    ::ceilf(left_top.y + cell.m_cy));
+    cell.Render(gfx, rect);
     x = rect.right;
   }
   gfx.Flush();
@@ -1817,12 +1794,12 @@ void Page::Line::Render(const gfx::Graphics& gfx,
 
 void Page::Line::Reset() {
   DoubleLinkedNode_::Reset();
+  cells_.DeleteAll();
   m_iHeight = 0;
   m_iWidth  = 0;
   m_nHash   = 0;
   m_lStart  = -1;
   m_lEnd    = -1;
-  m_pCell   = nullptr;
   m_cwch    = 0;
   if (m_pwch)
     ::HeapFree(m_hObjHeap, 0, m_pwch);

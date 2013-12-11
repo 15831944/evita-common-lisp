@@ -74,12 +74,12 @@ class Page {
   // Line
   public: class Line : public DoubleLinkedNode_<Line, DisplayBuffer>,
                        public ObjectInHeap {
+    private: typedef DoubleLinkedList_<Cell, Line> Cells;
     friend class Page;
     friend class DisplayBuffer;
     friend class PageInternal::Formatter;
 
-    private: ~Line() {}
-
+    private: Cells cells_;
     private: uint           m_cwch;
     private: mutable uint   m_nHash;
     private: HANDLE         m_hObjHeap;
@@ -87,23 +87,28 @@ class Page {
     private: float          m_iWidth;
     private: Posn           m_lStart;
     private: Posn           m_lEnd;
-    private: Cell*          m_pCell;
     private: char16*        m_pwch;
 
-    public: Line(HANDLE hHeap);
+    public: explicit Line(HANDLE hHeap);
+    private: Line(const Line& other, HANDLE hHeap);
+    private: ~Line() {}
+
+    public: const Cells& cells() const { return cells_; }
+    public: Cells& cells() { return cells_; }
 
     public: void  Discard();
     public: Line* Copy(HANDLE hHeap) const;
     public: bool  Equal(const Line*) const;
     public: void  Fix(float dscent);
-    public: Cell* GetCell()   const { return m_pCell; }
+    public: Cell* GetCell()   const { return cells_.GetFirst(); }
     public: Posn  GetEnd()    const { return m_lEnd; }
     public: float GetHeight() const { return m_iHeight; }
     public: Posn  GetStart()  const { return m_lStart; }
     public: float GetWidth()  const { return m_iWidth; }
     public: uint  Hash() const;
     public: Posn  MapXToPosn(const gfx::Graphics&, float) const;
-    public: void  Render(const gfx::Graphics&, const gfx::PointF& left_top) const;
+    public: void  Render(const gfx::Graphics&,
+                         const gfx::PointF& left_top) const;
     public: void  Reset();
   }; // Line
 
