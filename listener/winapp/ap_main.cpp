@@ -12,7 +12,7 @@
 // Example options:
 //  -dll vanilla.dll -image evcl3.image -multiple
 //
-#define DEBUG_IDLE _DEBUG
+#define DEBUG_IDLE 0
 
 #if USE_LISTENER
     #include "./ap_listener_buffer.h"
