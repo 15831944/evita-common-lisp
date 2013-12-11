@@ -487,8 +487,7 @@ bool TextEditWindow::OnIdle(uint count) {
     DEBUG_PRINTF("%p count=%d more=%d\n", this, count, more);
   #endif
 
-  if (more || !count)
-    redraw();
+  redraw();
   return more;
 }
 
