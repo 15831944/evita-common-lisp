@@ -10,7 +10,11 @@ namespace base {
     Debugger::Fail("hr=%08X\r\n%s\r\n", macro_hr, #expr); \
 }
 #else
-#define COM_VERIFY(expr) expr;
+#define COM_VERIFY(expr) { \
+  auto const macro_hr = (expr); \
+  if (FAILED(macro_hr)) \
+    Debugger::Fail("hr=%08X\r\n%s\r\n", macro_hr, #expr); \
+}
 #endif
 
 template<class T> class ComPtr {
