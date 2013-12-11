@@ -137,6 +137,8 @@ class DoubleLinkedList_
     public: Item_* Append(Item_* pItem)
     {
         Cons_* pCons = static_cast<Cons_*>(pItem);
+        ASSERT(!pCons->m_pNext);
+        ASSERT(!pCons->m_pPrev);
 
         pCons->m_pNext = NULL;
         pCons->m_pPrev = m_pLast;
@@ -353,6 +355,8 @@ class DoubleLinkedList_
 
     public: Item_* Prepend(Item_* item) {
       auto const cons = static_cast<Cons_*>(item);
+      ASSERT(!cons->m_pNext);
+      ASSERT(!cons->m_pPrev);
       cons->m_pPrev = nullptr;
       cons ->m_pNext = m_pFirst;
       if (!m_pLast)
