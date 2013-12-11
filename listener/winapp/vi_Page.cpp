@@ -361,18 +361,20 @@ class TextCell : public Cell {
       Posn            lPosn,
       uint            ofs,
       uint            cwch = 1)
-        : m_cwch(cwch),
-          m_crColor(crColor),
+        : m_crColor(crColor),
           m_eDecoration(pStyle->GetDecoration()),
           m_lStart(lPosn),
           m_lEnd(lPosn + 1),
-          m_ofs(ofs),
           m_pFont(pFont),
+          m_pwch(nullptr),
+          m_cwch(cwch),
+          m_ofs(ofs),
           Cell(crBackground, cx,
                AlignHeightToPixel(gfx, pFont->height())) {
   }
 
   public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
+    ASSERT(pwch);
     auto const pCell = new(hHeap) TextCell(*this);
     pCell->m_pwch = pwch + m_ofs;
     return pCell;
@@ -468,6 +470,8 @@ class TextCell : public Cell {
   // Render - Render text of this cell
   public: virtual void Render(const gfx::Graphics& gfx,
                               const gfx::RectF& rect) const override {
+    ASSERT(m_cwch);
+    ASSERT(m_pwch);
     FillBackground(gfx, rect);
     gfx::Brush text_brush(gfx, ColorToColorF(m_crColor));
     DrawText(gfx, *m_pFont, text_brush, rect, m_pwch, m_cwch);
@@ -527,6 +531,7 @@ class UnicodeCell final : public TextCell {
   }
 
   public: virtual Cell* Copy(HANDLE hHeap, char16* pwch) const {
+    ASSERT(pwch);
     auto const pCell = new(hHeap) UnicodeCell(*this);
     pCell->m_pwch = pwch + m_ofs;
     return pCell;
@@ -748,6 +753,7 @@ bool Formatter::FormatLine(Page::Line* pLine) {
 
   pLine->m_cwch = m_oCharSink.GetLength();
   pLine->m_pwch = m_oCharSink.Fix();
+  ASSERT(!pLine->m_cwch || pLine->m_pwch);
   pLine->Fix(iDescent);
 
   return fMoreContents;
@@ -1693,12 +1699,15 @@ Page::Line* Page::DisplayBuffer::ScrollUp() {
 // Line
 //
 Page::Line::Line(HANDLE hHeap)
-    : m_iHeight(0),
-      m_iWidth(0),
+    : m_cwch(0),
+      m_nHash(0),
       m_hObjHeap(hHeap),
-      m_lEnd(0),
+      m_iHeight(0),
+      m_iWidth(0),
       m_lStart(0),
-      m_nHash(0) {
+      m_lEnd(0),
+      m_pwch(nullptr) {
+  ASSERT(m_hObjHeap);
 }
 
 Page::Line::Line(const Line& other, HANDLE hHeap)
@@ -1711,11 +1720,13 @@ Page::Line::Line(const Line& other, HANDLE hHeap)
       m_lEnd(other.m_lEnd),
       m_pwch(reinterpret_cast<char16*>(
                 ::HeapAlloc(m_hObjHeap, 0, sizeof(char16) * m_cwch))) {
+  ASSERT(m_pwch);
   myCopyMemory(m_pwch, other.m_pwch, sizeof(char16) * m_cwch);
 }
 
 Page::Line* Page::Line::Copy(HANDLE hHeap) const {
   auto const pLine = new(hHeap) Line(*this, hHeap);
+  ASSERT(pLine->m_pwch);
   for (const auto& cell: cells()) {
     auto const copy = cell.Copy(hHeap, pLine->m_pwch);
     pLine->cells_.Append(copy);
@@ -1799,12 +1810,13 @@ void Page::Line::Reset() {
   DoubleLinkedNode_::Reset();
   cells_.DeleteAll();
   m_iHeight = 0;
-  m_iWidth  = 0;
-  m_nHash   = 0;
-  m_lStart  = -1;
-  m_lEnd    = -1;
-  m_cwch    = 0;
-  if (m_pwch)
+  m_iWidth = 0;
+  m_nHash = 0;
+  m_lStart = -1;
+  m_lEnd = -1;
+  m_cwch = 0;
+  if (m_pwch) {
     ::HeapFree(m_hObjHeap, 0, m_pwch);
-  m_pwch = nullptr;
+    m_pwch = nullptr;
+  }
 }
