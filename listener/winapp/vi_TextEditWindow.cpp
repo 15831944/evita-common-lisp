@@ -10,13 +10,13 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_TextEditWindow.cpp#3 $
 //
 #define DEBUG_AUTOSCROLL 0
-#define DEBUG_CARET      0
-#define DEBUG_FOCUS      0
-#define DEBUG_IDLE       0
-#define DEBUG_KEY        0
-#define DEBUG_PAINT      0
-#define DEBUG_REDRAW     0
-#define DEBUG_RESIZE     0
+#define DEBUG_CARET 0
+#define DEBUG_FOCUS 0
+#define DEBUG_IDLE 0
+#define DEBUG_KEY 0
+#define DEBUG_PAINT 0
+#define DEBUG_REDRAW 0
+#define DEBUG_RESIZE 0
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -30,9 +30,8 @@
 
 extern HWND g_hwndActiveDialog;
 
-namespace Command
-{
-    uint TranslateKey(uint);
+namespace Command {
+uint TranslateKey(uint);
 }
 
 namespace {
@@ -41,116 +40,104 @@ namespace {
 // Caret
 //
 // Description:
-//  Represents caret in per-thread queue. To blink caret, we must track
-//  caret size. If we call CreateCaret, caret doesn't blink.
+// Represents caret in per-thread queue. To blink caret, we must track
+// caret size. If we call CreateCaret, caret doesn't blink.
 //
 class Caret {
-    SIZE    m_size;
-    POINT   m_pt;
-    HWND    m_hwnd;
-    bool    m_fShow;
+  private: SIZE m_size;
+  private: POINT m_pt;
+  private: HWND m_hwnd;
+  private: bool m_fShow;
 
-    public: Caret() :
-        m_hwnd(nullptr),
-        m_fShow(false) {}
+  public: Caret()
+    : m_hwnd(nullptr),
+      m_fShow(false) {
+  }
 
-    public: void Destroy()
-    {
-        m_hwnd = nullptr;
-        ::DestroyCaret();
-        #if DEBUG_CARET
-            DEBUG_PRINTF("%p\n", this);
-        #endif // DEBUG_CARET
-        m_size.cx = -1;
-        m_pt.x = -1;
+  public: void Destroy() {
+    m_hwnd = nullptr;
+    ::DestroyCaret();
+    #if DEBUG_CARET
+        DEBUG_PRINTF("%p\n", this);
+    #endif // DEBUG_CARET
+    m_size.cx = -1;
+    m_pt.x = -1;
+  }
+
+  // Hide - Hide caret
+  public: void Hide() {
+    if (!m_hwnd)
+      return;
+    if (!m_fShow)
+      return;
+    #if DEBUG_CARET
+      DEBUG_PRINTF("%p\n", this);
+    #endif // DEBUG_CARET
+
+    ::HideCaret(m_hwnd);
+    m_fShow = false;
+  }
+
+  // IsDirty - Returns true if position or size of caret is changed
+  // since last show.
+  public: bool isDirty(HWND hwnd, SIZE size) const {
+    if (m_hwnd != hwnd) {
+      #if DEBUG_CARET
+          DEBUG_PRINTF("m_hwnd\n");
+      #endif
+      return true;
     }
 
-    // Hide - Hide caret
-    public: void Hide()
-    {
-        if (nullptr == m_hwnd) return;
-        if (!m_fShow) return;
-        #if DEBUG_CARET
-            DEBUG_PRINTF("%p\n", this);
-        #endif // DEBUG_CARET
-
-        ::HideCaret(m_hwnd);
-        m_fShow = false;
+    if (m_size.cx != size.cx) {
+      #if DEBUG_CARET
+          DEBUG_PRINTF("m_size.cx %d %d\n", m_size.cx, size.cx);
+      #endif
+      return true;
     }
 
-    // IsDirty - Returns true if position or size of caret is changed
-    // since last show.
-    bool isDirty(HWND hwnd, SIZE size) const
-    {
-        if (m_hwnd != hwnd)
-        {
-            #if DEBUG_CARET
-                DEBUG_PRINTF("m_hwnd\n");
-            #endif
-            return true;
-        }
-
-        if (m_size.cx != size.cx)
-        {
-            #if DEBUG_CARET
-                DEBUG_PRINTF("m_size.cx %d %d\n", m_size.cx, size.cx);
-            #endif
-            return true;
-        }
-
-        if (m_size.cy != size.cy)
-        {
-            #if DEBUG_CARET
-                DEBUG_PRINTF("m_size.cy\n");
-            #endif
-            return true;
-        }
-
-        return false;
+    if (m_size.cy != size.cy) {
+      #if DEBUG_CARET
+          DEBUG_PRINTF("m_size.cy\n");
+      #endif
+      return true;
     }
 
-    // Show - Show caret at pt with size.
-    public: void Show(HWND hwnd, SIZE size, POINT pt)
-    {
-        if (isDirty(hwnd, size))
-        {
-            m_hwnd = hwnd;
-            m_size = size;
-            ::CreateCaret(m_hwnd, nullptr, size.cx, size.cy);
-            #if DEBUG_CARET
-            {
-                DEBUG_PRINTF("Create %dx%d\r\n",
-                    size.cx, size.cy);
-            }
-            #endif // DEBUG_CARET
-        }
+    return false;
+  }
 
-        if (m_pt.x != pt.x || m_pt.y != pt.y)
-        {
-            m_pt = pt;
-            ::SetCaretPos(m_pt.x, m_pt.y);
-            #if DEBUG_CARET
-            {
-                DEBUG_PRINTF("SetCaretPos (%d, %d)\r\n",
-                    pt.x, pt.y);
-            }
-            #endif // DEBUG_CARET
-        }
-
-        #if DEBUG_CARET
-            DEBUG_PRINTF("ShowCaret: (%d, %d) %dx%d\n",
-                m_pt.x, m_pt.y, m_size.cx, m_size.cy);
-        #endif // DEBUG_CARET
-        ::ShowCaret(m_hwnd);
-        m_fShow = true;
+  // Show - Show caret at pt with size.
+  public: void Show(HWND hwnd, SIZE size, POINT pt) {
+    if (isDirty(hwnd, size)) {
+      m_hwnd = hwnd;
+      m_size = size;
+      ::CreateCaret(m_hwnd, nullptr, size.cx, size.cy);
+      #if DEBUG_CARET
+        DEBUG_PRINTF("Create %dx%d\r\n", size.cx, size.cy);
+      #endif // DEBUG_CARET
     }
+
+    if (m_pt.x != pt.x || m_pt.y != pt.y) {
+      m_pt = pt;
+      ::SetCaretPos(m_pt.x, m_pt.y);
+      #if DEBUG_CARET
+        DEBUG_PRINTF("SetCaretPos (%d, %d)\r\n", pt.x, pt.y);
+      #endif // DEBUG_CARET
+    }
+
+    #if DEBUG_CARET
+      DEBUG_PRINTF("ShowCaret: (%d, %d) %dx%d\n",
+          m_pt.x, m_pt.y, m_size.cx, m_size.cy);
+    #endif // DEBUG_CARET
+    ::ShowCaret(m_hwnd);
+    m_fShow = true;
+  }
 };
 
 Caret g_oCaret;
 
 enum MyTimerId {
   MyTimerId_AutoScroll = 1,
-  MyTimerId_Blink      = 2,
+  MyTimerId_Blink = 2,
 };
 
 static int s_active_tick;
@@ -166,15 +153,12 @@ void TextEditWindow::AutoScroll::Continue(HWND hwnd) {
   ::SetTimer(hwnd, m_nTimerId, 50, nullptr);
 }
 
-void TextEditWindow::AutoScroll::Start(HWND hwnd, int iDir)
-{
-    if (0 == m_nTimerId)
-    {
-        m_nStartTick = ::GetTickCount();
-        Continue(hwnd);
-    }
-
-    m_iDirection = iDir;
+void TextEditWindow::AutoScroll::Start(HWND hwnd, int iDir) {
+  if (!m_nTimerId) {
+    m_nStartTick = ::GetTickCount();
+    Continue(hwnd);
+  }
+  m_iDirection = iDir;
 }
 
 void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
@@ -250,142 +234,117 @@ Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal) {
   }
 }
 
-Count TextEditWindow::ComputeMotion(
-    Unit  eUnit,
-    Count n,
-    const gfx::PointF& pt,
-    Posn* inout_lPosn) 
-{
-    switch (eUnit)
-    {
+Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
+                                    const gfx::PointF& pt,
+                                    Posn* inout_lPosn)  {
+  switch (eUnit) {
     case Unit_Line:
-        if (n > 0)
-        {
-            const Posn lBufEnd = GetBuffer()->GetEnd();
-            Posn lGoal = *inout_lPosn;
-            Count k;
-            for (k = 0; k < n; k++)
-            {
-                lGoal = EndOfLine(lGoal);
-                if (lGoal >= lBufEnd) break;
-                lGoal += 1;
-            }
-
-            *inout_lPosn = computeGoalX(pt.x, min(lGoal, lBufEnd));
-            return k;
+      if (n > 0) {
+        auto const lBufEnd = GetBuffer()->GetEnd();
+        auto lGoal = *inout_lPosn;
+        auto k = 0;
+        for (k = 0; k < n; k++) {
+          lGoal = EndOfLine(lGoal);
+          if (lGoal >= lBufEnd)
+            break;
+          lGoal += 1;
         }
-        else if (n < 0)
-        {
-            n = -n;
-
-            const Posn lBufStart = GetBuffer()->GetStart();
-            Posn lStart = *inout_lPosn;
-            Count k;
-            for (k = 0; k < n; k++)
-            {
-                lStart = StartOfLine(lStart);
-                if (lStart <= lBufStart) break;
-                lStart -= 1;
-            }
-
-            *inout_lPosn = computeGoalX(pt.x, max(lStart, lBufStart));
-            return k;
-        }
-        return 0;
-
-    case Unit_Screen:
-    {
-        Count k = LargeScroll(0, n, false);
-        if (k > 0)
-        {
-            Posn lStart = m_pPage->GetStart();
-            m_pViewRange->SetRange(lStart, lStart);
-            *inout_lPosn = MapPointToPosn(pt);
-        }
-        else if (n > 0)
-        {
-            *inout_lPosn = GetEnd();
-            k = 1;
-        }
-        else if (n < 0)
-        {
-            *inout_lPosn = GetStart();
-            k = 1;
-        }
+        *inout_lPosn = computeGoalX(pt.x, min(lGoal, lBufEnd));
         return k;
+      } else if (n < 0) {
+        n = -n;
+
+        auto const lBufStart = GetBuffer()->GetStart();
+        auto lStart = *inout_lPosn;
+        auto k = 0;
+        for (k = 0; k < n; k++) {
+          lStart = StartOfLine(lStart);
+          if (lStart <= lBufStart)
+            break;
+          lStart -= 1;
+        }
+
+        *inout_lPosn = computeGoalX(pt.x, max(lStart, lBufStart));
+        return k;
+      }
+      return 0;
+
+    case Unit_Screen: {
+      auto k = LargeScroll(0, n, false);
+      if (k > 0) {
+        auto const lStart = m_pPage->GetStart();
+        m_pViewRange->SetRange(lStart, lStart);
+        *inout_lPosn = MapPointToPosn(pt);
+      } else if (n > 0) {
+        *inout_lPosn = GetEnd();
+        k = 1;
+      } else if (n < 0) {
+        *inout_lPosn = GetStart();
+        k = 1;
+      }
+      return k;
     }
 
     case Unit_Window:
-        if (n > 0)
-        {
-            *inout_lPosn = GetEnd();
-            return 1;
-        }
-        else if (n < 0)
-        {
-            *inout_lPosn = GetStart();
-            return 1;
-        }
-        return 0;
+      if (n > 0) {
+        *inout_lPosn = GetEnd();
+        return 1;
+      }
+      if (n < 0) {
+        *inout_lPosn = GetStart();
+        return 1;
+      }
+      return 0;
 
     default:
-        return GetBuffer()->ComputeMotion(eUnit, n, inout_lPosn);
-    }
+      return GetBuffer()->ComputeMotion(eUnit, n, inout_lPosn);
+  }
 }
 
-Posn TextEditWindow::EndOfLine(Posn lPosn)
-{
-    if (!m_pPage->IsDirty(m_rc, *selection_))
-    {
-        Page::Line* pLine = m_pPage->FindLine(lPosn);
-        if (nullptr != pLine) return pLine->GetEnd() - 1;
-    }
+Posn TextEditWindow::EndOfLine(Posn lPosn) {
+  if (!m_pPage->IsDirty(m_rc, *selection_)) {
+    auto const pLine = m_pPage->FindLine(lPosn);
+    if (pLine)
+      return pLine->GetEnd() - 1;
+  }
 
-    const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
-    if (lPosn >= lBufEnd) return lBufEnd;
-
-    return endOfLineAux(*m_gfx, lPosn);
+  auto const lBufEnd = selection_->GetBuffer()->GetEnd();
+  return lPosn >= lBufEnd ? lBufEnd : endOfLineAux(*m_gfx, lPosn);
 }
 
-Posn TextEditWindow::endOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
-{
-    const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
-    if (lPosn >= lBufEnd) return lBufEnd;
+Posn TextEditWindow::endOfLineAux(const gfx::Graphics& gfx, Posn lPosn) {
+  auto const lBufEnd = selection_->GetBuffer()->GetEnd();
+  if (lPosn >= lBufEnd)
+    return lBufEnd;
 
-    Page oPage;
-    gfx::RectF page_rect(m_rc);
-    Posn lStart = selection_->GetBuffer()->ComputeStartOf(
-        Unit_Paragraph,
-        lPosn);
-    for (;;)
-    {
-        auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
-                                            lStart);
-        lStart = pLine->GetEnd();
-        if (lPosn < lStart) return lStart - 1;
-    }
+  Page oPage;
+  gfx::RectF page_rect(m_rc);
+  auto lStart = selection_->GetBuffer()->ComputeStartOf(Unit_Paragraph, lPosn);
+  for (;;) {
+    auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_, lStart);
+    lStart = pLine->GetEnd();
+    if (lPosn < lStart)
+      return lStart - 1;
+  }
 }
 
 void TextEditWindow::format(const gfx::Graphics& gfx, Posn lStart) {
   m_pPage->Format(gfx, gfx::RectF(m_rc), *selection_, lStart);
 }
 
-Buffer* TextEditWindow::GetBuffer() const
-{
-    return selection_->GetBuffer();
+Buffer* TextEditWindow::GetBuffer() const {
+  return selection_->GetBuffer();
 }
 
-Count TextEditWindow::GetColumn(Posn lPosn)
-{
-    Posn lStart = StartOfLine(lPosn);
-    return lPosn - lStart;
+Count TextEditWindow::GetColumn(Posn lPosn) {
+  auto const lStart = StartOfLine(lPosn);
+  return lPosn - lStart;
 }
 
 // For Selection.MoveDown Screen
-Posn TextEditWindow::GetEnd()
-{
-    updateScreen();
-    return m_pPage->GetEnd();
+Posn TextEditWindow::GetEnd() {
+  updateScreen();
+  return m_pPage->GetEnd();
 }
 
 HWND TextEditWindow::GetScrollBarHwnd(int nBar) const {
@@ -400,66 +359,60 @@ Posn TextEditWindow::GetStart() {
  return m_pPage->GetStart();
 }
 
-int TextEditWindow::LargeScroll(int, int iDy, bool fRender)
-{
-    updateScreen();
+int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
+  updateScreen();
 
-    if (iDy < 0)
-    {
-        // Scroll Down -- place top line out of window.
-        iDy = -iDy;
+  if (iDy < 0) {
+    // Scroll Down -- place top line out of window.
+    iDy = -iDy;
 
-        const Posn lBufStart = selection_->GetBuffer()->GetStart();
-        int k;
-        for (k = 0; k < iDy; k++)
-        {
-            Posn lStart = m_pPage->GetStart();
-            if (lStart == lBufStart) break;
+    auto const lBufStart = selection_->GetBuffer()->GetStart();
+    int k;
+    for (k = 0; k < iDy; k++) {
+      auto const lStart = m_pPage->GetStart();
+      if (lStart == lBufStart)
+        break;
 
-            // Scroll down until page start goes out to page.
-            do
-            {
-
-                DEBUG_PRINTF("scroll down lStart=%d\n", lStart);
-                if (!m_pPage->ScrollDown(*m_gfx)) break;
-            } while (m_pPage->GetEnd() != lStart);
-        }
-
-        if (fRender && k > 0) render(*m_gfx);
-        return k;
-    }    else if (iDy > 0)
-    {
-        // Scroll Up -- format page from page end.
-        const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
-        int k;
-        for (k = 0; k < iDy; k++)
-        {
-            Posn lStart = m_pPage->GetEnd();
-            if (lStart >= lBufEnd) break;
-            DEBUG_PRINTF("scroll up lStart=%d\n", lStart);
-            format(*m_gfx, lStart);
-        }
-
-        if (fRender && k > 0) render(*m_gfx);
-        return k;
+      // Scroll down until page start goes out to page.
+      do {
+        DEBUG_PRINTF("scroll down lStart=%d\n", lStart);
+        if (!m_pPage->ScrollDown(*m_gfx))
+          break;
+      } while (m_pPage->GetEnd() != lStart);
     }
-    else
-    {
-        return 0;
+
+     if (fRender && k > 0)
+       render(*m_gfx);
+      return k;
+  } else if (iDy > 0) {
+    // Scroll Up -- format page from page end.
+    const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
+    int k;
+    for (k = 0; k < iDy; k++) {
+      auto const lStart = m_pPage->GetEnd();
+      if (lStart >= lBufEnd)
+        break;
+      DEBUG_PRINTF("scroll up lStart=%d\n", lStart);
+      format(*m_gfx, lStart);
     }
+
+    if (fRender && k > 0)
+      render(*m_gfx);
+    return k;
+  }
+  return 0;
 }
 
 Command::KeyBindEntry* TextEditWindow::MapKey(uint nKey) {
   return GetBuffer()->MapKey(nKey);
 }
 
-void TextEditWindow::MakeSelectionVisible()
-{
-    DEBUG_PRINTF("%p [%d,%d]\n",
-        this, selection_->GetStart(), selection_->GetEnd());
+void TextEditWindow::MakeSelectionVisible() {
+  DEBUG_PRINTF("%p [%d,%d]\n",
+      this, selection_->GetStart(), selection_->GetEnd());
 
-    m_lCaretPosn = -1;
-    redraw(true);
+  m_lCaretPosn = -1;
+  redraw(true);
 }
 
 Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt) {
@@ -468,9 +421,9 @@ Posn TextEditWindow::MapPointToPosn(const gfx::PointF pt) {
 }
 
 // Description:
-//  Maps position specified buffer position and returns height
-//  of caret, If specified buffer position isn't in window, this function
-//  returns 0.
+// Maps position specified buffer position and returns height
+// of caret, If specified buffer position isn't in window, this function
+// returns 0.
 gfx::RectF TextEditWindow::MapPosnToPoint(Posn lPosn) {
   updateScreen();
   for (;;) {
@@ -491,193 +444,141 @@ bool TextEditWindow::OnIdle(uint count) {
   return more;
 }
 
-LRESULT TextEditWindow::onMessage(
-    UINT    uMsg,
-    WPARAM  wParam,
-    LPARAM  lParam)
-{
-    if (WM_SYSTIMER == uMsg)  // WM_SYSTIMER for blinking caret
-    {
-        DEBUG_PRINTF("WM_SYSTIMER %p\r\n", this);
-    }
+LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  if (WM_SYSTIMER == uMsg) { // WM_SYSTIMER for blinking caret
+    DEBUG_PRINTF("WM_SYSTIMER %p\r\n", this);
+  }
 
-    switch (uMsg)
-    {
-    case WM_CHAR:
-    {
-        // Ctrl+<key> is handled by WM_KEYDOWN.
-        char16 wch = static_cast<char16>(wParam);
-        if (wch >= 0x20)
-        {
-            m_fBlink = false;
-            Application::Get()->Execute(
-                this,
-                wch,
-                HIWORD(lParam) & KF_REPEAT);
-        }
-        break;
+  switch (uMsg) {
+    case WM_CHAR: {
+      // Ctrl+<key> is handled by WM_KEYDOWN.
+      char16 wch = static_cast<char16>(wParam);
+      if (wch >= 0x20) {
+        m_fBlink = false;
+        Application::Get()->Execute(this, wch, HIWORD(lParam) & KF_REPEAT);
+      }
+      break;
     }
 
     case WM_DESTROY:
-        #if DEBUG_DESTROY
-            DEBUG_PRINTF("WM_DESTROY %p\n", this);
-        #endif
-        m_nActiveTick = 0;
-        break;
+      #if DEBUG_DESTROY
+        DEBUG_PRINTF("WM_DESTROY %p\n", this);
+      #endif
+      m_nActiveTick = 0;
+      break;
 
     case WM_CREATE:
       m_gfx->Init(m_hwnd);
       break;
 
     case WM_APPCOMMAND:
-        #if DEBUG_KEY
-            DEBUG_PRINTF("WM_APPCOMMAND %p %x\n", this, lParam);
-        #endif
-        return TRUE;
+      #if DEBUG_KEY
+          DEBUG_PRINTF("WM_APPCOMMAND %p %x\n", this, lParam);
+      #endif
+      return TRUE;
 
-    case WM_ERASEBKGND:
-        return TRUE;
+    case WM_KEYDOWN: {
+      #if DEBUG_KEY
+        DEBUG_PRINTF("WM_KEYDOWN VKey=0x%0X 0x%04X 0x%04X\r\n",
+            wParam, HIWORD(lParam), LOWORD(lParam));
+      #endif
 
-    case WM_KEYDOWN:
-    {
-        #if DEBUG_KEY
-        {
-            DEBUG_PRINTF("WM_KEYDOWN VKey=0x%0X 0x%04X 0x%04X\r\n",
-                wParam,
-                HIWORD(lParam), LOWORD(lParam));
-        }
-        #endif
-
-        uint nVKey = static_cast<uint>(wParam);
-
-        uint nKey = Command::TranslateKey(nVKey);
-        if (0 != nKey)
-        {
-            m_fBlink = false;
-            Application::Get()->Execute(
-                this,
-                nKey,
-                HIWORD(lParam) & KF_REPEAT);
-            return 0;
-        }
-        break;
+      auto const nVKey = static_cast<uint>(wParam);
+      auto const nKey = Command::TranslateKey(nVKey);
+      if (nKey) {
+        m_fBlink = false;
+        Application::Get()->Execute(this, nKey, HIWORD(lParam) & KF_REPEAT);
+        return 0;
+      }
+      break;
     }
 
     case WM_KILLFOCUS:
-        #if DEBUG_FOCUS
-        {
-            DEBUG_PRINTF("WM_KILLFOCUS\r\n");
-        }
-        #endif // DEBUG_FOCUS
+      #if DEBUG_FOCUS
+        DEBUG_PRINTF("WM_KILLFOCUS\r\n");
+      #endif // DEBUG_FOCUS
 
-        m_fHasFocus = false;
-        g_oCaret.Destroy();
+      m_fHasFocus = false;
+      g_oCaret.Destroy();
+      break;
+
+    case WM_LBUTTONDBLCLK: {
+      Point pt(MAKEPOINTS(lParam));
+      auto const lPosn = MapPointToPosn(pt);
+      if (lPosn >= 0)
+        selectWord(lPosn);
+      return 0;
+    }
+
+    case WM_LBUTTONDOWN: {
+      Point pt(MAKEPOINTS(lParam));
+      auto const lPosn = MapPointToPosn(pt);
+      if (lPosn < 0) {
+        // Click outside window. We do nothing.
         break;
+      }
 
-    case WM_LBUTTONDBLCLK:
-    {
-        Point pt(MAKEPOINTS(lParam));
-        Posn lPosn = MapPointToPosn(pt);
-        if (lPosn >= 0) selectWord(lPosn);
-        return 0;
+      #if DEBUG_FOCUS
+        DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
+      #endif
+
+      if (!m_fHasFocus) {
+        ::SetFocus(m_hwnd);
+         if (lPosn >= GetSelection()->GetStart() &&
+             lPosn < GetSelection()->GetEnd()) {
+           return 0;
+        }
+      }
+
+      GetSelection()->MoveTo(lPosn, 0 != (wParam & MK_SHIFT));
+
+      if (wParam & MK_CONTROL) {
+        selectWord(lPosn);
+      } else {
+        m_eDragMode = DragMode_Selection;
+        ::SetCapture(m_hwnd);
+      }
+      return 0;
     }
 
-    ////////////////////////////////////////////////////////////
-    //
-    // WM_LBUTTONDOWN
-    //  o Start selection drag
-    //  o Activate window
-    case WM_LBUTTONDOWN:
-    {
-        Point pt(MAKEPOINTS(lParam));
-        Posn lPosn = MapPointToPosn(pt);
-        if (lPosn < 0)
-        {
-            // Click outside window. We do nothing.
-            break;
-        }
-
-        #if DEBUG_FOCUS
-            DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
-        #endif
-
-        if (!m_fHasFocus)
-        {
-            ::SetFocus(m_hwnd);
-
-            if (lPosn >= GetSelection()->GetStart() &&
-                lPosn <  GetSelection()->GetEnd())
-            {
-                return 0;
-            }
-        }
-
-        GetSelection()->MoveTo(lPosn, 0 != (wParam & MK_SHIFT));
-
-        if (wParam & MK_CONTROL)
-        {
-            selectWord(lPosn);
-        }
-        else
-        {
-            m_eDragMode = DragMode_Selection;
-            ::SetCapture(m_hwnd);
-        }
-
-        return 0;
+    case WM_LBUTTONUP: {
+      if (m_eDragMode != DragMode_None) {
+        ::ReleaseCapture();
+        stopDrag();
+      }
+      return 0;
     }
 
-    case WM_LBUTTONUP:
-    {
-        if (m_eDragMode != DragMode_None)
-        {
-            ::ReleaseCapture();
-            stopDrag();
-        }
+    case WM_MOUSEMOVE: {
+      if (m_eDragMode == DragMode_None) {
+        // We have nothing to do if mouse isn't dragged.
         return 0;
-    }
+      }
 
-    case WM_MOUSEMOVE:
-    {
-        if (m_eDragMode == DragMode_None)
-        {
-            // We have nothing to do if mouse isn't dragged.
-            return 0;
-        }
-
-        if (::GetCapture() != m_hwnd)
-        {
-            // Someone takes mouse capture.
-            stopDrag();
-            return 0;
-        }
-
-        Point pt(MAKEPOINTS(lParam));
-        Posn lPosn = MapPointToPosn(pt);
-        if (lPosn >= 0)
-        {
-            selection_->MoveTo(lPosn, true);
-        }
-
-        #if DEBUG_FORMAT
-        {
-            DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
-        }
-        #endif // DEBUG_FORMAT
-
-        if (pt.y < m_rc.top)
-        {
-            m_oAutoScroll.Start(m_hwnd, -1);
-        }
-        else if (pt.y > m_rc.bottom)
-        {
-            m_oAutoScroll.Start(m_hwnd, 1);
-        }
-        else
-        {
-            m_oAutoScroll.Stop(m_hwnd);
-        }
+      if (::GetCapture() != m_hwnd){
+        // Someone takes mouse capture.
+        stopDrag();
         return 0;
+      }
+
+      Point pt(MAKEPOINTS(lParam));
+      auto const lPosn = MapPointToPosn(pt);
+      if (lPosn >= 0) {
+        selection_->MoveTo(lPosn, true);
+      }
+
+      #if DEBUG_FORMAT
+        DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
+      #endif // DEBUG_FORMAT
+
+      if (pt.y < m_rc.top) {
+        m_oAutoScroll.Start(m_hwnd, -1);
+      } else if (pt.y > m_rc.bottom) {
+        m_oAutoScroll.Start(m_hwnd, 1);
+      } else {
+        m_oAutoScroll.Stop(m_hwnd);
+      }
+      return 0;
     }
 
     case WM_MOUSEWHEEL:
@@ -719,85 +620,72 @@ LRESULT TextEditWindow::onMessage(
     }
 
     case WM_SETCURSOR:
-        if (HTCLIENT == LOWORD(lParam))
-        {
-            ::SetCursor(::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM)));
-            return 1;
-        }
-        break;
+      if (HTCLIENT == LOWORD(lParam)) {
+        ::SetCursor(::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM)));
+        return 1;
+      }
+      break;
 
     case WM_SETFOCUS:
-        #if DEBUG_FOCUS
-        {
-            DEBUG_PRINTF("WM_SETFOCUS %p\n", this);
-        }
-        #endif // DEBUG_FOCUS
-        s_active_tick += 1;
-        m_nActiveTick = s_active_tick;
-        m_fHasFocus = true;
-        return 0;
+      #if DEBUG_FOCUS
+        DEBUG_PRINTF("WM_SETFOCUS %p\n", this);
+      #endif // DEBUG_FOCUS
+      s_active_tick += 1;
+      m_nActiveTick = s_active_tick;
+      m_fHasFocus = true;
+      return 0;
 
     case WM_SIZE:
-        #if DEBUG_RESIZE
-            DEBUG_PRINTF("WM_SIZE %p %dx%d\n",
-                this,
-                LOWORD(lParam), HIWORD(lParam));
-        #endif
-        return 0;
+      #if DEBUG_RESIZE
+        DEBUG_PRINTF("WM_SIZE %p %dx%d\n",
+            this, LOWORD(lParam), HIWORD(lParam));
+      #endif
+      return 0;
 
-    case WM_TIMER:
-    {
-        #if DEBUG_AUTOSCROLL
-        DEBUG_PRINTF("WM_TIMER: %d dir=%d\n",
-            wParam, m_oAutoScroll.m_iDirection);
-        #endif // DEBUG_AUTOSCROLL
+    case WM_TIMER: {
+      #if DEBUG_AUTOSCROLL
+      DEBUG_PRINTF("WM_TIMER: %d dir=%d\n",
+          wParam, m_oAutoScroll.m_iDirection);
+      #endif // DEBUG_AUTOSCROLL
 
-        switch (wParam)
-        {
+      switch (wParam) {
         case MyTimerId_AutoScroll:
-            if (0 != m_oAutoScroll.m_nTimerId)
-            {
-                int iDuration = ::GetTickCount() - m_oAutoScroll.m_nStartTick;
-                Count lCount = iDuration / 500;
-                lCount = max(lCount, 1);
-                lCount = min(lCount, 20);
+          if (m_oAutoScroll.m_nTimerId) {
+              auto const iDuration = ::GetTickCount() -
+                  m_oAutoScroll.m_nStartTick;
+              auto lCount = iDuration / 500;
+              lCount = max(lCount, 1);
+              lCount = min(lCount, 20);
 
-                Count k;
-                if (m_oAutoScroll.m_iDirection > 0)
-                {
-                    k = selection_->MoveDown(Unit_Line, lCount, true);
-                }
-                else
-                {
-                    k = selection_->MoveUp(Unit_Line, lCount, true);
-                }
+              Count k;
+              if (m_oAutoScroll.m_iDirection > 0) {
+                  k = selection_->MoveDown(Unit_Line, lCount, true);
+              } else {
+                  k = selection_->MoveUp(Unit_Line, lCount, true);
+              }
 
-                if (0 == k)
-                {
-                    m_oAutoScroll.Stop(m_hwnd);
-                }
-                else
-                {
-                    m_oAutoScroll.Continue(m_hwnd);
-                }
-            }
-            break;
+              if (!k) {
+                m_oAutoScroll.Stop(m_hwnd);
+              } else {
+                m_oAutoScroll.Continue(m_hwnd);
+              }
+          }
+          break;
 
         case MyTimerId_Blink:
-            ::KillTimer(m_hwnd, wParam);
-            m_nBlinkTimerId = 0;
-            m_fBlink = false;
-            break;
-        }
-        break;
+          ::KillTimer(m_hwnd, wParam);
+          m_nBlinkTimerId = 0;
+          m_fBlink = false;
+          break;
+      }
+      break;
     }
 
     case WM_VSCROLL:
-     onVScroll(LOWORD(wParam));
-     return 0;
+      onVScroll(LOWORD(wParam));
+      return 0;
 
-    case WM_WINDOWPOSCHANGED:
-    {
+    case WM_WINDOWPOSCHANGED: {
       // DefWindowProc sents WM_SIZE and WM_MOVE, so handling
       // WM_WINDPOSCHANGED is faster than DefWindowProc.
       auto const wp = reinterpret_cast<const WINDOWPOS*>(lParam);
@@ -805,8 +693,7 @@ LRESULT TextEditWindow::onMessage(
         return 0;
       #if DEBUG_REDRAW || DEBUG_RESIZE
         DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
-                     this, wp->flags,
-                     wp->cx, wp->cy, wp->x, wp->y);
+                     this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
       #endif
       ::GetClientRect(m_hwnd, &m_rc);
       m_gfx->Resize(m_rc);
@@ -817,86 +704,80 @@ LRESULT TextEditWindow::onMessage(
 
     #if SUPPORT_IME
     case WM_IME_COMPOSITION:
-        onImeComposition(lParam);
-        return 0;
+      onImeComposition(lParam);
+      return 0;
 
     case WM_IME_ENDCOMPOSITION:
-        m_fImeTarget = false;
-        return 0;
+      m_fImeTarget = false;
+      return 0;
 
     case WM_IME_REQUEST:
-        if (IMR_RECONVERTSTRING == wParam)
-        {
-            uint cb = setReconvert(
-                reinterpret_cast<RECONVERTSTRING*>(lParam),
-                GetSelection()->GetStart(),
-                GetSelection()->GetEnd());
-            return cb;
-        }
-        break;
+      if (IMR_RECONVERTSTRING == wParam) {
+          return setReconvert(
+              reinterpret_cast<RECONVERTSTRING*>(lParam),
+              GetSelection()->GetStart(),
+              GetSelection()->GetEnd());
+      }
+      break;
 
     case WM_IME_SETCONTEXT:
-        // We draw composition string instead of IME. So, we don't
-        // need default composition window.
-        lParam &= ~ISC_SHOWUICOMPOSITIONWINDOW;
-        break;
+      // We draw composition string instead of IME. So, we don't
+      // need default composition window.
+      lParam &= ~ISC_SHOWUICOMPOSITIONWINDOW;
+      break;
 
     case WM_IME_STARTCOMPOSITION:
-        if (!m_fImeTarget)
-        {
-            m_lImeStart  = GetSelection()->GetStart();
-            m_lImeEnd    = m_lImeStart;
-            m_fImeTarget = false;
-        }
-        return 0;
+      if (!m_fImeTarget) {
+        m_lImeStart = GetSelection()->GetStart();
+        m_lImeEnd = m_lImeStart;
+        m_fImeTarget = false;
+      }
+      return 0;
     #endif // SUPPORT_IME
-    }
+  }
 
-    return BaseWindow::onMessage(uMsg, wParam, lParam);
+  return BaseWindow::onMessage(uMsg, wParam, lParam);
 }
 
-void TextEditWindow::onVScroll(uint nCode)
-{
-    switch (nCode)
-    {
-    case SB_ENDSCROLL:  // 8
-        break;
+void TextEditWindow::onVScroll(uint nCode) {
+  switch (nCode) {
+    case SB_ENDSCROLL: // 8
+      break;
 
-    case SB_LINEDOWN:   // 1
-        SmallScroll(0, 1);
-        break;
+    case SB_LINEDOWN: // 1
+      SmallScroll(0, 1);
+      break;
 
-    case SB_LINEUP:     // 0
-        SmallScroll(0, -1);
-        break;
+    case SB_LINEUP: // 0
+      SmallScroll(0, -1);
+      break;
 
-    case SB_PAGEDOWN:   // 3
-        LargeScroll(0, 1);
-        break;
+    case SB_PAGEDOWN: // 3
+      LargeScroll(0, 1);
+      break;
 
-    case SB_PAGEUP:   // 2
-        LargeScroll(0, -1);
-        break;
+    case SB_PAGEUP: // 2
+      LargeScroll(0, -1);
+      break;
 
-    case SB_THUMBPOSITION:  // 4
-        return;
+    case SB_THUMBPOSITION: // 4
+      return;
 
-    case SB_THUMBTRACK:     // 5
-    {
-        SCROLLINFO oInfo;
-            oInfo.cbSize = sizeof(oInfo);
-            oInfo.fMask  = SIF_ALL;
-        if (m_oVertScrollBar.GetInfo(&oInfo)) {
-            Posn lStart = startOfLineAux(*m_gfx, oInfo.nTrackPos);
-            format(*m_gfx, lStart);
-            render(*m_gfx);
-        }
-        break;
+    case SB_THUMBTRACK: { // 5
+      SCROLLINFO oInfo;
+      oInfo.cbSize = sizeof(oInfo);
+      oInfo.fMask = SIF_ALL;
+      if (m_oVertScrollBar.GetInfo(&oInfo)) {
+        auto const lStart = startOfLineAux(*m_gfx, oInfo.nTrackPos);
+        format(*m_gfx, lStart);
+        render(*m_gfx);
+      }
+      break;
     }
 
     default:
-        return;
-    }
+      return;
+  }
 }
 
 void TextEditWindow::redraw() {
@@ -1011,7 +892,7 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
   if (!m_fHasFocus)
     return;
 
-  const auto rect  = m_pPage->MapPosnToPoint(gfx, m_lCaretPosn);
+  const auto rect = m_pPage->MapPosnToPoint(gfx, m_lCaretPosn);
   if (!rect)
     return;
   ASSERT(rect.height() > 0);
@@ -1048,64 +929,52 @@ void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
     m_oVertScrollBar.Set(hwnd, hwnd == *this ? SB_VERT : SB_CTL);
 }
 
-int TextEditWindow::SmallScroll(int, int iDy)
-{
-    updateScreen();
+int TextEditWindow::SmallScroll(int, int iDy) {
+  updateScreen();
 
-    if (iDy < 0)
-    {
-        iDy = -iDy;
+  if (iDy < 0) {
+    iDy = -iDy;
 
-        const Posn lBufStart = selection_->GetBuffer()->GetStart();
-        Posn lStart = m_pPage->GetStart();
-        int k;
-        for (k = 0; k < iDy; k++)
-        {
-            if (lStart == lBufStart) break;
-            lStart = startOfLineAux(*m_gfx, lStart - 1);
-        }
-
-        if (k > 0)
-        {
-            #if DEBUG_FORMAT
-                DEBUG_PRINTF("down lStart=%d\n", lStart);
-            #endif // DEBUG_FORMAT
-            format(*m_gfx, lStart);
-            render(*m_gfx);
-        }
-        return k;
+    auto const lBufStart = selection_->GetBuffer()->GetStart();
+    auto lStart = m_pPage->GetStart();
+    int k;
+    for (k = 0; k < iDy; k++) {
+      if (lStart == lBufStart)
+        break;
+        lStart = startOfLineAux(*m_gfx, lStart - 1);
     }
-    else if (iDy > 0)
-    {
-        const Posn lBufEnd = selection_->GetBuffer()->GetEnd();
-        int k;
-        for (k = 0; k < iDy; k++)
-        {
-            if (m_pPage->GetEnd() >= lBufEnd)
-            {
-                // Make sure whole line of buffer end is visible.
-                m_pPage->ScrollToPosn(*m_gfx, lBufEnd);
-                k += 1;
-                break;
-            }
 
-            if (!m_pPage->ScrollUp(*m_gfx))
-            {
-                break;
-            }
-        }
-
-        if (k > 0)
-        {
-            render(*m_gfx);
-        }
-
-        return k;
+    if (k > 0) {
+      #if DEBUG_FORMAT
+        DEBUG_PRINTF("down lStart=%d\n", lStart);
+      #endif // DEBUG_FORMAT
+      format(*m_gfx, lStart);
+      render(*m_gfx);
     }
-    else
-    {
-        return 0;
+    return k;
+  }
+
+  if (iDy > 0) {
+    auto const lBufEnd = selection_->GetBuffer()->GetEnd();
+    int k;
+    for (k = 0; k < iDy; k++) {
+      if (m_pPage->GetEnd() >= lBufEnd) {
+          // Make sure whole line of buffer end is visible.
+          m_pPage->ScrollToPosn(*m_gfx, lBufEnd);
+          k += 1;
+          break;
+      }
+
+      if (!m_pPage->ScrollUp(*m_gfx))
+        break;
     }
+
+    if (k > 0)
+        render(*m_gfx);
+    return k;
+  }
+
+  return 0;
 }
 
 Posn TextEditWindow::StartOfLine(Posn lPosn) {
@@ -1113,36 +982,33 @@ Posn TextEditWindow::StartOfLine(Posn lPosn) {
 }
 
 // See Also:
-//  EditPange::endOfLineAux
+// EditPange::endOfLineAux
 // Description:
-//  Returns start position of window line of specified position.
-Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn)
-{
-    if (!m_pPage->IsDirty(m_rc, *selection_))
-    {
-        Page::Line* pLine = m_pPage->FindLine(lPosn);
-        if (nullptr != pLine) return pLine->GetStart();
-    }
+// Returns start position of window line of specified position.
+Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn) {
+  if (!m_pPage->IsDirty(m_rc, *selection_)) {
+    auto const pLine = m_pPage->FindLine(lPosn);
+    if (pLine)
+      return pLine->GetStart();
+  }
 
-    Posn lStart = selection_->GetBuffer()->ComputeStartOf(
-        Unit_Paragraph,
-        lPosn);
-    if (0 == lStart)
-    {
-        return 0;
-    }
+  auto lStart = selection_->GetBuffer()->ComputeStartOf(
+      Unit_Paragraph,
+      lPosn);
+  if (!lStart)
+    return 0;
 
-    Page oPage;
-    gfx::RectF page_rect(m_rc);
-    for (;;)
-    {
-        auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
-                                            lStart);
+  Page oPage;
+  gfx::RectF page_rect(m_rc);
+  for (;;) {
+    auto const pLine = oPage.FormatLine(gfx, page_rect, *selection_,
+                                        lStart);
 
-        Posn lEnd = pLine->GetEnd();
-        if (lPosn < lEnd) return pLine->GetStart();
-        lStart = lEnd;
-    }
+    auto const lEnd = pLine->GetEnd();
+    if (lPosn < lEnd)
+      return pLine->GetStart();
+    lStart = lEnd;
+  }
 }
 
 void TextEditWindow::stopDrag() {
@@ -1162,29 +1028,26 @@ void TextEditWindow::updateScreen() {
   format(*m_gfx, lStart);
 }
 
-void TextEditWindow::updateScrollBar()
-{
-    if (nullptr == m_pPage->GetBuffer()) return;
+void TextEditWindow::updateScrollBar() {
+  if (!m_pPage->GetBuffer())
+    return;
 
-    Posn lBufEnd = m_pPage->GetBuffer()->GetEnd() + 1;
+  auto const lBufEnd = m_pPage->GetBuffer()->GetEnd() + 1;
 
-    SCROLLINFO oInfo;
+  SCROLLINFO oInfo;
+  oInfo.cbSize = sizeof(oInfo);
+  oInfo.fMask = SIF_POS | SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL;
+  oInfo.nPage = m_pPage->GetEnd() - m_pPage->GetStart();
+  oInfo.nMin = 0;
+  oInfo.nMax = lBufEnd;
+  oInfo.nPos = m_pPage->GetStart();
 
-    oInfo.cbSize = sizeof(oInfo);
-    oInfo.fMask = SIF_POS | SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL;
-    oInfo.nPage = m_pPage->GetEnd() - m_pPage->GetStart();
-    oInfo.nMin  = 0;
-    oInfo.nMax  = lBufEnd;
+  if (static_cast<Count>(oInfo.nPage) >= lBufEnd) {
+    // Current screen shows entire buffer. We disable scroll bar.
+    oInfo.nMax = 0;
+  }
 
-    oInfo.nPos  = m_pPage->GetStart();
-
-    if (static_cast<Count>(oInfo.nPage) >= lBufEnd)
-    {
-        // Current screen shows entire buffer. We disable scroll bar.
-        oInfo.nMax  = 0;
-    }
-
-    m_oVertScrollBar.SetInfo(&oInfo, true);
+  m_oVertScrollBar.SetInfo(&oInfo, true);
 }
 
 #if SUPPORT_IME
@@ -1216,315 +1079,279 @@ class Imc {
   public: operator HIMC() const { return m_himc; }
 };
 
-void TextEditWindow::onImeComposition(LPARAM lParam)
-{
-    Imc imc(m_hwnd);
-    if (!imc) return;
+void TextEditWindow::onImeComposition(LPARAM lParam) {
+  Imc imc(m_hwnd);
+  if (!imc)
+    return;
 
-    Edit::UndoBlock oUndo(GetSelection(), L"IME");
+  Edit::UndoBlock oUndo(GetSelection(), L"IME");
 
-    char16 rgwch[1024];
-    // If IME has result string, we can insert it into buffer.
-    if (lParam & GCS_RESULTSTR)
-    {
-        // Remove previous composition string. If user inputs "Space",
-        // IME set GCS_RESULTSTR without composition.
-        if (m_lImeStart != m_lImeEnd)
-        {
-            GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
-            GetSelection()->SetText(L"", 0);
-        }
-
-        // Get result string
-        long cwch = ::ImmGetCompositionString(
-            imc,
-            GCS_RESULTSTR,
-            rgwch,
-            sizeof(rgwch)) / sizeof(char16);
-
-        // Insert result string into buffer
-        if (cwch >= 1)
-        {
-            GetSelection()->SetText(rgwch, cwch);
-            GetSelection()->Collapse(Collapse_End);
-            m_lImeEnd = GetSelection()->GetEnd();
-
-            m_lImeStart = m_lImeEnd;
-        }
+  char16 rgwch[1024];
+  // If IME has result string, we can insert it into buffer.
+  if (lParam & GCS_RESULTSTR) {
+    // Remove previous composition string. If user inputs "Space",
+    // IME set GCS_RESULTSTR without composition.
+    if (m_lImeStart != m_lImeEnd) {
+      GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
+      GetSelection()->SetText(L"", 0);
     }
 
-    // IME has composition string
-    if ((lParam & GCS_COMPSTRATTR) == GCS_COMPSTRATTR)
-    {
-        // Remove previous composition string
-        if (m_lImeStart != m_lImeEnd)
-        {
-            GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
-            GetSelection()->SetText(L"", 0);
-            m_lImeEnd = m_lImeStart;
-        }
+    // Get result string
+    auto const cwch = ::ImmGetCompositionString(
+        imc, GCS_RESULTSTR, rgwch, sizeof(rgwch)) / sizeof(char16);
 
-        // Get composition string
-        long cwch = ::ImmGetCompositionString(
-            imc,
-            GCS_COMPSTR,
-            rgwch,
-            sizeof(rgwch)) / sizeof(char16);
-
-        // Get composition attributes
-        char rgbAttr[lengthof(rgwch)];
-        long cbAttr = ::ImmGetCompositionString(
-            imc,
-            GCS_COMPATTR,
-            rgbAttr,
-            sizeof(rgbAttr));
-        if (cbAttr != cwch)
-        {
-            DEBUG_PRINTF("GCCS_COMPATTR\n");
-            return;
-        }
-
-        long lCursor = ::ImmGetCompositionString(
-            imc,
-            GCS_CURSORPOS,
-            nullptr,
-            0);
-        if (lCursor < 0)
-        {
-            DEBUG_PRINTF("GCCS_CURSORPOS\n");
-            return;
-        }
-
-        uint32 rgnClause[100];
-        ::ImmGetCompositionString(
-            imc,
-            GCS_COMPCLAUSE,
-            rgnClause,
-            sizeof(rgnClause));
-
-        GetSelection()->SetText(rgwch, cwch);
-        GetSelection()->Collapse(Collapse_End);
-        m_lImeEnd = GetSelection()->GetEnd();
-        GetSelection()->SetRange(
-            m_lImeStart + lCursor,
-            m_lImeStart + lCursor);
-
-        if (0 == g_pImeStyleInput.m_rgfMask)
-        {
-            // Converted[0]
-            g_rgpImeStyleConverted[0].m_rgfMask =
-                StyleValues::Mask_Decoration;
-
-            g_rgpImeStyleConverted[0].m_eDecoration =
-                TextDecoration_ImeInactiveA;
-
-            // Converted[1]
-            g_rgpImeStyleConverted[1].m_rgfMask =
-                StyleValues::Mask_Decoration;
-
-            g_rgpImeStyleConverted[1].m_eDecoration =
-                TextDecoration_ImeInactiveB;
-
-            // Input
-            g_pImeStyleInput.m_rgfMask =
-                StyleValues::Mask_Decoration;
-
-            g_pImeStyleInput.m_eDecoration =
-                TextDecoration_ImeInput;
-
-            // Target Converted
-            g_pImeStyleTargetConverted.m_rgfMask =
-                StyleValues::Mask_Decoration;
-
-            g_pImeStyleTargetConverted.m_eDecoration =
-                TextDecoration_ImeActive;
-
-            // Target Not Converted
-            g_pImeStyleTargetNotConverted.m_rgfMask =
-                StyleValues::Mask_Background |
-                StyleValues::Mask_Color |
-                StyleValues::Mask_Decoration;
-
-            #if 0
-                g_pImeStyleTargetNotConverted.m_crBackground =
-                    g_DefaultStyle.GetColor();
-
-                g_pImeStyleTargetNotConverted.m_crColor =
-                    g_DefaultStyle.GetBackground();
-            #else
-                g_pImeStyleTargetNotConverted.m_crBackground =
-                    GetSelection()->GetBackground();
-
-                g_pImeStyleTargetNotConverted.m_crColor =
-                    GetSelection()->GetColor();
-            #endif
-
-            g_pImeStyleTargetNotConverted.m_eDecoration =
-                TextDecoration_None;
-        }
-
-        m_fImeTarget = false;
-        Posn lEnd = m_lImeStart + cwch;
-        Posn lPosn = m_lImeStart;
-        int iClause = 0;
-        int iConverted = 0;
-        while (lPosn < lEnd)
-        {
-            StyleValues* pStyle;
-            switch (rgbAttr[lPosn - m_lImeStart])
-            {
-            case ATTR_INPUT:
-            case ATTR_INPUT_ERROR:
-                pStyle = &g_pImeStyleInput;
-                iConverted = 0;
-                break;
-
-            case ATTR_TARGET_CONVERTED:
-                pStyle = &g_pImeStyleTargetConverted;
-                m_fImeTarget = true;
-                iConverted = 0;
-                break;
-
-            case ATTR_TARGET_NOTCONVERTED:
-                pStyle = &g_pImeStyleTargetNotConverted;
-                m_fImeTarget = true;
-                iConverted = 0;
-                break;
-
-            case ATTR_CONVERTED:
-                pStyle = &g_rgpImeStyleConverted[iConverted];
-                iConverted = 1 - iConverted;
-                break;
-
-            default:
-                pStyle = &g_pImeStyleInput;
-                break;
-            }
-
-            iClause += 1;
-            Posn lNext = m_lImeStart + rgnClause[iClause];
-            GetBuffer()->SetStyle(lPosn, lNext, pStyle);
-            lPosn = lNext;
-        }
+    // Insert result string into buffer
+    if (cwch >= 1) {
+      GetSelection()->SetText(rgwch, cwch);
+      GetSelection()->Collapse(Collapse_End);
+      m_lImeEnd = GetSelection()->GetEnd();
+      m_lImeStart = m_lImeEnd;
     }
+  }
 
-    ////////////////////////////////////////////////////////////
-    //
-    // We have already insert composed string. So, we don't
-    // need WM_IME_CHAR and WM_CHAR messages to insert
-    // composed string.
-    if (lParam & GCS_RESULTSTR)
-    {
-        m_fImeTarget = false;
-        return;
-    }
-
-    // Composition was canceled.
-    if (0 == lParam)
-    {
-        m_fImeTarget = false;
-
-        // Remove previous composition string
+  // IME has composition string
+  if ((lParam & GCS_COMPSTRATTR) == GCS_COMPSTRATTR) {
+    // Remove previous composition string
+    if (m_lImeStart != m_lImeEnd) {
         GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
         GetSelection()->SetText(L"", 0);
-
-        // if (m_fCancelButLeave)
-        {
-            long cwch = ::ImmGetCompositionString(
-                imc,
-                GCS_COMPSTR,
-                rgwch,
-                sizeof(rgwch)) / sizeof(char16);
-            if (cwch >= 1)
-            {
-                GetSelection()->SetText(rgwch, cwch);
-            }
-        }
-
         m_lImeEnd = m_lImeStart;
     }
+
+    // Get composition string
+    auto const cwch = ::ImmGetCompositionString(
+        imc, GCS_COMPSTR, rgwch, sizeof(rgwch)) / sizeof(char16);
+
+    // Get composition attributes
+    char rgbAttr[lengthof(rgwch)];
+    auto const cbAttr = ::ImmGetCompositionString(
+        imc, GCS_COMPATTR, rgbAttr, sizeof(rgbAttr));
+    if (cbAttr != static_cast<int>(cwch)) {
+      DEBUG_PRINTF("GCCS_COMPATTR\n");
+      return;
+    }
+
+    auto const lCursor = ::ImmGetCompositionString(
+          imc, GCS_CURSORPOS, nullptr, 0);
+    if (lCursor < 0) {
+      DEBUG_PRINTF("GCCS_CURSORPOS\n");
+      return;
+    }
+
+    uint32 rgnClause[100];
+    ::ImmGetCompositionString(imc, GCS_COMPCLAUSE, rgnClause,
+                              sizeof(rgnClause));
+
+    GetSelection()->SetText(rgwch, cwch);
+    GetSelection()->Collapse(Collapse_End);
+    m_lImeEnd = GetSelection()->GetEnd();
+    GetSelection()->SetRange(m_lImeStart + lCursor, m_lImeStart + lCursor);
+
+    if (!g_pImeStyleInput.m_rgfMask) {
+          // Converted[0]
+          g_rgpImeStyleConverted[0].m_rgfMask =
+              StyleValues::Mask_Decoration;
+
+          g_rgpImeStyleConverted[0].m_eDecoration =
+              TextDecoration_ImeInactiveA;
+
+          // Converted[1]
+          g_rgpImeStyleConverted[1].m_rgfMask =
+              StyleValues::Mask_Decoration;
+
+          g_rgpImeStyleConverted[1].m_eDecoration =
+              TextDecoration_ImeInactiveB;
+
+          // Input
+          g_pImeStyleInput.m_rgfMask =
+              StyleValues::Mask_Decoration;
+
+          g_pImeStyleInput.m_eDecoration =
+              TextDecoration_ImeInput;
+
+          // Target Converted
+          g_pImeStyleTargetConverted.m_rgfMask =
+              StyleValues::Mask_Decoration;
+
+          g_pImeStyleTargetConverted.m_eDecoration =
+              TextDecoration_ImeActive;
+
+          // Target Not Converted
+          g_pImeStyleTargetNotConverted.m_rgfMask =
+              StyleValues::Mask_Background |
+              StyleValues::Mask_Color |
+              StyleValues::Mask_Decoration;
+
+          #if 0
+              g_pImeStyleTargetNotConverted.m_crBackground =
+                  g_DefaultStyle.GetColor();
+
+              g_pImeStyleTargetNotConverted.m_crColor =
+                  g_DefaultStyle.GetBackground();
+          #else
+              g_pImeStyleTargetNotConverted.m_crBackground =
+                  GetSelection()->GetBackground();
+
+              g_pImeStyleTargetNotConverted.m_crColor =
+                  GetSelection()->GetColor();
+          #endif
+
+          g_pImeStyleTargetNotConverted.m_eDecoration =
+              TextDecoration_None;
+      }
+
+      m_fImeTarget = false;
+      Posn lEnd = m_lImeStart + cwch;
+      Posn lPosn = m_lImeStart;
+      int iClause = 0;
+      int iConverted = 0;
+      while (lPosn < lEnd) {
+        StyleValues* pStyle;
+        switch (rgbAttr[lPosn - m_lImeStart]) {
+          case ATTR_INPUT:
+          case ATTR_INPUT_ERROR:
+            pStyle = &g_pImeStyleInput;
+            iConverted = 0;
+            break;
+
+          case ATTR_TARGET_CONVERTED:
+            pStyle = &g_pImeStyleTargetConverted;
+            m_fImeTarget = true;
+            iConverted = 0;
+            break;
+
+          case ATTR_TARGET_NOTCONVERTED:
+            pStyle = &g_pImeStyleTargetNotConverted;
+            m_fImeTarget = true;
+            iConverted = 0;
+            break;
+
+          case ATTR_CONVERTED:
+            pStyle = &g_rgpImeStyleConverted[iConverted];
+            iConverted = 1 - iConverted;
+            break;
+
+          default:
+            pStyle = &g_pImeStyleInput;
+            break;
+        }
+
+        iClause += 1;
+        Posn lNext = m_lImeStart + rgnClause[iClause];
+        GetBuffer()->SetStyle(lPosn, lNext, pStyle);
+        lPosn = lNext;
+      }
+  }
+
+  ////////////////////////////////////////////////////////////
+  //
+  // We have already insert composed string. So, we don't
+  // need WM_IME_CHAR and WM_CHAR messages to insert
+  // composed string.
+  if (lParam & GCS_RESULTSTR)
+  {
+      m_fImeTarget = false;
+      return;
+  }
+
+  // Composition was canceled.
+  if (0 == lParam)
+  {
+      m_fImeTarget = false;
+
+      // Remove previous composition string
+      GetSelection()->SetRange(m_lImeStart, m_lImeEnd);
+      GetSelection()->SetText(L"", 0);
+
+      // if (m_fCancelButLeave)
+      {
+          long cwch = ::ImmGetCompositionString(
+              imc,
+              GCS_COMPSTR,
+              rgwch,
+              sizeof(rgwch)) / sizeof(char16);
+          if (cwch >= 1)
+          {
+              GetSelection()->SetText(rgwch, cwch);
+          }
+      }
+
+      m_lImeEnd = m_lImeStart;
+  }
 }
 
 // Note:
-//  o IME2000 ignores string after newline.
-//  o We should limit number of characters to be reconverted.
+// o IME2000 ignores string after newline.
+// o We should limit number of characters to be reconverted.
 //
-void TextEditWindow::Reconvert(Posn lStart, Posn lEnd)
-{
-    BOOL fSucceeded;
+void TextEditWindow::Reconvert(Posn lStart, Posn lEnd) {
+  BOOL fSucceeded;
 
-    uint cb = setReconvert(nullptr, lStart, lEnd);
-    if (0 == cb) return;
+  auto const cb = setReconvert(nullptr, lStart, lEnd);
+  if (!cb)
+    return;
 
-    char* pb = new char[cb];
-    if (nullptr == pb) return;
+  auto const pb = new char[cb];
+  if (!pb)
+    return;
 
-    RECONVERTSTRING* p = reinterpret_cast<RECONVERTSTRING*>(pb);
+  auto const p = reinterpret_cast<RECONVERTSTRING*>(pb);
+  setReconvert(p, lStart, lEnd);
 
-    setReconvert(p, lStart, lEnd);
+  Imc imc(m_hwnd);
+  fSucceeded = ::ImmSetCompositionString(
+      imc,
+      SCS_QUERYRECONVERTSTRING,
+      p,
+      cb,
+      nullptr,
+      0);
+  if (!fSucceeded) {
+      DEBUG_PRINTF("SCS_QUERYRECONVERTSTRING\n");
+      goto exit;
+  }
 
-    Imc imc(m_hwnd);
+  m_lImeStart = lStart + p->dwCompStrOffset / 2;
+  m_lImeEnd = m_lImeStart + p->dwCompStrLen;
+  m_fImeTarget = true;
 
-    fSucceeded = ::ImmSetCompositionString(
-        imc,
-        SCS_QUERYRECONVERTSTRING,
-        p,
-        cb,
-        nullptr,
-        0);
-    unless (fSucceeded)
-    {
-        DEBUG_PRINTF("SCS_QUERYRECONVERTSTRING\n");
-        goto exit;
-    }
-
-    m_lImeStart  = lStart + p->dwCompStrOffset / 2;
-    m_lImeEnd    = m_lImeStart + p->dwCompStrLen;
-    m_fImeTarget = true;
-
-    fSucceeded = ::ImmSetCompositionString(
-        imc,
-        SCS_SETRECONVERTSTRING,
-        p,
-        cb,
-        nullptr,
-        0);
-    unless (fSucceeded)
-    {
-        DEBUG_PRINTF("SCS_SETRECONVERTSTRING\n");
-        goto exit;
-    }
+  fSucceeded = ::ImmSetCompositionString(
+      imc,
+      SCS_SETRECONVERTSTRING,
+      p,
+      cb,
+      nullptr,
+      0);
+  if (!fSucceeded) {
+    DEBUG_PRINTF("SCS_SETRECONVERTSTRING\n");
+    goto exit;
+  }
 
   exit:
     delete[] pb;
 }
 
-uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart, Posn lEnd)
-{
-    Count cwch = lEnd - lStart;
-    when (0 == cwch) return 0;
+uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart,
+                                  Posn lEnd) {
+  auto const cwch = lEnd - lStart;
+  if (!p || !cwch)
+    return 0;
 
-    uint cb = sizeof(RECONVERTSTRING) + sizeof(char16) * (cwch + 1);
+  auto const cb = sizeof(RECONVERTSTRING) + sizeof(char16) * (cwch + 1);
+  p->dwSize = cb;
+  p->dwVersion = 0;
+  p->dwStrLen = cwch;
+  p->dwStrOffset = sizeof(RECONVERTSTRING);
+  p->dwCompStrLen = cwch; // # of characters
+  p->dwCompStrOffset = 0; // byte offset
+  p->dwTargetStrLen = p->dwCompStrLen;
+  p->dwTargetStrOffset = p->dwCompStrOffset;
 
-    if (nullptr == p) return cb;
-
-    p->dwSize            = cb;
-    p->dwVersion         = 0;
-    p->dwStrLen          = cwch;
-    p->dwStrOffset       = sizeof(RECONVERTSTRING);
-    p->dwCompStrLen      = cwch;    // # of characters
-    p->dwCompStrOffset   = 0;       // byte offset
-    p->dwTargetStrLen    = p->dwCompStrLen;
-    p->dwTargetStrOffset = p->dwCompStrOffset;
-
-    char16* pwch = reinterpret_cast<char16*>(
-        reinterpret_cast<char*>(p) + p->dwStrOffset);
-
-    GetBuffer()->GetText(pwch, lStart, lEnd);
-
-    pwch[cwch] = 0;
-
-    return cb;
+  auto const pwch = reinterpret_cast<char16*>(
+      reinterpret_cast<char*>(p) + p->dwStrOffset);
+  GetBuffer()->GetText(pwch, lStart, lEnd);
+  pwch[cwch] = 0;
+  return cb;
 }
 
 // Set left top coordinate of IME candiate window.
@@ -1534,14 +1361,14 @@ BOOL TextEditWindow::showImeCaret(SIZE sz, POINT pt) {
     return FALSE;
 
   CANDIDATEFORM oCF;
-  oCF.dwIndex         = 0;
-  oCF.dwStyle         = CFS_EXCLUDE;
-  oCF.ptCurrentPos.x  = pt.x;
-  oCF.ptCurrentPos.y  = pt.y + sz.cy;
-  oCF.rcArea.left     = pt.x;
-  oCF.rcArea.top      = pt.y;
-  oCF.rcArea.right    = pt.x;
-  oCF.rcArea.bottom   = pt.y + sz.cy;
+  oCF.dwIndex = 0;
+  oCF.dwStyle = CFS_EXCLUDE;
+  oCF.ptCurrentPos.x = pt.x;
+  oCF.ptCurrentPos.y = pt.y + sz.cy;
+  oCF.rcArea.left = pt.x;
+  oCF.rcArea.top = pt.y;
+  oCF.rcArea.right = pt.x;
+  oCF.rcArea.bottom = pt.y + sz.cy;
 
   return ::ImmSetCandidateWindow(imc, &oCF);
 }
