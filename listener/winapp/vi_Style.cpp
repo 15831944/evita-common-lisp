@@ -17,23 +17,6 @@
 #include <vector>
 
 namespace {
-std::vector<uint16> GetGlyphIndexs(const gfx::FontFace& font_face, 
-                                   const char16* pwch, int cwch) {
-  ASSERT(cwch);
-  std::vector<uint32> code_points(cwch);
-  auto it = code_points.begin();
-  for (auto s = pwch; s < pwch + cwch; ++s) {
-    *it = *s;
-    ++it;
-  }
-  std::vector<uint16> glyph_indexs(cwch);
-  COM_VERIFY(font_face->GetGlyphIndices(
-      &code_points[0],
-      code_points.size(),
-      &glyph_indexs[0]));
-    return glyph_indexs;
-}
-
 bool IsCacheableChar(char16 wch) {
   return wch >= 0x20 && wch <= 0x7E;
 }
@@ -62,74 +45,163 @@ void FontSet::Add(Font* pFont)
 //
 // Font
 //
-static uint CalculateFixedWidth(const gfx::FontFace& font_face) {
-  static uint32 code_points[0x7E - 0x20 + 1];
-  if (!code_points[0]) {
-    for (int ch = ' '; ch <= 0x7E; ++ch) {
-      code_points[ch - 0x20] = ch;
+class Font::FontImpl {
+  private: const base::OwnPtr<gfx::FontFace> font_face_;
+  private: float const em_size_; // the logical size of the font in DIP units.
+  private: float const pixels_per_dip_;
+  private: const DWRITE_FONT_METRICS metrics_;
+
+  public: FontImpl(const char16* face_name, int font_size_pt)
+      : font_face_(*new gfx::FontFace(face_name)),
+        em_size_(font_size_pt * 96.0f / 72.0f),
+        pixels_per_dip_(gfx::FactorySet::instance().pixels_per_dip().height),
+        metrics_(GetMetrics()) {
+  }
+
+  // [C]
+  public: SimpleMetrics CalculateMetrics() const {
+    SimpleMetrics metrics;
+    metrics.ascent = ConvertToDip(metrics_.ascent);
+    metrics.descent = ConvertToDip(metrics_.descent);
+    metrics.height = ConvertToDip(metrics_.ascent +
+                                  metrics_.descent +
+                                  metrics_.lineGap);
+    metrics.fixed_width = ConvertToDip(CalculateFixedWidth());
+    return metrics;
+  }
+
+  private: uint CalculateFixedWidth() const {
+    static char16 cacheable_chars[0x7E - 0x20 + 1];
+    if (!cacheable_chars[0]) {
+      for (int ch = ' '; ch <= 0x7E; ++ch) {
+        cacheable_chars[ch - 0x20] = static_cast<char16>(ch);
+      }
     }
+
+    const auto metrics = GetGlyphMetrics(cacheable_chars,
+                                         lengthof(cacheable_chars));
+    auto const width = metrics[0].advanceWidth;
+    for (const auto metric: metrics) {
+      if (width != metric.advanceWidth)
+        return 0;
+    }
+    return width;
   }
-  std::vector<uint16> glyph_indexs(lengthof(code_points));
-  COM_VERIFY(font_face->GetGlyphIndices(
-      &code_points[0],
-      lengthof(code_points),
-      &glyph_indexs[0]));
 
-  std::vector<DWRITE_GLYPH_METRICS> metrics(glyph_indexs.size());
-  COM_VERIFY(font_face->GetDesignGlyphMetrics(
-      &glyph_indexs[0], glyph_indexs.size(), &metrics[0], false));
-
-  auto const width = metrics[0].advanceWidth;
-  for (const auto metric: metrics) {
-    if (width != metric.advanceWidth)
-      return 0;
+  public: float ConvertToDip(uint design_unit) const {
+    return design_unit * em_size_ / metrics_.designUnitsPerEm;
   }
-  return width;
-}
 
-static int CalculateFontHeight(const gfx::FontFace& font_face) {
-  return font_face.metrics().ascent +
-         font_face.metrics().lineGap +
-         font_face.metrics().descent;
-}
+  // [D]
+  public: void DrawText(const gfx::Graphics& gfx,const gfx::Brush& text_brush,
+                        const gfx::PointF& baseline, const char16* chars,
+                        uint num_chars) const {
+    ASSERT(num_chars);
+    const auto glyph_indexes = GetGlyphIndexes(chars, num_chars);
+
+    DWRITE_GLYPH_RUN glyph_run;
+    glyph_run.fontFace = *font_face_;
+    glyph_run.fontEmSize = em_size_;
+    glyph_run.glyphCount = glyph_indexes.size();
+    glyph_run.glyphIndices = &glyph_indexes[0];
+    glyph_run.glyphAdvances = nullptr; //&glyph_advances[0];
+    glyph_run.glyphOffsets = nullptr;
+    glyph_run.isSideways = false;
+    glyph_run.bidiLevel = 0;
+
+    ASSERT(gfx.drawing());
+    gfx->DrawGlyphRun(baseline, &glyph_run, text_brush,
+                      DWRITE_MEASURING_MODE_GDI_NATURAL);
+  }
+
+  // [G]
+  public: std::vector<uint16> GetGlyphIndexes(const char16* pwch,
+                                             uint cwch) const {
+    ASSERT(cwch);
+    std::vector<uint32> code_points(cwch);
+    auto it = code_points.begin();
+    for (auto s = pwch; s < pwch + cwch; ++s) {
+      *it = *s;
+      ++it;
+    }
+    std::vector<uint16> glyph_indexes(cwch);
+    COM_VERIFY((*font_face_)->GetGlyphIndices(
+        &code_points[0], code_points.size(), &glyph_indexes[0]));
+    return std::move(glyph_indexes);
+  }
+
+  public: std::vector<DWRITE_GLYPH_METRICS> GetGlyphMetrics(
+      const char16* pwch, uint cwch) const {
+    return GetGlyphMetrics(GetGlyphIndexes(pwch, cwch));
+  }
+
+  private: std::vector<DWRITE_GLYPH_METRICS> GetGlyphMetrics(
+      const std::vector<uint16> glyph_indexes) const {
+    DWRITE_MATRIX* const transform = nullptr;
+    auto const use_gdi_natural = true;
+    auto const is_side_ways = false;
+    std::vector<DWRITE_GLYPH_METRICS> metrics(glyph_indexes.size());
+    COM_VERIFY((*font_face_)->GetGdiCompatibleGlyphMetrics(
+        em_size_, pixels_per_dip_, transform, use_gdi_natural,
+        &glyph_indexes[0], glyph_indexes.size(), &metrics[0], is_side_ways));
+    return std::move(metrics);
+  }
+
+  // [G]
+  private: DWRITE_FONT_METRICS GetMetrics() {
+    DWRITE_FONT_METRICS metrics;
+    COM_VERIFY((*font_face_)->GetGdiCompatibleMetrics(
+        em_size_, pixels_per_dip_, nullptr, &metrics));
+    return metrics;
+  }
+
+  // [H]
+  public: bool HasCharacter(char16 wch) const {
+    uint32 code_point = wch;
+    uint16 glyph_index;
+    COM_VERIFY((*font_face_)->GetGlyphIndices(&code_point, 1, &glyph_index));
+    return glyph_index;
+  }
+
+  DISALLOW_COPY_AND_ASSIGN(FontImpl);
+};
 
 Font::Font(const LOGFONT& log_font)
     : m_oLogFont(log_font),
-      font_face_(*new gfx::FontFace(log_font.lfFaceName)),
-      ascent_(ConvertDesignUnitToDip(font_face_->metrics().ascent)),
-      descent_(ConvertDesignUnitToDip(font_face_->metrics().descent)),
-      height_(ConvertDesignUnitToDip(CalculateFontHeight(*font_face_))),
-      fixed_width_(ConvertDesignUnitToDip(CalculateFixedWidth(*font_face_))) {
+      font_impl_(*new FontImpl(log_font.lfFaceName, log_font.lfHeight)),
+      metrics_(font_impl_->CalculateMetrics()) {
 }
 
 Font::~Font() {
 }
 
-// Font::Create
 base::OwnPtr<Font> Font::Create(const LOGFONT* logFont) {
   return std::move(base::OwnPtr<Font>(new Font(*logFont)));
 }
 
+void Font::DrawText(const gfx::Graphics& gfx,const gfx::Brush& text_brush,
+                    const gfx::RectF& rect, const char16* chars,
+                    uint num_chars) const {
+  auto const baseline = rect.left_top() + gfx::SizeF(0.0f, metrics_.ascent);
+  font_impl_->DrawText(gfx, text_brush, baseline, chars, num_chars);
+}
+
 float Font::GetCharWidth(char16 wch) const {
-  if (IsCacheableChar(wch) && fixed_width_)
-    return fixed_width_;
+  if (IsCacheableChar(wch) && metrics_.fixed_width)
+    return metrics_.fixed_width;
   return GetTextWidth(&wch, 1);
 }
 
 float Font::GetTextWidth(const char16* pwch, uint cwch) const {
-  if (fixed_width_ && IsCachableString(pwch, cwch))
-    return fixed_width_ * cwch;
-  auto const glyph_indexs = GetGlyphIndexs(*font_face_, pwch, cwch);
-  if (!glyph_indexs.size())
-    return 0.0f;
-  std::vector<DWRITE_GLYPH_METRICS> metrics(glyph_indexs.size());
-  COM_VERIFY((*font_face_)->GetDesignGlyphMetrics(
-      &glyph_indexs[0], glyph_indexs.size(), &metrics[0], false));
+  if (metrics_.fixed_width && IsCachableString(pwch, cwch))
+    return metrics_.fixed_width * cwch;
+
+  const auto metrics = font_impl_->GetGlyphMetrics(pwch, cwch);
   auto width = 0;
   for (const auto metric: metrics) {
     width += metric.advanceWidth;
   }
-  return ConvertDesignUnitToDip(width);
+  return font_impl_->ConvertToDip(width);
 }
 
 bool Font::HasCharacter(char16 wch) const {
@@ -137,21 +209,7 @@ bool Font::HasCharacter(char16 wch) const {
   // TODO(yosi): We don't belive this assumption.l
   if (wch >= 0x20 && wch <= 0x7E)
     return true;
-
-  uint32 code_point = wch;
-  uint16 glyph_index;
-  COM_VERIFY((*font_face_)->GetGlyphIndices(
-      &code_point,
-      1,
-      &glyph_index));
-  return glyph_index;
-}
-
-// Convert pt(1/72in) to dip(1/96in)
-float Font::ConvertDesignUnitToDip(int design_unit) const {
-  auto const pt = static_cast<float>(m_oLogFont.lfHeight * design_unit) /
-      font_face_->metrics().designUnitsPerEm;
-  return pt * 96.0f / 72.0f;
+  return font_impl_->HasCharacter(wch);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -217,7 +275,7 @@ class Cache_
     {
         ::ZeroMemory(m_prgSlot, sizeof(Slot) * m_cAlloc);
     } // Cache_
-        
+
     private: static Item_* Removed()
         { return reinterpret_cast<Item_*>(1); };
 
@@ -298,7 +356,7 @@ class Cache_
         Slot* prgStart = m_prgSlot;
         int cAllocs = m_cAlloc;
         int cItems  = m_cItems;
-        
+
         m_cAlloc = m_cAlloc * 130 / 100;
         m_cItems  = 0;
         m_prgSlot = new Slot[m_cAlloc];

@@ -84,29 +84,7 @@ inline void fillRect(const gfx::Graphics& gfx, const gfx::RectF& rect,
 static void DrawText(const gfx::Graphics& gfx, const Font& font,
               const gfx::Brush& text_brush, const gfx::RectF& rect,
               const char16* chars, uint num_chars) {
-  ASSERT(num_chars);
-  std::vector<uint32> code_points(num_chars);
-  auto it = code_points.begin();
-  for (auto s = chars; s < chars + num_chars; ++s) {
-    *it = *s;
-    ++it;
-  }
-  std::vector<uint16> glyph_indexs(num_chars);
-  COM_VERIFY(font.font_face()->GetGlyphIndices(&code_points[0], num_chars,
-                                               &glyph_indexs[0]));
-  DWRITE_GLYPH_RUN glyph_run;
-  glyph_run.fontFace = font.font_face();
-  glyph_run.fontEmSize = font.font_size();
-  glyph_run.glyphCount = glyph_indexs.size();
-  glyph_run.glyphIndices = &glyph_indexs[0];
-  glyph_run.glyphAdvances = nullptr;
-  glyph_run.glyphOffsets = nullptr;
-  glyph_run.isSideways = false;
-  glyph_run.bidiLevel = 0;
-
-  auto left_top = rect.left_top() + gfx::SizeF(0.0f, font.ascent());
-  ASSERT(gfx.drawing());
-  gfx->DrawGlyphRun(left_top, &glyph_run, text_brush);
+  font.DrawText(gfx, text_brush, rect, chars, num_chars);
   gfx.Flush();
 }
 
@@ -430,7 +408,7 @@ class TextCell : public Cell {
   }
 
   public: virtual float GetDescent() const override {
-    return m_pFont->GetDescent();
+    return m_pFont->descent();
   }
 
   public: virtual CellKind GetKind() const override {
@@ -843,7 +821,7 @@ Cell* Formatter::formatChar(
           crBackground,
           cx,
           AlignHeightToPixel(m_gfx, pFont->height()),
-          pFont->GetDescent(),
+          pFont->descent(),
           lPosn,
           MarkerCell::Kind_Tab);
     }
@@ -962,7 +940,7 @@ Cell* Formatter::formatMarker(MarkerCell::Kind  eKind) {
         crBackground,
         AlignWidthToPixel(m_gfx, pFont->GetCharWidth('x')),
         AlignHeightToPixel(m_gfx, pFont->height()),
-        pFont->GetDescent(),
+        pFont->descent(),
         m_oEnumCI.GetPosn(),
         eKind);
     return pCell;

@@ -16,11 +16,18 @@
 #include "./ed_Style.h"
 #include "./li_util.h"
 
+#include <d2d1.h>
+
 namespace gfx {
+class Brush;
 class FontFace;
 class Graphics;
-class TextFormat;
-class TextLayout;
+template<typename base, typename element> class Size_;
+template<typename base, typename size> class Point_;
+template<typename base, typename point, typename size> class Rect_;
+typedef Size_<D2D1_SIZE_F, float> SizeF;
+typedef Point_<D2D1_POINT_2F, SizeF> PointF;
+typedef Rect_<D2D1_RECT_F, PointF, SizeF> RectF;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -30,27 +37,32 @@ class TextLayout;
 class Font {
     public: typedef LOGFONT Key;
 
+    private: class FontImpl;
+    private: struct SimpleMetrics {
+      float ascent;
+      float descent;
+      float height;
+      float fixed_width;
+    };
+
     private: LOGFONT m_oLogFont;
-    private: const base::OwnPtr<gfx::FontFace> font_face_;
-    private: float const ascent_;
-    private: float const descent_;
-    private: float const height_;
-    private: float const fixed_width_;
+    private: const base::OwnPtr<FontImpl> font_impl_;
+    private: const SimpleMetrics metrics_;
 
     private: Font(const LOGFONT&);
     public: ~Font();
 
-    public: float ascent() const { return ascent_; }
-    public: const gfx::FontFace& font_face() const { return *font_face_; }
-    public: float height() const { return height_; }
-
-    public: float font_size() const {
-      return m_oLogFont.lfHeight * 96.0f / 72.0f;
-    }
+    private: float ascent() const { return metrics_.ascent; }
+    public: float descent() const { return metrics_.descent; }
+    public: float height() const { return metrics_.height; }
 
     // [C]
-    private: float ConvertDesignUnitToDip(int design_unit) const;
     public: static base::OwnPtr<Font> Create(const LOGFONT*);
+
+    // [D]
+    void DrawText(const gfx::Graphics& gfx,const gfx::Brush& text_brush,
+                  const gfx::RectF& rect, const char16* chars,
+                  uint num_chars) const;
 
     // [E]
     public: bool EqualKey(const Key* pKey) const {
@@ -59,8 +71,6 @@ class Font {
 
     // [G]
     public: float GetCharWidth(char16) const;
-    public: float GetDescent() const { return descent_; }
-    private: float GetHeight()  const { return height_; }
     public: const Key* GetKey() const { return &m_oLogFont; }
     public: float GetTextWidth(const char16* pwch, uint cwch) const;
 
