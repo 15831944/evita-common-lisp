@@ -27,6 +27,17 @@ class Pane;
 //
 class BaseWindow
 {
+  public: class MessageResult {
+    private: LRESULT lResult_;
+    private: bool is_handled_;
+    public: MessageResult() : lResult_(0), is_handled_(false) {}
+    public: MessageResult(LRESULT lResult)
+        : lResult_(lResult), is_handled_(true) {
+    }
+    public: bool is_handled() const { return is_handled_; }
+    public: LRESULT lResult() const { return lResult_; }
+  };
+
     protected: static ATOM sm_atomWndClass;
     static BaseWindow* sm_pCreateWnd;
 

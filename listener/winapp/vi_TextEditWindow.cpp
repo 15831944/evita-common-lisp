@@ -14,9 +14,9 @@
 #define DEBUG_FOCUS 0
 #define DEBUG_IDLE 0
 #define DEBUG_KEY 0
-#define DEBUG_PAINT 0
+#define DEBUG_PAINT _DEBUG
 #define DEBUG_REDRAW 0
-#define DEBUG_RESIZE 0
+#define DEBUG_RESIZE _DEBUG
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -177,7 +177,7 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
     : m_eDragMode(DragMode_None),
       m_fBlink(false),
       m_fHasFocus(false),
-      m_gfx(new gfx::Graphics()),
+      m_gfx(nullptr),
       m_lCaretPosn(-1),
       m_nActiveTick(0),
       m_nBlinkTimerId(0),
@@ -191,7 +191,8 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
         m_lImeEnd(0),
         m_lImeStart(0),
       #endif // SUPPORT_IME
-      m_pvHost(pvHost) {
+      m_pvHost(pvHost),
+      showing_(false) {
   pBuffer->AddWindow(this);
 }
 
@@ -199,10 +200,14 @@ TextEditWindow::~TextEditWindow() {
     GetSelection()->GetBuffer()->RemoveWindow(this);
 }
 
+void TextEditWindow::Activate() {
+  m_fHasFocus = true;
+}
+
 void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
   m_pBlink->SetRange(lPosn, lPosn);
   m_fBlink = true;
-  redraw();
+  Redraw();
   if (!m_nBlinkTimerId) {
     m_nBlinkTimerId = MyTimerId_Blink;
     ::SetTimer(m_hwnd, m_nBlinkTimerId, nMillisecond, nullptr);
@@ -341,6 +346,11 @@ Count TextEditWindow::GetColumn(Posn lPosn) {
   return lPosn - lStart;
 }
 
+HCURSOR TextEditWindow::GetCursorAt(const Point&) const {
+  return ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM));
+}
+
+
 // For Selection.MoveDown Screen
 Posn TextEditWindow::GetEnd() {
   updateScreen();
@@ -357,6 +367,11 @@ HWND TextEditWindow::GetScrollBarHwnd(int nBar) const {
 Posn TextEditWindow::GetStart() {
   updateScreen();
  return m_pPage->GetStart();
+}
+
+void TextEditWindow::Hide() {
+  ASSERT(showing_);
+  showing_ = false;
 }
 
 int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
@@ -382,7 +397,7 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
     }
 
      if (fRender && k > 0)
-       render(*m_gfx);
+       Render();
       return k;
   } else if (iDy > 0) {
     // Scroll Up -- format page from page end.
@@ -397,7 +412,7 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
     }
 
     if (fRender && k > 0)
-      render(*m_gfx);
+      Render();
     return k;
   }
   return 0;
@@ -440,11 +455,81 @@ bool TextEditWindow::OnIdle(uint count) {
     DEBUG_PRINTF("%p count=%d more=%d\n", this, count, more);
   #endif
 
-  redraw();
+  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+  Redraw();
   return more;
 }
 
+void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
+  auto const lPosn = MapPointToPosn(point);
+  if (lPosn < 0) {
+    // Click outside window. We do nothing.
+    return;
+  }
+
+  #if DEBUG_FOCUS
+    DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
+  #endif
+
+  if (!m_fHasFocus) {
+    m_fHasFocus = true;
+    if (lPosn >= GetSelection()->GetStart() &&
+        lPosn < GetSelection()->GetEnd()) {
+     return;
+    }
+  }
+
+  GetSelection()->MoveTo(lPosn, flags & MK_SHIFT);
+
+  if (flags & MK_CONTROL) {
+    selectWord(lPosn);
+  } else {
+    m_eDragMode = DragMode_Selection;
+    ::SetCapture(m_hwnd);
+  }
+}
+
+void TextEditWindow::OnLeftButtonUp(uint, const Point&) {
+  if (m_eDragMode == DragMode_None)
+    return;
+  ::ReleaseCapture();
+  stopDrag();
+}
+
 LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  return BaseWindow::onMessage(uMsg, wParam, lParam);
+}
+
+void TextEditWindow::OnMouseMove(uint, const Point& point) {
+  if (m_eDragMode == DragMode_None) {
+    // We have nothing to do if mouse isn't dragged.
+    return;
+  }
+
+  if (::GetCapture() != m_hwnd){
+    // Someone takes mouse capture.
+    stopDrag();
+    return;
+  }
+
+  auto const lPosn = MapPointToPosn(point);
+  if (lPosn >= 0)
+    selection_->MoveTo(lPosn, true);
+
+  #if DEBUG_FORMAT
+    DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
+  #endif // DEBUG_FORMAT
+
+  if (point.y < m_rc.top)
+    m_oAutoScroll.Start(m_hwnd, -1);
+  else if (point.y > m_rc.bottom)
+    m_oAutoScroll.Start(m_hwnd, 1);
+  else
+    m_oAutoScroll.Stop(m_hwnd);
+}
+
+TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
+    uint uMsg, WPARAM wParam, LPARAM lParam) {
   if (WM_SYSTIMER == uMsg) { // WM_SYSTIMER for blinking caret
     DEBUG_PRINTF("WM_SYSTIMER %p\r\n", this);
   }
@@ -465,10 +550,6 @@ LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         DEBUG_PRINTF("WM_DESTROY %p\n", this);
       #endif
       m_nActiveTick = 0;
-      break;
-
-    case WM_CREATE:
-      m_gfx->Init(m_hwnd);
       break;
 
     case WM_APPCOMMAND:
@@ -510,76 +591,17 @@ LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
 
-    case WM_LBUTTONDOWN: {
-      Point pt(MAKEPOINTS(lParam));
-      auto const lPosn = MapPointToPosn(pt);
-      if (lPosn < 0) {
-        // Click outside window. We do nothing.
-        break;
-      }
-
-      #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
-      #endif
-
-      if (!m_fHasFocus) {
-        ::SetFocus(m_hwnd);
-         if (lPosn >= GetSelection()->GetStart() &&
-             lPosn < GetSelection()->GetEnd()) {
-           return 0;
-        }
-      }
-
-      GetSelection()->MoveTo(lPosn, 0 != (wParam & MK_SHIFT));
-
-      if (wParam & MK_CONTROL) {
-        selectWord(lPosn);
-      } else {
-        m_eDragMode = DragMode_Selection;
-        ::SetCapture(m_hwnd);
-      }
+    case WM_LBUTTONDOWN:
+      OnLeftButtonUp(static_cast<uint>(wParam), MAKEPOINTS(lParam));
       return 0;
-    }
 
-    case WM_LBUTTONUP: {
-      if (m_eDragMode != DragMode_None) {
-        ::ReleaseCapture();
-        stopDrag();
-      }
+    case WM_LBUTTONUP:
+      OnLeftButtonUp(static_cast<uint>(wParam), MAKEPOINTS(lParam));
       return 0;
-    }
 
-    case WM_MOUSEMOVE: {
-      if (m_eDragMode == DragMode_None) {
-        // We have nothing to do if mouse isn't dragged.
-        return 0;
-      }
-
-      if (::GetCapture() != m_hwnd){
-        // Someone takes mouse capture.
-        stopDrag();
-        return 0;
-      }
-
-      Point pt(MAKEPOINTS(lParam));
-      auto const lPosn = MapPointToPosn(pt);
-      if (lPosn >= 0) {
-        selection_->MoveTo(lPosn, true);
-      }
-
-      #if DEBUG_FORMAT
-        DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
-      #endif // DEBUG_FORMAT
-
-      if (pt.y < m_rc.top) {
-        m_oAutoScroll.Start(m_hwnd, -1);
-      } else if (pt.y > m_rc.bottom) {
-        m_oAutoScroll.Start(m_hwnd, 1);
-      } else {
-        m_oAutoScroll.Stop(m_hwnd);
-      }
+    case WM_MOUSEMOVE:
+      OnMouseMove(static_cast<uint>(wParam), MAKEPOINTS(lParam));
       return 0;
-    }
 
     case WM_MOUSEWHEEL:
       SmallScroll(0, GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? -2 : 2);
@@ -621,7 +643,7 @@ LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_SETCURSOR:
       if (HTCLIENT == LOWORD(lParam)) {
-        ::SetCursor(::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM)));
+        ::SetCursor(GetCursorAt(Point()));
         return 1;
       }
       break;
@@ -695,10 +717,9 @@ LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
         DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
                      this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
       #endif
-      ::GetClientRect(m_hwnd, &m_rc);
-      m_gfx->Resize(m_rc);
-      m_pPage->Reset();
-      redraw();
+      Rect rect;
+      ::GetClientRect(m_hwnd, &rect);
+      Resize(rect);
       return 0;
     }
 
@@ -735,8 +756,7 @@ LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     #endif // SUPPORT_IME
   }
-
-  return BaseWindow::onMessage(uMsg, wParam, lParam);
+  return MessageResult();
 }
 
 void TextEditWindow::onVScroll(uint nCode) {
@@ -770,7 +790,7 @@ void TextEditWindow::onVScroll(uint nCode) {
       if (m_oVertScrollBar.GetInfo(&oInfo)) {
         auto const lStart = startOfLineAux(*m_gfx, oInfo.nTrackPos);
         format(*m_gfx, lStart);
-        render(*m_gfx);
+        Render();
       }
       break;
     }
@@ -780,7 +800,15 @@ void TextEditWindow::onVScroll(uint nCode) {
   }
 }
 
-void TextEditWindow::redraw() {
+void TextEditWindow::Realize(HWND hwnd, const gfx::Graphics& gfx,
+                             const Rect& rect) {
+  ASSERT(!m_gfx);
+  m_hwnd = hwnd;
+  m_gfx = &gfx;
+  Resize(rect);
+}
+
+void TextEditWindow::Redraw() {
   auto fSelectionActive = m_fHasFocus;
 
   if (g_hwndActiveDialog) {
@@ -871,15 +899,22 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
   #endif
 }
 
+void TextEditWindow::Render() {
+  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+  render(*m_gfx);
+}
+
 void TextEditWindow::render(const gfx::Graphics& gfx) {
-  if (!(::GetWindowLong(m_hwnd, GWL_STYLE) & WS_VISIBLE))
+  if (!showing_)
     return;
 
   if (m_fHasFocus)
     g_oCaret.Hide();
 
-  {
-    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+  if (gfx.drawing()) {
+    m_pPage->Render(gfx);
+  } else {
+    gfx::Graphics::DrawingScope drawing_scope(gfx);
     m_pPage->Render(gfx);
   }
 
@@ -916,6 +951,12 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
   g_oCaret.Show(m_hwnd, size, pt);
 }
 
+void TextEditWindow::Resize(const Rect& rect) {
+  m_rc = rect;
+  m_pPage->Reset();
+  Redraw();
+}
+
 void TextEditWindow::selectWord(Posn lPosn) {
   auto const pSelection = GetSelection();
   pSelection->SetStart(lPosn);
@@ -927,6 +968,13 @@ void TextEditWindow::selectWord(Posn lPosn) {
 void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
   if (nBar == SB_VERT)
     m_oVertScrollBar.Set(hwnd, hwnd == *this ? SB_VERT : SB_CTL);
+}
+
+void TextEditWindow::Show() {
+  ASSERT(!showing_);
+  showing_ = true;
+  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+  Redraw();
 }
 
 int TextEditWindow::SmallScroll(int, int iDy) {
@@ -949,7 +997,7 @@ int TextEditWindow::SmallScroll(int, int iDy) {
         DEBUG_PRINTF("down lStart=%d\n", lStart);
       #endif // DEBUG_FORMAT
       format(*m_gfx, lStart);
-      render(*m_gfx);
+      Render();
     }
     return k;
   }
@@ -970,7 +1018,7 @@ int TextEditWindow::SmallScroll(int, int iDy) {
     }
 
     if (k > 0)
-        render(*m_gfx);
+        Render();
     return k;
   }
 

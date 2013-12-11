@@ -446,6 +446,8 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
   switch (uMsg) {
     case WM_DWMCOMPOSITIONCHANGED:
       CompositionState::Update(m_hwnd);
+      // FALLTHROUGH
+
     case WM_ACTIVATE: {
         MARGINS margins;
         margins.cxLeftWidth = 0;
@@ -799,6 +801,12 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
             reinterpret_cast<HWND>(lParam));
       }
       break;
+  }
+
+  if (auto const pane = GetActivePane()) {
+    const auto result = pane->ForwardMessage(uMsg, wParam, lParam);
+    if (result.is_handled())
+      return result.lResult();
   }
 
   return BaseWindow::onMessage(uMsg, wParam, lParam);

@@ -26,6 +26,10 @@ void Pane::Activate() {
   GetFrame()->DidActivePane(this);
 }
 
+Pane::MessageResult Pane::ForwardMessage(uint, WPARAM, LPARAM) {
+  return MessageResult();
+}
+
 LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg)
     {

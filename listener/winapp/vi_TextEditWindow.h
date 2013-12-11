@@ -92,7 +92,7 @@ class TextEditWindow
   protected: DragMode m_eDragMode;
   protected: bool m_fBlink;
   protected: bool m_fHasFocus;
-  private: const base::OwnPtr<gfx::Graphics> m_gfx;
+  private: const gfx::Graphics* m_gfx;
   protected: Posn m_lCaretPosn;
   protected: uint m_nActiveTick;
   protected: uint m_nBlinkTimerId;
@@ -112,13 +112,14 @@ class TextEditWindow
   #endif // SUPPORT_IME
   protected: void* m_pvHost;
   protected: RECT m_rc;
+  private: bool showing_;
 
   // ctor/dtor
   public: TextEditWindow(void* pvHost, Buffer*, Posn = 0);
   public: ~TextEditWindow();
 
   // [A]
-  public: void Activate() { ::SetFocus(m_hwnd); }
+  public: void Activate();
 
   // [B]
   public: void Blink(Posn, uint);
@@ -133,10 +134,13 @@ class TextEditWindow
 
   // [F]
   protected: void format(const gfx::Graphics&, Posn);
+  public: MessageResult ForwardMessage(uint message, WPARAM wParam, 
+                                       LPARAM lParam);
 
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
   public: Buffer* GetBuffer() const;
+  public: HCURSOR GetCursorAt(const Point&) const;
 
   public: static const char16* GetClass_() { return L"TextEditWindow"; }
 
@@ -162,6 +166,7 @@ class TextEditWindow
 
   // [H]
   public: bool HasFocus() const { return m_fHasFocus; }
+  public: void Hide();
 
   // [L]
   public: int LargeScroll(int, int, bool = true);
@@ -174,17 +179,24 @@ class TextEditWindow
 
   // [O]
   public: virtual bool OnIdle(uint);
+  public: void OnLeftButtonDown(uint flags, const Point&);
+  public: void OnLeftButtonUp(uint flags, const Point&);
   protected: virtual LRESULT onMessage(UINT, WPARAM, LPARAM);
+  public: void OnMouseMove(uint flags, const Point&);
   protected: void onVScroll(uint);
 
   // [R]
-  protected: void redraw();
+  public: void Realize(HWND hwnd, const gfx::Graphics& gfx, const Rect& rect);
+  public: void Redraw();
   protected: void redraw(bool);
   protected: void render(const gfx::Graphics&);
+  private: void Render();
+  public: void Resize(const Rect& rect);
 
   // [S]
   protected: void selectWord(Posn);
   public: void SetScrollBar(HWND, int);
+  public: void Show();
   public: int SmallScroll(int, int);
   public: Posn StartOfLine(Posn);
   protected: Posn startOfLineAux(const gfx::Graphics&, Posn);

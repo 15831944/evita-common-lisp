@@ -84,6 +84,10 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: virtual bool DidCreateHwnd(HWND hwnd) override;
   public: virtual bool DidDestroyHwnd(HWND hwnd) override;
 
+  // [F]
+  public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,
+                                               LPARAM lParam) override;
+
   // [G]
   private: LeafBox* GetActiveLeafBox() const;
   public: virtual HCURSOR GetCursorAt(const Point&) const override;

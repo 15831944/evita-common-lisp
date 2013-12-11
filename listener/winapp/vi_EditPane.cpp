@@ -44,6 +44,8 @@ struct EditPane::HitTestResult {
       : box(const_cast<Box*>(&box)), type(type) {
     ASSERT(type != None);
   }
+
+  TextEditWindow* window() const;
 };
 
 class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
@@ -171,7 +173,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual void Hide() {
     if (m_hwndVScrollBar)
       ::ShowWindow(m_hwndVScrollBar, SW_HIDE);
-    ::ShowWindow(*m_pWindow, SW_HIDE);
+    m_pWindow->Hide();
   }
 
   // [I]
@@ -190,7 +192,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual void Show() {
     if (m_hwndVScrollBar)
       ::ShowWindow(m_hwndVScrollBar, SW_SHOW);
-    ::ShowWindow(*m_pWindow, SW_SHOW);
+    m_pWindow->Show();
   }
 };
 
@@ -234,6 +236,7 @@ class EditPane::SplitterController {
 
   public: SplitterController();
   public: ~SplitterController();
+  public: bool is_dragging() const { return m_eState != State_None; }
   public: void End(const Point&);
   public: void Move(const Point&);
   public: void Start(HWND, State, Box&);
@@ -736,6 +739,11 @@ void EditPane::LayoutBox::UpdateSplitters() {
   DrawSplitters(gfx);
 }
 
+// HitTestResult
+EditPane::Window* EditPane::HitTestResult::window() const {
+  return static_cast<LeafBox*>(box)->GetWindow();
+}
+
 // LeafBox
 EditPane::LeafBox::~LeafBox() {
   DEBUG_PRINTF("%p\n", this);
@@ -827,15 +835,18 @@ bool EditPane::LeafBox::OnIdle(uint count) {
 void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
   Box::Realize(edit_pane, rect);
 
+  auto const splitter_height = HasSibling() ? 0 : k_cySplitterBig;
+  auto const scroll_bar_width = ::GetSystemMetrics(SM_CXVSCROLL);
+  Rect scroll_bar_rect(rect.right - scroll_bar_width,
+                       rect.top + splitter_height,
+                       rect.right, rect.bottom);
+
   m_hwndVScrollBar = ::CreateWindowExW(
         0,
         L"SCROLLBAR",
         nullptr, // title
         WS_CHILD | WS_VISIBLE | SBS_VERT,
-        0, // x
-        0, // y
-        0, // width
-        0, // height
+        rect.left, rect.top, rect.width(), rect.height(),
         edit_pane->frame(),
         nullptr, // menu
         g_hInstance,
@@ -844,52 +855,44 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
   ::SetWindowLongPtr(m_hwndVScrollBar, GWLP_USERDATA,
                      reinterpret_cast<LONG_PTR>(this));
 
-  m_pWindow->CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE,
-                            edit_pane->frame());
+  Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
+  m_pWindow->Realize(*edit_pane->GetFrame(), edit_pane_->GetFrame()->gfx(),
+                     window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
   SetRect(rect);
 }
 
 void EditPane::LeafBox::Redraw() const {
-  // TODO: We should assign number to redraw text editor window.
-  ::SendMessage(*m_pWindow, WM_USER, 0, 0);
+  m_pWindow->Redraw();
 }
 
 void EditPane::LeafBox::SetRect(const Rect& rect) {
-    Box::SetRect(rect);
-  auto const pWindow = GetWindow();
-  auto const hwndVScrollBar = pWindow->GetScrollBarHwnd(SB_VERT);
-  auto const prc = &rect;
+  Box::SetRect(rect);
 
   #if DEBUG_SPLIT
     DEBUG_PRINTF("%p %p %d+%d-%d+%d\n",
         this,
-        pWindow,
-        prc->left, prc->top, prc->right, prc->bottom);
+        m_pWindow,
+        rect.left, rect.top, rect.right, rect.bottom);
   #endif
 
-  auto cxVScroll = hwndVScrollBar ? ::GetSystemMetrics(SM_CXVSCROLL) : 0;
-
-  if (hwndVScrollBar) {
-    auto const cySplitter = HasSibling() ? 0 : k_cySplitterBig;
+  auto const splitter_height = HasSibling() ? 0 : k_cySplitterBig;
+  auto const scroll_bar_width = m_hwndVScrollBar ?
+      ::GetSystemMetrics(SM_CXVSCROLL) : 0;
+  Rect scroll_bar_rect(rect.right - scroll_bar_width,
+                       rect.top + splitter_height,
+                       rect.right, rect.bottom);
+  if (m_hwndVScrollBar) {
     ::SetWindowPos(
-        hwndVScrollBar,
+        m_hwndVScrollBar,
         nullptr,
-        prc->right - cxVScroll,
-        prc->top + cySplitter,
-        cxVScroll,
-        prc->bottom - prc->top - cySplitter,
+        scroll_bar_rect.left, scroll_bar_rect.top,
+        scroll_bar_rect.width(),scroll_bar_rect.height(),
         SWP_NOZORDER);
   }
 
-  ::SetWindowPos(
-      *pWindow,
-      nullptr,
-      prc->left,
-      prc->top,
-      prc->right - prc->left - cxVScroll,
-      prc->bottom - prc->top,
-      SWP_NOZORDER);
+  Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
+  m_pWindow->Resize(window_rect);
 }
 
 EditPane::VerticalLayoutBox::VerticalLayoutBox(EditPane* edit_pane,
@@ -1299,6 +1302,13 @@ bool EditPane::DidDestroyHwnd(HWND hwnd) {
   return true;
 }
 
+Pane::MessageResult EditPane::ForwardMessage(uint message, WPARAM wParam,
+                                             LPARAM lParam) {
+  if (auto const window = GetActiveWindow())
+    return window->ForwardMessage(message, wParam, lParam);
+  return MessageResult();
+}
+
 // Returns the last active Box.
 EditPane::LeafBox* EditPane::GetActiveLeafBox() const {
   return root_box_->GetActiveLeafBox();
@@ -1315,7 +1325,8 @@ Buffer* EditPane::GetBuffer() const {
 }
 
 HCURSOR EditPane::GetCursorAt(const Point& point) const {
-  switch (root_box_->HitTest(point).type) {
+  auto const result = root_box_->HitTest(point);
+  switch (result.type) {
     case HitTestResult::HSplitter:
     case HitTestResult::HSplitterBig: {
       static StockCursor hsplit_cursor(IDC_HSPLIT);
@@ -1330,6 +1341,9 @@ HCURSOR EditPane::GetCursorAt(const Point& point) const {
 
     case HitTestResult::None:
       return nullptr;
+
+    case HitTestResult::Window:
+      return result.window()->GetCursorAt(point);
 
     default: {
       static StockCursor arrow_cursor(IDC_ARROW);
@@ -1397,7 +1411,7 @@ bool EditPane::OnIdle(uint count) {
   return root_box_->OnIdle(count);
 }
 
-void EditPane::OnLeftButtonDown(uint, const Point& point) {
+void EditPane::OnLeftButtonDown(uint flags, const Point& point) {
   auto const result = root_box_->HitTest(point);
   switch (result.type) {
     case HitTestResult::HSplitter:
@@ -1412,15 +1426,36 @@ void EditPane::OnLeftButtonDown(uint, const Point& point) {
                                   SplitterController::State_DragSingle,
                                   *result.box);
       break;
+
+    case HitTestResult::Window:
+      static_cast<LeafBox*>(result.box)->GetWindow()->
+          OnLeftButtonDown(flags, point);
+      break;
   }
 }
 
-void EditPane::OnLeftButtonUp(uint, const Point& point) {
-  splitter_controller_->End(point);
+void EditPane::OnLeftButtonUp(uint flags, const Point& point) {
+  if (splitter_controller_->is_dragging()) {
+    splitter_controller_->End(point);
+    return;
+  }
+  auto const result = root_box_->HitTest(point);
+  if (result.type == HitTestResult::Window) {
+    static_cast<LeafBox*>(result.box)->GetWindow()->
+        OnLeftButtonUp(flags, point);
+  }
 }
 
-void EditPane::OnMouseMove(uint, const Point& point) {
-  splitter_controller_->Move(point);
+void EditPane::OnMouseMove(uint flags, const Point& point) {
+  if (splitter_controller_->is_dragging()) {
+    splitter_controller_->Move(point);
+    return;
+  }
+  auto const result = root_box_->HitTest(point);
+  if (result.type == HitTestResult::Window) {
+      static_cast<LeafBox*>(result.box)->GetWindow()->
+          OnMouseMove(flags, point);
+  }
 }
 
 void EditPane::Realize() {

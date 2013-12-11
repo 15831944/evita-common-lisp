@@ -43,6 +43,10 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
     return false;
   }
 
+  // [F]
+  public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,
+                                               LPARAM lParam);
+
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
   public: virtual HCURSOR GetCursorAt(const Point&) const { return nullptr; }
