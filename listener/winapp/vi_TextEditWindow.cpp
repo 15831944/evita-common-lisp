@@ -17,6 +17,7 @@
 #define DEBUG_PAINT _DEBUG
 #define DEBUG_REDRAW 0
 #define DEBUG_RESIZE _DEBUG
+#define DEBUG_SHOW_HIDE _DEBUG
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"
@@ -192,7 +193,7 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
         m_lImeStart(0),
       #endif // SUPPORT_IME
       m_pvHost(pvHost),
-      showing_(false) {
+      show_count_(0) {
   pBuffer->AddWindow(this);
 }
 
@@ -370,8 +371,11 @@ Posn TextEditWindow::GetStart() {
 }
 
 void TextEditWindow::Hide() {
-  ASSERT(showing_);
-  showing_ = false;
+  #if DEBUG_SHOW_HIDE
+    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
+                 GetBuffer()->GetName());
+  #endif
+  show_count_ = 0;
 }
 
 int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
@@ -803,8 +807,10 @@ void TextEditWindow::onVScroll(uint nCode) {
 void TextEditWindow::Realize(HWND hwnd, const gfx::Graphics& gfx,
                              const Rect& rect) {
   ASSERT(!m_gfx);
+  ASSERT(!show_count_);
   m_hwnd = hwnd;
   m_gfx = &gfx;
+  show_count_ = 1;
   Resize(rect);
 }
 
@@ -905,7 +911,7 @@ void TextEditWindow::Render() {
 }
 
 void TextEditWindow::render(const gfx::Graphics& gfx) {
-  if (!showing_)
+  if (show_count_ <= 0)
     return;
 
   if (m_fHasFocus)
@@ -952,6 +958,13 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
 }
 
 void TextEditWindow::Resize(const Rect& rect) {
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p (%d,%d)x(%d,%d) show=%d |%ls|\n",
+        this,
+        rect.left, rect.top, rect.width(), rect.height(),
+        show_count_,
+        GetBuffer()->GetName());
+  #endif
   m_rc = rect;
   m_pPage->Reset();
   Redraw();
@@ -971,10 +984,15 @@ void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
 }
 
 void TextEditWindow::Show() {
-  ASSERT(!showing_);
-  showing_ = true;
-  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-  Redraw();
+  #if DEBUG_SHOW_HIDE
+    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
+                 GetBuffer()->GetName());
+  #endif
+  ++show_count_;
+  if (show_count_ == 1) {
+    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+    Redraw();
+  }
 }
 
 int TextEditWindow::SmallScroll(int, int iDy) {

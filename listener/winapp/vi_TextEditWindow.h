@@ -112,7 +112,7 @@ class TextEditWindow
   #endif // SUPPORT_IME
   protected: void* m_pvHost;
   protected: RECT m_rc;
-  private: bool showing_;
+  private: int show_count_;
 
   // ctor/dtor
   public: TextEditWindow(void* pvHost, Buffer*, Posn = 0);
