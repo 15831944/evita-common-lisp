@@ -60,7 +60,8 @@ void __declspec(noreturn) Fail(const char* psz, ...)
     char sz[1024];
     ::wvsprintfA(sz, psz, args);
     va_end(args);
-    ::MessageBoxA(NULL, sz, "Tiny Common Lisp", MB_ICONERROR);
+    ::OutputDebugStringA(sz);
+    ::MessageBoxA(NULL, sz, "Evita Common Lisp", MB_ICONERROR);
     __debugbreak();
 } // Fail
 
