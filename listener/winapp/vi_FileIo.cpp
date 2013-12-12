@@ -9,8 +9,9 @@
 //
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_FileIo.cpp#5 $
 //
-#define DEBUG_LOAD  1
-#define DEBUG_SAVE  1
+#define DEBUG_IO 0
+#define DEBUG_LOAD 0
+#define DEBUG_SAVE 0
 #include "./vi_FileIo.h"
 
 #include "./ed_Mode.h"
@@ -43,7 +44,9 @@ class InfoRequest : public FileRequest {
   }
 
   private: void finishIo(uint nError) {
-    DEBUG_PRINTF("%p err=%d buf=%s\n", this, nError, m_pBuffer->GetName());
+    #if DEBUG_IO
+      DEBUG_PRINTF("%p err=%d buf=%s\n", this, nError, m_pBuffer->GetName());
+    #endif
     if (nError != 0) {
       m_pBuffer->SetObsolete(Buffer::Obsolete_Unknown);
       return;
@@ -546,7 +549,9 @@ DWORD WINAPI IoRequest::threadProc(void*) {
         continue;
       } // if
 
-    DEBUG_PRINTF("%p %u %p\n", pFile, cbReceived, pOverlapped);
+    #if DEBUG_IO
+      DEBUG_PRINTF("%p %u %p\n", pFile, cbReceived, pOverlapped);
+    #endif
     pFile->onEvent(cbReceived);
   } // for
 } // IoRequest::threadProc
@@ -757,8 +762,9 @@ void LoadRequest::requestRead() {
   if (!fSucceeded) {
     auto const dwError = ::GetLastError();
 
-    DEBUG_PRINTF("ReadFile: %p %ls %u\n",
-        this, m_wszFileName, dwError);
+    #if DEBUG_LOAD
+      DEBUG_PRINTF("ReadFile: %p %ls %u\n", this, m_wszFileName, dwError);
+    #endif
 
     switch (dwError) {
       case ERROR_HANDLE_EOF:

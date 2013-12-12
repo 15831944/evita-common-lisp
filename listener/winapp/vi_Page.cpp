@@ -12,7 +12,7 @@
 #define DEBUG_DIRTY  0
 #define DEBUG_FORMAT 0
 #define DEBUG_HEAP   0
-#define DEBUG_RENDER _DEBUG
+#define DEBUG_RENDER 0
 #include "./vi_Page.h"
 
 #include "./ed_interval.h"

@@ -11,6 +11,7 @@
 //
 #define DEBUG_DROPFILES 0
 #define DEBUG_FOCUS     _DEBUG
+#define DEBUG_PAINT     0
 #define DEBUG_REDRAW    _DEBUG
 #define DEBUG_WINDOWPOS _DEBUG
 #include "./vi_Frame.h"
@@ -623,13 +624,19 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
     }
 
     case WM_ERASEBKGND:
-      DEBUG_PRINTF("WM_ERASEBKGND\n");
+      #if DEBUG_PAINT
+        DEBUG_PRINTF("WM_ERASEBKGND %p\n", this);
+      #endif
       return TRUE;
 
     case WM_PAINT: {
-      DEBUG_PRINTF("WM_PAINT Start\n");
+      #if DEBUG_PAINT
+        DEBUG_PRINTF("WM_PAINT Start %p\n", this);
+      #endif
       ::ValidateRect(m_hwnd, nullptr);
-      DEBUG_PRINTF("WM_PAINT End\n");
+      #if DEBUG_PAINT
+        DEBUG_PRINTF("WM_PAINT End %p\n", this);
+      #endif
       return 0;
     }
 
