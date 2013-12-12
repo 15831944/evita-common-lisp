@@ -282,11 +282,11 @@ FontFace::FontFace(const char16* family_name)
 // Graphics
 //
 Graphics::Graphics()
-    : factory_set_(FactorySet::instance()),
+    : batch_nesting_level_(0),
+      factory_set_(FactorySet::instance()),
       hwnd_(nullptr),
       render_target_(nullptr),
-      work_(nullptr),
-      drawing_(false) {
+      work_(nullptr) {
 }
 
 Graphics::~Graphics() {
@@ -295,16 +295,18 @@ Graphics::~Graphics() {
 }
 
 void Graphics::BeginDraw() const {
-  ASSERT(!drawing_);
   ASSERT(render_target_);
-  render_target_->BeginDraw();
-  drawing_ = true;
+  if (!batch_nesting_level_)
+    render_target_->BeginDraw();
+  ++batch_nesting_level_;
 }
 
 bool Graphics::EndDraw() {
-  ASSERT(drawing_);
+  ASSERT(drawing());
   ASSERT(render_target_);
-  drawing_ = false;
+  --batch_nesting_level_;
+  if (batch_nesting_level_)
+    return true;
   auto const hr = render_target_->EndDraw();
   if (SUCCEEDED(hr))
     return true;

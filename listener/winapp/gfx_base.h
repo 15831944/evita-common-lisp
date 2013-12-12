@@ -334,7 +334,7 @@ class TextLayout : public SimpleObject_<IDWriteTextLayout> {
 };
 
 class Graphics : public Object, public DpiHandler {
-  private: mutable bool drawing_;
+  private: mutable int batch_nesting_level_;
   private: ScopedRefCount_<FactorySet> factory_set_;
   private: HWND hwnd_;
   private: ID2D1HwndRenderTarget* render_target_;
@@ -346,7 +346,7 @@ class Graphics : public Object, public DpiHandler {
       gfx_.BeginDraw();
     }
     public: ~DrawingScope() {
-      // TODO: DrawingScope should take mutable Graphics.
+      // TODO: Should DrawingScope take mutable Graphics?
       const_cast<Graphics&>(gfx_).EndDraw();
     }
     DISALLOW_COPY_AND_ASSIGN(DrawingScope);
@@ -364,7 +364,7 @@ class Graphics : public Object, public DpiHandler {
   }
 
   // |drawing()| is for debugging.
-  public: bool drawing() const { return drawing_; }
+  public: bool drawing() const { return batch_nesting_level_; }
   public: const FactorySet& factory_set() const { return *factory_set_; }
 
   public: ID2D1HwndRenderTarget& render_target() const {
@@ -383,7 +383,7 @@ class Graphics : public Object, public DpiHandler {
   // [D]
   public: void DrawLine(const Brush& brush, int sx, int sy, int ex, int ey,
                         float strokeWidth = 1) const {
-    ASSERT(drawing_);
+    ASSERT(drawing());
     render_target().DrawLine(PointF(sx, sy), PointF(ex, ey), brush,
                              strokeWidth);
   }
@@ -392,7 +392,7 @@ class Graphics : public Object, public DpiHandler {
                         float sx, float sy,
                         float ex, float ey,
                         float strokeWidth = 1) const {
-    ASSERT(drawing_);
+    ASSERT(drawing());
     render_target().DrawLine(PointF(sx, sy), PointF(ex, ey), brush,
                              strokeWidth);
   }
@@ -404,7 +404,7 @@ class Graphics : public Object, public DpiHandler {
 
   public: void DrawRectangle(const Brush& brush, const RectF& rect,
                              float strokeWidth = 1) const {
-    ASSERT(drawing_);
+    ASSERT(drawing());
     ASSERT(!!rect);
     render_target().DrawRectangle(rect, brush, strokeWidth);
   }
@@ -413,7 +413,7 @@ class Graphics : public Object, public DpiHandler {
                         const Brush& brush,
                         const RECT& rc,
                         const char16* pwch, size_t cwch) const {
-    ASSERT(drawing_);
+    ASSERT(drawing());
     auto rect = RectF(rc);
     ASSERT(!!rect);
     render_target().DrawText(pwch, cwch, text_format, rect, brush);
@@ -439,7 +439,7 @@ class Graphics : public Object, public DpiHandler {
   }
 
   public: void FillRectangle(const Brush& brush, const RectF& rect) const {
-    ASSERT(drawing_);
+    ASSERT(drawing());
     ASSERT(!!rect);
     render_target().FillRectangle(rect, brush);
   }
