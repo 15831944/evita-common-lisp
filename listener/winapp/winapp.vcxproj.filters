@@ -189,6 +189,9 @@
     <ClCompile Include="vi_PseudoWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vi_Caret.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -369,6 +372,9 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="vi_PseudoWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vi_Caret.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

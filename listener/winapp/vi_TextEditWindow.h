@@ -17,6 +17,7 @@
 #include "./vi_Page.h"
 
 class Buffer;
+class Caret;
 class EditPane;
 class Page;
 class Selection;
@@ -90,6 +91,7 @@ class TextEditWindow
     }
   };
 
+  private: const base::OwnPtr<Caret> caret_;
   protected: DragMode m_eDragMode;
   protected: bool m_fBlink;
   protected: bool m_fHasFocus;
@@ -195,7 +197,6 @@ class TextEditWindow
   public: void Realize(HWND hwnd, const gfx::Graphics& gfx, const Rect& rect);
   public: void Redraw();
   protected: void redraw(bool);
-  protected: void render(const gfx::Graphics&);
   private: void Render();
   public: void Resize(const Rect& rect);
 

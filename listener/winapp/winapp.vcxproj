@@ -273,6 +273,7 @@
     <ClCompile Include="vi_BaseWindow.cpp" />
     <ClCompile Include="vi_Buffer.cpp" />
     <ClCompile Include="vi_BufferListPane.cpp" />
+    <ClCompile Include="vi_Caret.cpp" />
     <ClCompile Include="vi_DialogBox.cpp" />
     <ClCompile Include="vi_EditPane.cpp" />
     <ClCompile Include="vi_FileDialogBox.cpp" />
@@ -336,6 +337,7 @@
     <ClInclude Include="vi_BaseWindow.h" />
     <ClInclude Include="vi_Buffer.h" />
     <ClInclude Include="vi_BufferListPane.h" />
+    <ClInclude Include="vi_Caret.h" />
     <ClInclude Include="vi_CommandWindow.h" />
     <ClInclude Include="vi_defs.h" />
     <ClInclude Include="vi_DialogBox.h" />

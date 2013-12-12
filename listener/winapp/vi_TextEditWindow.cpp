@@ -25,6 +25,7 @@
 #include "./gfx_base.h"
 #include "./vi_Application.h"
 #include "./vi_Buffer.h"
+#include "./vi_Caret.h"
 #include "./vi_EditPane.h"
 #include "./vi_Frame.h"
 #include "./vi_Selection.h"
@@ -37,105 +38,6 @@ uint TranslateKey(uint);
 }
 
 namespace {
-//////////////////////////////////////////////////////////////////////
-//
-// Caret
-//
-// Description:
-// Represents caret in per-thread queue. To blink caret, we must track
-// caret size. If we call CreateCaret, caret doesn't blink.
-//
-class Caret {
-  private: SIZE m_size;
-  private: POINT m_pt;
-  private: HWND m_hwnd;
-  private: bool m_fShow;
-
-  public: Caret()
-    : m_hwnd(nullptr),
-      m_fShow(false) {
-  }
-
-  public: void Destroy() {
-    m_hwnd = nullptr;
-    ::DestroyCaret();
-    #if DEBUG_CARET
-        DEBUG_PRINTF("%p\n", this);
-    #endif // DEBUG_CARET
-    m_size.cx = -1;
-    m_pt.x = -1;
-  }
-
-  // Hide - Hide caret
-  public: void Hide() {
-    if (!m_hwnd)
-      return;
-    if (!m_fShow)
-      return;
-    #if DEBUG_CARET
-      DEBUG_PRINTF("%p\n", this);
-    #endif // DEBUG_CARET
-
-    ::HideCaret(m_hwnd);
-    m_fShow = false;
-  }
-
-  // IsDirty - Returns true if position or size of caret is changed
-  // since last show.
-  public: bool isDirty(HWND hwnd, SIZE size) const {
-    if (m_hwnd != hwnd) {
-      #if DEBUG_CARET
-          DEBUG_PRINTF("m_hwnd\n");
-      #endif
-      return true;
-    }
-
-    if (m_size.cx != size.cx) {
-      #if DEBUG_CARET
-          DEBUG_PRINTF("m_size.cx %d %d\n", m_size.cx, size.cx);
-      #endif
-      return true;
-    }
-
-    if (m_size.cy != size.cy) {
-      #if DEBUG_CARET
-          DEBUG_PRINTF("m_size.cy\n");
-      #endif
-      return true;
-    }
-
-    return false;
-  }
-
-  // Show - Show caret at pt with size.
-  public: void Show(HWND hwnd, SIZE size, POINT pt) {
-    if (isDirty(hwnd, size)) {
-      m_hwnd = hwnd;
-      m_size = size;
-      ::CreateCaret(m_hwnd, nullptr, size.cx, size.cy);
-      #if DEBUG_CARET
-        DEBUG_PRINTF("Create %dx%d\r\n", size.cx, size.cy);
-      #endif // DEBUG_CARET
-    }
-
-    if (m_pt.x != pt.x || m_pt.y != pt.y) {
-      m_pt = pt;
-      ::SetCaretPos(m_pt.x, m_pt.y);
-      #if DEBUG_CARET
-        DEBUG_PRINTF("SetCaretPos (%d, %d)\r\n", pt.x, pt.y);
-      #endif // DEBUG_CARET
-    }
-
-    #if DEBUG_CARET
-      DEBUG_PRINTF("ShowCaret: (%d, %d) %dx%d\n",
-          m_pt.x, m_pt.y, m_size.cx, m_size.cy);
-    #endif // DEBUG_CARET
-    ::ShowCaret(m_hwnd);
-    m_fShow = true;
-  }
-};
-
-Caret g_oCaret;
 
 enum MyTimerId {
   MyTimerId_AutoScroll = 1,
@@ -176,7 +78,8 @@ void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
 }
 
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
-    : m_eDragMode(DragMode_None),
+    : caret_(new Caret()),
+      m_eDragMode(DragMode_None),
       m_fBlink(false),
       m_gfx(nullptr),
       m_lCaretPosn(-1),
@@ -318,7 +221,7 @@ void TextEditWindow::DidKillFocus() {
         show_count_, GetBuffer()->GetName());
   #endif
   ParentClass::DidKillFocus();
-  g_oCaret.Destroy();
+  caret_->Give(*m_gfx);
 }
 
 void TextEditWindow::DidSetFocus() {
@@ -327,6 +230,7 @@ void TextEditWindow::DidSetFocus() {
         show_count_, GetBuffer()->GetName());
   #endif
   ParentClass::DidSetFocus();
+  caret_->Take(*m_gfx);
   s_active_tick += 1;
   m_nActiveTick = s_active_tick;
 }
@@ -912,7 +816,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
     }
   }
 
-  render(*m_gfx);
+  Render();
 
   #if DEBUG_REDRAW
     DEBUG_PRINTF("~~~~~~~~~~ End Page=[%d,%d]\n",
@@ -921,23 +825,12 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
 }
 
 void TextEditWindow::Render() {
-  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-  render(*m_gfx);
-}
-
-void TextEditWindow::render(const gfx::Graphics& gfx) {
   if (show_count_ <= 0)
     return;
 
-  if (has_focus())
-    g_oCaret.Hide();
-
-  if (gfx.drawing()) {
-    m_pPage->Render(gfx);
-  } else {
-    gfx::Graphics::DrawingScope drawing_scope(gfx);
-    m_pPage->Render(gfx);
-  }
+  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+    caret_->Hide(*m_gfx);
+  m_pPage->Render(*m_gfx);
 
   {
     auto const lStart = m_pPage->GetStart();
@@ -948,28 +841,32 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
   if (!has_focus())
     return;
 
-  const auto rect = m_pPage->MapPosnToPoint(gfx, m_lCaretPosn);
+  const auto rect = m_pPage->MapPosnToPoint(*m_gfx, m_lCaretPosn);
   if (!rect)
     return;
-  ASSERT(rect.height() > 0);
-  SIZE size = {
-    max(::GetSystemMetrics(SM_CXBORDER), 2),
-    static_cast<int>(rect.height())
-  };
 
-  POINT pt = {
-    static_cast<int>(rect.left),
-    static_cast<int>(rect.top)
-  };
-
+  auto const caret_width = max(::GetSystemMetrics(SM_CXBORDER), 2.0f);
+  gfx::RectF caret_rect(rect.left_top(),
+                        gfx::SizeF(caret_width,  rect.height()));
   #if SUPPORT_IME
     if (m_fImeTarget) {
-        if (showImeCaret(size, pt))
-          return;
-        DEBUG_PRINTF("showImeCaret failed.\r\n");
+      POINT pt = {
+        static_cast<int>(rect.left),
+        static_cast<int>(rect.top)
+      };
+
+      SIZE size = {
+        static_cast<int>(rect.width()),
+        static_cast<int>(rect.height())
+      };
+
+      if (showImeCaret(size, pt))
+        return;
+      DEBUG_PRINTF("showImeCaret failed.\r\n");
     }
   #endif // SUPPORT_IME
-  g_oCaret.Show(m_hwnd, size, pt);
+
+  caret_->Show(*m_gfx, caret_rect);
 }
 
 void TextEditWindow::Resize(const Rect& rect) {
