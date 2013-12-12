@@ -17,6 +17,7 @@
 #define DEBUG_PAINT _DEBUG
 #define DEBUG_REDRAW 0
 #define DEBUG_RESIZE _DEBUG
+#define DEBUG_SCROLL 0
 #define DEBUG_SHOW_HIDE _DEBUG
 #include "./vi_TextEditWindow.h"
 
@@ -394,7 +395,9 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
 
       // Scroll down until page start goes out to page.
       do {
-        DEBUG_PRINTF("scroll down lStart=%d\n", lStart);
+        #if DEBUG_SCROLL
+          DEBUG_PRINTF("scroll down lStart=%d\n", lStart);
+        #endif
         if (!m_pPage->ScrollDown(*m_gfx))
           break;
       } while (m_pPage->GetEnd() != lStart);
@@ -411,7 +414,9 @@ int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
       auto const lStart = m_pPage->GetEnd();
       if (lStart >= lBufEnd)
         break;
-      DEBUG_PRINTF("scroll up lStart=%d\n", lStart);
+      #if DEBUG_SCROLL
+        DEBUG_PRINTF("scroll up lStart=%d\n", lStart);
+      #endif
       format(*m_gfx, lStart);
     }
 
@@ -427,8 +432,10 @@ Command::KeyBindEntry* TextEditWindow::MapKey(uint nKey) {
 }
 
 void TextEditWindow::MakeSelectionVisible() {
-  DEBUG_PRINTF("%p [%d,%d]\n",
-      this, selection_->GetStart(), selection_->GetEnd());
+  #if DEBUG_CARET
+    DEBUG_PRINTF("%p [%d,%d]\n",
+        this, selection_->GetStart(), selection_->GetEnd());
+  #endif
 
   m_lCaretPosn = -1;
   redraw(true);
