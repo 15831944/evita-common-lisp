@@ -596,11 +596,7 @@ class OwnPtr {
   public: bool operator!=(const T* other) const { return ptr_ != other; }
   public: bool operator==(const T& other) const { return ptr_ == &other; }
   public: bool operator!=(const T& other) const { return ptr_ != &other; }
-  public: void Assign(T& obj) {
-    ASSERT(!ptr_);
-    ptr_ = &obj;
-  }
-  public: T& Detach() {
+  public: T& DeprecatedDetach() {
     auto const ptr = ptr_;
     ptr_ = nullptr;
     return *ptr;

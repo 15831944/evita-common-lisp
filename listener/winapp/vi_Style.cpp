@@ -454,7 +454,7 @@ FontSet* FontSet::Get(const StyleValues* pStyle)
 
         Font* pFont = g_pFontCache->Get(&oLogFont);
         if (!pFont) {
-            pFont = &Font::Create(&oLogFont).Detach();
+            pFont = &Font::Create(&oLogFont).DeprecatedDetach();
             g_pFontCache->Put(pFont);
         }
 
