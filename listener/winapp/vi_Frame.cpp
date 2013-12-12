@@ -470,7 +470,10 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
         margins.cxRightWidth = 0;
         margins.cyBottomHeight = 0;
         margins.cyTopHeight = CompositionState::IsEnabled() ? m_cyTabBand : 0;
-        COM_VERIFY(::DwmExtendFrameIntoClientArea(m_hwnd, &margins));
+        auto const hr = ::DwmExtendFrameIntoClientArea(m_hwnd, &margins);
+        if (FAILED(hr)) {
+          DEBUG_PRINTF("DwmExtendFrameIntoClientArea hr=0x%08X\n", hr);
+        }
       }
       break;
 
