@@ -11,7 +11,7 @@
 //
 #define DEBUG_AUTOSCROLL 0
 #define DEBUG_CARET 0
-#define DEBUG_FOCUS 0
+#define DEBUG_FOCUS _DEBUG
 #define DEBUG_IDLE 0
 #define DEBUG_KEY 0
 #define DEBUG_PAINT _DEBUG
@@ -587,7 +587,8 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
 
     case WM_KILLFOCUS:
       #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_KILLFOCUS\r\n");
+        DEBUG_PRINTF("WM_KILLFOCUS %p focus=%d |%ls|\n",
+            this, m_fHasFocus, GetBuffer()->GetName());
       #endif // DEBUG_FOCUS
 
       m_fHasFocus = false;
@@ -661,7 +662,8 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
 
     case WM_SETFOCUS:
       #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_SETFOCUS %p\n", this);
+        DEBUG_PRINTF("WM_SETFOCUS %p focus=%d |%ls|\n",
+            this, m_fHasFocus, GetBuffer()->GetName());
       #endif // DEBUG_FOCUS
       s_active_tick += 1;
       m_nActiveTick = s_active_tick;
