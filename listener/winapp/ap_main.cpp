@@ -211,7 +211,7 @@ static int MainLoop(EnumArg* pEnumArg) {
 
   // When there is no filename argument, we start lisp.
   if (!frame.GetFirstPane()) {
-    #if USE_LISTENER
+    #if USE_LISTENER && _NDEBUG
       auto const buffer = new ListenerBuffer();
       buffer->Start();
     #else // USE_LISTENER
