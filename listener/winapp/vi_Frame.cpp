@@ -187,6 +187,21 @@ void Frame::DidActivePane(Pane* const pane) {
     TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
 }
 
+void Frame::DidKillFocus() {
+  if (m_pActivePane)
+    m_pActivePane->DidKillFocus();
+}
+
+void Frame::DidSetFocus() {
+  if (!m_pActivePane) {
+    m_pActivePane = m_oPanes.GetFirst();
+    if (!m_pActivePane)
+      return;
+  }
+  Application::Get()->SetActiveFrame(this);
+  m_pActivePane->DidSetFocus();
+}
+
 Pane* Frame::GetActivePane() {
   if (m_pActivePane && m_pActivePane->GetActiveTick())
     return m_pActivePane;
@@ -672,17 +687,6 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       }
       // Ask Windows set cursor for non-client area.
       break;
-
-    case WM_SETFOCUS:
-      if (auto const pPane = GetActivePane()) {
-        #if DEBUG_FOCUS
-            DEBUG_PRINTF("WM_SETFOCUS %p pane=%p (%ls)\n",
-                this, pPane, pPane->GetName());
-        #endif
-        Application::Get()->SetActiveFrame(this);
-        pPane->Activate();
-      }
-      return 0;
 
     case WM_VSCROLL:
       if (auto const pane = GetActivePane())

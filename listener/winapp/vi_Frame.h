@@ -81,6 +81,8 @@ class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
 
   // [D]
   public: void DidActivePane(Pane*);
+  private: virtual void DidKillFocus() override;
+  private: virtual void DidSetFocus() override;
 
   // [G]
   public: Pane* GetActivePane();

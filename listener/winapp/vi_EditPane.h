@@ -81,7 +81,9 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   // [D]
   public: virtual void Destroy() override;
   public: virtual void DidChangeOwnerFrame() override;
-  private: void DidRealizeWindow(const Window&);
+  public: virtual void DidKillFocus() override;
+  public: void DidRealizeWindow(const Window&);
+  private: virtual void DidSetFocus() override;
 
   // [F]
   public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,

@@ -13,7 +13,7 @@
 
 #include "./li_util.h"
 #include "./gfx_base.h"
-#include "./vi_CommandWindow.h"
+#include "./vi_PseudoWindow.h"
 #include "./vi_Page.h"
 
 class Buffer;
@@ -39,10 +39,11 @@ enum DragMode
 // A range contains the start position of window.
 //
 class TextEditWindow
-    : public CommandWindow_<TextEditWindow>,
+    : public CommandWindow_<TextEditWindow, PseudoWindow>,
       public DoubleLinkedNode_<TextEditWindow>,
       public DoubleLinkedNode_<TextEditWindow, Buffer> {
   private: typedef DoubleLinkedNode_<TextEditWindow> WindowItem;
+  private: typedef PseudoWindow ParentClass;
 
   protected: typedef Edit::Range Range;
 
@@ -130,6 +131,8 @@ class TextEditWindow
 
   // [D]
   public: virtual void Destroy() override;
+  public: void DidKillFocus() override;
+  public: void DidSetFocus() override;
 
   // [E]
   public: Posn EndOfLine(Posn);

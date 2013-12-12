@@ -77,6 +77,8 @@ class BaseWindow
 
     // [D]
     public: virtual void Destroy();
+    public: virtual void DidKillFocus() {}
+    public: virtual void DidSetFocus();
 
     // [I]
     public: static int Init();
@@ -104,6 +106,8 @@ class BaseWindow
     {
         return ::SendMessage(m_hwnd, uMsg, wParam, lParam);
     } // SendMessage
+
+    public: virtual void SetFocus();
 
     // [W]
     static LRESULT CALLBACK windowProc(

@@ -16,7 +16,8 @@ extern HINSTANCE g_hResource;
 
 ATOM BaseWindow::sm_atomWndClass;
 BaseWindow* BaseWindow::sm_pCreateWnd;
-
+static BaseWindow* s_focus_pseudo_window;
+static BaseWindow* s_set_focus_caller;
 
 BaseWindow::~BaseWindow()
 {
@@ -57,9 +58,31 @@ void BaseWindow::Destroy() {
   ::DestroyWindow(m_hwnd);
 }
 
+void BaseWindow::DidSetFocus() {
+  DEBUG_PRINTF("%p\n", this);
+  s_focus_pseudo_window = this;
+}
+
 BaseWindow* BaseWindow::MapHwndToWindow(HWND const hwnd) {
   return reinterpret_cast<BaseWindow*>(
     static_cast<LONG_PTR>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA)));
+}
+
+void BaseWindow::SetFocus() {
+  ASSERT(m_hwnd);
+  //ASSERT(!s_set_focus_caller);
+  if (auto const focus_window = s_focus_pseudo_window) {
+    s_focus_pseudo_window = nullptr;
+    focus_window->DidKillFocus();
+  }
+
+  if (::GetFocus() == m_hwnd) {
+    DidSetFocus();
+    return;
+  }
+
+  s_set_focus_caller = this;
+  ::SetFocus(m_hwnd);
 }
 
 // BaseWindow::windowProc
@@ -81,11 +104,32 @@ LRESULT CALLBACK BaseWindow::windowProc(
             static_cast<LONG>(reinterpret_cast<LONG_PTR>(pWnd)) );
     } // if NULL == pWnd
 
-    if (WM_NCDESTROY == uMsg)
-    {
+    switch (uMsg) {
+    case WM_KILLFOCUS:
+      if (auto const window = s_focus_pseudo_window) {
+        s_focus_pseudo_window = nullptr;
+        window->DidKillFocus();
+        return 0;
+      }
+      pWnd->DidKillFocus();
+      return 0;
+
+    case WM_NCDESTROY:
         pWnd->m_hwnd = NULL;
         delete pWnd;
         return 0;
+
+    case WM_SETFOCUS: {
+      if (auto const caller = s_set_focus_caller) {
+        s_set_focus_caller = nullptr;
+        caller->DidSetFocus();
+        s_focus_pseudo_window = caller;
+      } else {
+        pWnd->DidSetFocus();
+        s_focus_pseudo_window = nullptr;
+      }
+      return 0;
+    }
     }
 
     return pWnd->onMessage(uMsg, wParam, lParam);

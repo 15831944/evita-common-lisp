@@ -178,7 +178,6 @@ void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
     : m_eDragMode(DragMode_None),
       m_fBlink(false),
-      m_fHasFocus(false),
       m_gfx(nullptr),
       m_lCaretPosn(-1),
       m_nActiveTick(0),
@@ -199,13 +198,11 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
 }
 
 TextEditWindow::~TextEditWindow() {
-  // TODO: We should not use m_hwnd in TextEditWindow.
-  m_hwnd = nullptr;
   GetSelection()->GetBuffer()->RemoveWindow(this);
 }
 
 void TextEditWindow::Activate() {
-  m_fHasFocus = true;
+  SetFocus();
 }
 
 void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
@@ -313,6 +310,25 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
 void TextEditWindow::Destroy() {
   GetHost<EditPane>()->WillDestroyWindow(*this);
   delete this;
+}
+
+void TextEditWindow::DidKillFocus() {
+  #if DEBUG_FOCUS
+    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
+        show_count_, GetBuffer()->GetName());
+  #endif
+  ParentClass::DidKillFocus();
+  g_oCaret.Destroy();
+}
+
+void TextEditWindow::DidSetFocus() {
+  #if DEBUG_FOCUS
+    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
+        show_count_, GetBuffer()->GetName());
+  #endif
+  ParentClass::DidSetFocus();
+  s_active_tick += 1;
+  m_nActiveTick = s_active_tick;
 }
 
 Posn TextEditWindow::EndOfLine(Posn lPosn) {
@@ -480,17 +496,19 @@ bool TextEditWindow::OnIdle(uint count) {
 
 void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
   auto const lPosn = MapPointToPosn(point);
+  #if DEBUG_FOCUS
+    DEBUG_PRINTF("%p (%d,%d) focus=%d show=%d p=%d |%ls|\n", this,
+        point.x, point.y,
+        has_focus(), show_count_, lPosn, GetBuffer()->GetName());
+  #endif
+
   if (lPosn < 0) {
     // Click outside window. We do nothing.
     return;
   }
 
-  #if DEBUG_FOCUS
-    DEBUG_PRINTF("WM_LBUTTONDOWN: p=%d\r\n", lPosn);
-  #endif
-
-  if (!m_fHasFocus) {
-    m_fHasFocus = true;
+  if (!has_focus()) {
+    SetFocus();
     if (lPosn >= GetSelection()->GetStart() &&
         lPosn < GetSelection()->GetEnd()) {
      return;
@@ -592,16 +610,6 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
       break;
     }
 
-    case WM_KILLFOCUS:
-      #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_KILLFOCUS %p focus=%d |%ls|\n",
-            this, m_fHasFocus, GetBuffer()->GetName());
-      #endif // DEBUG_FOCUS
-
-      m_fHasFocus = false;
-      g_oCaret.Destroy();
-      break;
-
     case WM_LBUTTONDBLCLK: {
       Point pt(MAKEPOINTS(lParam));
       auto const lPosn = MapPointToPosn(pt);
@@ -666,16 +674,6 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
         return 1;
       }
       break;
-
-    case WM_SETFOCUS:
-      #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_SETFOCUS %p focus=%d |%ls|\n",
-            this, m_fHasFocus, GetBuffer()->GetName());
-      #endif // DEBUG_FOCUS
-      s_active_tick += 1;
-      m_nActiveTick = s_active_tick;
-      m_fHasFocus = true;
-      return 0;
 
     case WM_SIZE:
       #if DEBUG_RESIZE
@@ -824,14 +822,15 @@ void TextEditWindow::Realize(HWND hwnd, const gfx::Graphics& gfx,
                              const Rect& rect) {
   ASSERT(!m_gfx);
   ASSERT(!show_count_);
-  m_hwnd = hwnd;
+  set_owner_window(hwnd);
   m_gfx = &gfx;
   show_count_ = 1;
   Resize(rect);
+  GetHost<EditPane>()->DidRealizeWindow(*this);
 }
 
 void TextEditWindow::Redraw() {
-  auto fSelectionActive = m_fHasFocus;
+  auto fSelectionActive = has_focus();
 
   if (g_hwndActiveDialog) {
     auto const edit_pane = Application::Get()->GetActiveFrame()->
@@ -930,7 +929,7 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
   if (show_count_ <= 0)
     return;
 
-  if (m_fHasFocus)
+  if (has_focus())
     g_oCaret.Hide();
 
   if (gfx.drawing()) {
@@ -946,7 +945,7 @@ void TextEditWindow::render(const gfx::Graphics& gfx) {
     updateScrollBar();
   }
 
-  if (!m_fHasFocus)
+  if (!has_focus())
     return;
 
   const auto rect = m_pPage->MapPosnToPoint(gfx, m_lCaretPosn);
@@ -1001,11 +1000,12 @@ void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
 
 void TextEditWindow::Show() {
   #if DEBUG_SHOW_HIDE
-    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
-                 GetBuffer()->GetName());
+    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
+        show_count_, GetBuffer()->GetName());
   #endif
   ++show_count_;
   if (show_count_ == 1) {
+    m_pPage->Reset();
     gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
     Redraw();
   }

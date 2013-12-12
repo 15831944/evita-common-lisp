@@ -284,6 +284,7 @@
     <ClCompile Include="vi_Listener.cpp" />
     <ClCompile Include="vi_Page.cpp" />
     <ClCompile Include="vi_Pane.cpp" />
+    <ClCompile Include="vi_PseudoWindow.cpp" />
     <ClCompile Include="vi_Selection.cpp" />
     <ClCompile Include="vi_Style.cpp" />
     <ClCompile Include="vi_TextEditWindow.cpp" />
@@ -348,6 +349,7 @@
     <ClInclude Include="vi_Listener.h" />
     <ClInclude Include="vi_Page.h" />
     <ClInclude Include="vi_Pane.h" />
+    <ClInclude Include="vi_PseudoWindow.h" />
     <ClInclude Include="vi_Selection.h" />
     <ClInclude Include="vi_Style.h" />
     <ClInclude Include="vi_TextEditWindow.h" />
