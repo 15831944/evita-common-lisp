@@ -1157,7 +1157,7 @@ Posn Page::MapPointToPosn(const gfx::Graphics& gfx, gfx::PointF pt) const {
   if (pt.y >= m_oFormatBuf.bottom())
     return GetEnd();
 
-  auto yLine = m_oFormatBuf.left();
+  auto yLine = m_oFormatBuf.top();
   for (const auto& line: m_oFormatBuf.lines()) {
     auto const y = pt.y - yLine;
     yLine += line.GetHeight();
