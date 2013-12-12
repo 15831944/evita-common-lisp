@@ -81,8 +81,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   // [D]
   public: virtual void Destroy() override;
   public: virtual void DidChangeOwnerFrame() override;
-  public: virtual bool DidCreateHwnd(HWND hwnd) override;
-  public: virtual bool DidDestroyHwnd(HWND hwnd) override;
+  private: void DidRealizeWindow(const Window&);
 
   // [F]
   public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,
@@ -132,6 +131,9 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   // [U]
   public: virtual void UpdateStatusBar() override;
+
+  // [W]
+  public: void WillDestroyWindow(const TextEditWindow&);
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_EditPane_h)

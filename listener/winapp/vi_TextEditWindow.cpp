@@ -199,7 +199,9 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
 }
 
 TextEditWindow::~TextEditWindow() {
-    GetSelection()->GetBuffer()->RemoveWindow(this);
+  // TODO: We should not use m_hwnd in TextEditWindow.
+  m_hwnd = nullptr;
+  GetSelection()->GetBuffer()->RemoveWindow(this);
 }
 
 void TextEditWindow::Activate() {
@@ -306,6 +308,11 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
     default:
       return GetBuffer()->ComputeMotion(eUnit, n, inout_lPosn);
   }
+}
+
+void TextEditWindow::Destroy() {
+  GetHost<EditPane>()->WillDestroyWindow(*this);
+  delete this;
 }
 
 Posn TextEditWindow::EndOfLine(Posn lPosn) {

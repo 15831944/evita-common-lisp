@@ -69,9 +69,9 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: virtual void DidChangeOwnerFrame() = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(const gfx::Graphics&) { }
+    public: virtual LeafBox* FindLeafBoxFromWindow(const Window&) const = 0;
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
     public: virtual LeafBox* GetFirstLeafBox() const = 0;
-    public: virtual LeafBox* GetLeafBox(HWND) const = 0;
 
     public: virtual HitTestResult HitTest(Point) const = 0;
     public: virtual void Hide() {}
@@ -107,7 +107,8 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual void MoveSplitter(const Point&, Box&) = 0;
   public: virtual LeafBox* GetActiveLeafBox() const override final;
   public: virtual LeafBox* GetFirstLeafBox() const override final;
-  public: virtual LeafBox* GetLeafBox(HWND) const override final;
+  public: virtual LeafBox* FindLeafBoxFromWindow(
+      const Window&) const override final;
 
   // [H]
   public: virtual void Hide() override {
@@ -163,7 +164,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   // [G]
   public: virtual LeafBox* GetActiveLeafBox() const override;
   public: virtual LeafBox* GetFirstLeafBox() const override;
-  public: virtual LeafBox* GetLeafBox(HWND) const override;
+  public: virtual LeafBox* FindLeafBoxFromWindow(const Window&) const override;
   public: Window* GetWindow() const { return m_pWindow; }
 
   // [H]
@@ -653,10 +654,11 @@ void EditPane::LayoutBox::Destroy() {
   }
 }
 
-EditPane::LeafBox* EditPane::LayoutBox::GetLeafBox(HWND hwnd) const {
+EditPane::LeafBox* EditPane::LayoutBox::FindLeafBoxFromWindow(
+    const Window& window) const {
   ASSERT(!is_removed());
   foreach (BoxList::Enum, it, boxes_) {
-    if (auto const box = it->GetLeafBox(hwnd)) {
+    if (auto const box = it->FindLeafBoxFromWindow(window)) {
       return box;
     }
   }
@@ -810,8 +812,9 @@ EditPane::LeafBox* EditPane::LeafBox::GetFirstLeafBox() const {
   return const_cast<LeafBox*>(this);
 }
 
-EditPane::LeafBox* EditPane::LeafBox::GetLeafBox(HWND hwnd) const {
-    return *GetWindow() == hwnd ? const_cast<LeafBox*>(this) : nullptr;
+EditPane::LeafBox* EditPane::LeafBox::FindLeafBoxFromWindow(
+    const Window& window) const {
+  return window == m_pWindow ? const_cast<LeafBox*>(this) : nullptr;
 }
 
 EditPane::HitTestResult EditPane::LeafBox::HitTest(Point pt) const {
@@ -859,6 +862,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
   m_pWindow->Realize(*edit_pane->GetFrame(), edit_pane_->GetFrame()->gfx(),
                      window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
+  edit_pane_->DidRealizeWindow(*m_pWindow);
   SetRect(rect);
 }
 
@@ -1264,10 +1268,10 @@ void EditPane::DidChangeOwnerFrame() {
  }
 }
 
-bool EditPane::DidCreateHwnd(HWND hwnd) {
-  auto const box = root_box_->GetLeafBox(hwnd);
+void EditPane::DidRealizeWindow(const Window& window) {
+  auto const box = root_box_->FindLeafBoxFromWindow(window);
   if (!box)
-    return false;
+    return;
 
   auto const next_leaf_box = box->GetNext() ?
       box->GetNext()->GetFirstLeafBox() : nullptr;
@@ -1277,29 +1281,7 @@ bool EditPane::DidCreateHwnd(HWND hwnd) {
     m_oWindows.InsertBefore(box->GetWindow(), next_window);
   else
     m_oWindows.Append(box->GetWindow());
-  return true;
-}
-
-bool EditPane::DidDestroyHwnd(HWND hwnd) {
-  auto const box = root_box_->GetLeafBox(hwnd);
-  if (!box)
-    return false;
-
-  DEBUG_PRINTF("box=%p\n", box);
-  m_oWindows.Delete(box->GetWindow());
-  box->DetachWindow();
-  auto const outer = box->outer();
-  outer->RemoveBox(*box);
-  if (m_eState != State_Realized)
-    return true;
-  if (root_box_->CountLeafBox())
-    return true;
-  frame().WillDestroyPane(this);
-
-  // There is no window in this pane. So, we delete this pane.
-  m_eState = State_Destroyed;
-  root_box_->Destroy();
-  return true;
+  return;
 }
 
 Pane::MessageResult EditPane::ForwardMessage(uint message, WPARAM wParam,
@@ -1611,4 +1593,25 @@ void EditPane::UpdateStatusBar() {
       StatusBarPart_Insert,
       pBuffer->IsReadOnly() ? L"R/O" : L"INS",
       pBuffer->GetStart());
+}
+
+void EditPane::WillDestroyWindow(const Window& window) {
+  auto const box = root_box_->FindLeafBoxFromWindow(window);
+  if (!box)
+    return;
+
+  DEBUG_PRINTF("box=%p\n", box);
+  m_oWindows.Delete(box->GetWindow());
+  box->DetachWindow();
+  auto const outer = box->outer();
+  outer->RemoveBox(*box);
+  if (m_eState != State_Realized)
+    return;
+  if (root_box_->CountLeafBox())
+    return;
+  frame().WillDestroyPane(this);
+
+  // There is no window in this pane. So, we delete this pane.
+  m_eState = State_Destroyed;
+  root_box_->Destroy();
 }

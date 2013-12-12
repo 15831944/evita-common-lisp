@@ -17,6 +17,7 @@
 #include "./vi_Page.h"
 
 class Buffer;
+class EditPane;
 class Page;
 class Selection;
 
@@ -25,7 +26,6 @@ enum DragMode
     DragMode_None,
     DragMode_Selection,
 }; // DragMode
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -127,6 +127,9 @@ class TextEditWindow
   // [C]
   public: Count ComputeMotion(Unit, Count, const gfx::PointF&, Posn*);
   protected: Posn computeGoalX(float, Posn);
+
+  // [D]
+  public: virtual void Destroy() override;
 
   // [E]
   public: Posn EndOfLine(Posn);
