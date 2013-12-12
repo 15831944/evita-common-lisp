@@ -1809,7 +1809,8 @@ void Page::Line::Render(const gfx::Graphics& gfx,
 }
 
 void Page::Line::Reset() {
-  DoubleLinkedNode_::Reset();
+  ASSERT(!GetNext());
+  ASSERT(!GetPrev());
   cells_.DeleteAll();
   m_iHeight = 0;
   m_iWidth = 0;

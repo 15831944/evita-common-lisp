@@ -116,7 +116,6 @@ class DoubleLinkedNode_
 
     public: Item_* GetNext() const { return m_pNext; }
     public: Item_* GetPrev() const { return m_pPrev; }
-    protected: void Reset() { m_pNext = m_pPrev = nullptr; }
 }; // DoubleLinkedNode_
 
 
