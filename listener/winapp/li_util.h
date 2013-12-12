@@ -579,6 +579,13 @@ class OwnPtr {
   public: T& operator*() const { ASSERT(ptr_); return *ptr_; }
   public: operator bool() const { return ptr_; }
   public: bool operator!() const { return !ptr_; }
+  public: OwnPtr& operator=(OwnPtr&) = delete;
+  public: OwnPtr& operator=(OwnPtr&& other) {
+    delete ptr_;
+    ptr_ = other.ptr_;
+    other.ptr_ = nullptr;
+    return *this;
+  }
   public: bool operator==(const OwnPtr<T>& other) const {
     return ptr_ == other.ptr_;
   }
