@@ -972,19 +972,21 @@ class TabBand : public Element {
 
   // [D]
   private: virtual void Draw(const gfx::Graphics& gfx) const override {
-    gfx::Graphics::DrawingScope scope(gfx);
-    gfx->SetTransform(D2D1::IdentityMatrix());
-    gfx->Clear(gfx::sysColor(COLOR_3DFACE, m_compositionEnabled ? 0.0f : 1.0f));
+    do {
+      gfx.BeginDraw();
+      gfx->SetTransform(D2D1::IdentityMatrix());
+      gfx->Clear(gfx::sysColor(COLOR_3DFACE,
+                               m_compositionEnabled ? 0.0f : 1.0f));
 
-    foreach (Elements::Enum, oEnum, &m_oElements) {
-      auto const element = oEnum.Get();
-      if (element->IsShow()) {
-        element->Draw(gfx);
+      foreach (Elements::Enum, oEnum, &m_oElements) {
+        auto const element = oEnum.Get();
+        if (element->IsShow())
+          element->Draw(gfx);
       }
-    }
 
-    if (m_pInsertBefore)
-        drawInsertMarker(m_gfx, m_pInsertBefore->GetRect());
+      if (m_pInsertBefore)
+          drawInsertMarker(m_gfx, m_pInsertBefore->GetRect());
+    } while (!const_cast<gfx::Graphics&>(gfx).EndDraw());
   }
 
   private: static void drawInsertMarker(const gfx::Graphics& gfx, RECT* prc) {
