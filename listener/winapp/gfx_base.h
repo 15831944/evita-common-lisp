@@ -334,22 +334,20 @@ class TextLayout : public SimpleObject_<IDWriteTextLayout> {
 };
 
 class Graphics : public Object, public DpiHandler {
-  private: ScopedRefCount_<FactorySet> factory_set_;
-  private: base::ComPtr<ID2D1HwndRenderTarget> render_target_;
-  private: mutable void* work_;
   private: mutable bool drawing_;
+  private: ScopedRefCount_<FactorySet> factory_set_;
+  private: HWND hwnd_;
+  private: ID2D1HwndRenderTarget* render_target_;
+  private: mutable void* work_;
 
   public: class DrawingScope {
     private: const Graphics& gfx_;
     public: DrawingScope(const Graphics& gfx) : gfx_(gfx) {
-      ASSERT(!gfx.drawing_);
-      gfx_.drawing_ = true;
-      gfx_->BeginDraw();
+      gfx_.BeginDraw();
     }
     public: ~DrawingScope() {
-      ASSERT(gfx_.drawing_);
-      COM_VERIFY(gfx_->EndDraw());
-      gfx_.drawing_ = false;
+      // TODO: DrawingScope should take mutable Graphics.
+      const_cast<Graphics&>(gfx_).EndDraw();
     }
     DISALLOW_COPY_AND_ASSIGN(DrawingScope);
   };
@@ -378,6 +376,9 @@ class Graphics : public Object, public DpiHandler {
     return reinterpret_cast<T*>(work_); 
   }
   public: void set_work(void* ptr) const { work_ = ptr; }
+
+  // [B]
+  public: void BeginDraw() const;
 
   // [D]
   public: void DrawLine(const Brush& brush, int sx, int sy, int ex, int ey,
@@ -418,6 +419,10 @@ class Graphics : public Object, public DpiHandler {
     render_target().DrawText(pwch, cwch, text_format, rect, brush);
   }
 
+  // [E]
+  // Returns true if succeeded.
+  public: bool EndDraw();
+
   // [F]
   public: void FillRectangle(const Brush& brush, int left, int top,
                              int right, int bottom) const {
@@ -442,9 +447,10 @@ class Graphics : public Object, public DpiHandler {
   public: void Flush() const;
 
   // [I]
-  public: void Init(HWND hwn);
+  public: void Init(HWND hwnd);
 
   // [R]
+  private: void Reinitialize();
   public: void Resize(const RECT& rc) const;
 };
 

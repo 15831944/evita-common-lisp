@@ -283,11 +283,40 @@ FontFace::FontFace(const char16* family_name)
 //
 Graphics::Graphics()
     : factory_set_(FactorySet::instance()),
+      hwnd_(nullptr),
+      render_target_(nullptr),
       work_(nullptr),
       drawing_(false) {
 }
 
 Graphics::~Graphics() {
+  if (render_target_)
+    render_target_->Release();
+}
+
+void Graphics::BeginDraw() const {
+  ASSERT(!drawing_);
+  ASSERT(render_target_);
+  render_target_->BeginDraw();
+  drawing_ = true;
+}
+
+bool Graphics::EndDraw() {
+  ASSERT(drawing_);
+  ASSERT(render_target_);
+  drawing_ = false;
+  auto const hr = render_target_->EndDraw();
+  if (SUCCEEDED(hr))
+    return true;
+  if (hr == D2DERR_RECREATE_TARGET) {
+    Debugger::Printf("Got D2DERR_RECREATE_TARGET\n", hr);
+  } else {
+    Debugger::Printf("ID2D1RenderTarget::EndDraw failed hr=0x%0X\n", hr);
+  }
+  render_target_->Release();
+  const_cast<Graphics*>(this)->render_target_ = nullptr;
+  const_cast<Graphics*>(this)->Reinitialize();
+  return false;
 }
 
 void Graphics::Flush() const {
@@ -298,8 +327,15 @@ void Graphics::Flush() const {
 }
 
 void Graphics::Init(HWND hwnd) {
+  ASSERT(!hwnd_);
+  hwnd_ = hwnd;
+  Reinitialize();
+}
+
+void Graphics::Reinitialize() {
+  ASSERT(!render_target_);
   RECT rc;
-  ::GetClientRect(hwnd, &rc);
+  ::GetClientRect(hwnd_, &rc);
   auto const pixel_format = D2D1::PixelFormat(
       DXGI_FORMAT_B8G8R8A8_UNORM,
       D2D1_ALPHA_MODE_PREMULTIPLIED);
@@ -307,7 +343,7 @@ void Graphics::Init(HWND hwnd) {
   COM_VERIFY(FactorySet::d2d1().CreateHwndRenderTarget(
       D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
                                    pixel_format),
-      D2D1::HwndRenderTargetProperties(hwnd, size,
+      D2D1::HwndRenderTargetProperties(hwnd_, size,
                                        D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS),
       &render_target_));
   SizeF dpi;
