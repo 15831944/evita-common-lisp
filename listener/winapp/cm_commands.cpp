@@ -710,7 +710,7 @@ static void newFile(const Context* pCtx, bool fNewFrame)
     else if (NULL != pCtx->GetSelection())
     {
         oParam.SetDirectory(pCtx->GetSelection()->GetBuffer()->GetFileName());
-        oParam.m_hwndOwner = *pCtx->GetSelection()->GetWindow();
+        oParam.m_hwndOwner = pCtx->GetSelection()->GetWindow()->AssociatedHwnd();
 
         FileDialogBox oDialog;
         if (! oDialog.GetSaveFileName(&oParam))
@@ -804,7 +804,7 @@ DEFCOMMAND(NewFrameAndClose)
         pSelection->GetStart(),
         pSelection->GetEnd() );
 
-    ::DestroyWindow(*pSelection->GetWindow());
+    pSelection->GetWindow()->Destroy();
 
     pWindow->MakeSelectionVisible();
     pPane->Activate();
@@ -931,7 +931,7 @@ static void openFile(const Context* pCtx, bool fNewFrame)
     if (NULL != pSelection)
     {
         oParam.SetDirectory(pSelection->GetBuffer()->GetFileName());
-        oParam.m_hwndOwner = *pSelection->GetWindow();
+        oParam.m_hwndOwner = pSelection->GetWindow()->AssociatedHwnd();
     }
     else
     {

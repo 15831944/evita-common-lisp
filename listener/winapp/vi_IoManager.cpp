@@ -237,7 +237,7 @@ IoManager::InsertString(
 // IoManager::onMessage
 //
 LRESULT
-IoManager::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+IoManager::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -322,7 +322,7 @@ IoManager::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
     } // switch message
 
-    return ::DefWindowProc(m_hwnd, uMsg, wParam, lParam);
+    return DefWindowProc(uMsg, wParam, lParam);
 } // IoManager::onMessage
 
 
@@ -332,7 +332,7 @@ IoManager::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 //
 void IoManager::Realize()
 {
-    CreateWindowEx(0, NULL, 0, HWND_MESSAGE);
+    CreateWindowEx(0, 0, HWND_MESSAGE, Rect());
     ASSERT(NULL != *this);
 } // IoManager::Realize
 
@@ -368,5 +368,5 @@ void IoManager::visitFile(const char16* pwsz)
     }
 
     pPane->Activate();
-    ::SetForegroundWindow(*pPane->GetFrame());
+    ::SetForegroundWindow(pPane->AssociatedHwnd());
 } // IoManager::visitFile

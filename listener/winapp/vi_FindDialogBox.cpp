@@ -415,7 +415,7 @@ INT_PTR FindDialogBox::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
             DEBUG_PRINTF("WM_WINDOWPOSCHANGED: %d %p SWP_HIDEWINDOW\n",
                 ::GetTickCount(), this );
             //::SetActiveWindow(*Application::Get()->GetActiveFrame());
-            ::SetFocus(*Application::Get()->GetActiveFrame()->GetActivePane());
+            Application::Get()->GetActiveFrame()->GetActivePane()->SetFocus();
             return TRUE;
         }
         break;

@@ -13,7 +13,7 @@
 
 #include "./li_util.h"
 #include "./gfx_base.h"
-#include "./vi_PseudoWindow.h"
+#include "./vi_CommandWindow.h"
 #include "./vi_Page.h"
 
 class Buffer;
@@ -40,11 +40,11 @@ enum DragMode
 // A range contains the start position of window.
 //
 class TextEditWindow
-    : public CommandWindow_<TextEditWindow, PseudoWindow>,
+    : public CommandWindow_<TextEditWindow>,
       public DoubleLinkedNode_<TextEditWindow>,
       public DoubleLinkedNode_<TextEditWindow, Buffer> {
   private: typedef DoubleLinkedNode_<TextEditWindow> WindowItem;
-  private: typedef PseudoWindow ParentClass;
+  private: typedef CommandWindow ParentClass;
 
   protected: typedef Edit::Range Range;
 
@@ -83,6 +83,8 @@ class TextEditWindow
       m_hwnd = hwnd;
       m_nBar = nBar;
     }
+
+    void ShowWindow(int) const;
 
     void SetInfo(SCROLLINFO* pInfo, bool fRedraw) {
       if (!m_hwnd)
@@ -132,9 +134,10 @@ class TextEditWindow
   protected: Posn computeGoalX(float, Posn);
 
   // [D]
-  public: virtual void Destroy() override;
-  public: void DidKillFocus() override;
-  public: void DidSetFocus() override;
+  private: void DidHide();
+  private: void DidKillFocus() override;
+  private: void DidSetFocus() override;
+  private: void DidShow();
 
   // [E]
   public: Posn EndOfLine(Posn);
@@ -142,8 +145,6 @@ class TextEditWindow
 
   // [F]
   protected: void format(const gfx::Graphics&, Posn);
-  public: MessageResult ForwardMessage(uint message, WPARAM wParam, 
-                                       LPARAM lParam);
 
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
@@ -174,7 +175,6 @@ class TextEditWindow
 
   // [H]
   public: bool HasFocus() const { return m_fHasFocus; }
-  public: void Hide();
 
   // [L]
   public: int LargeScroll(int, int, bool = true);
@@ -187,14 +187,15 @@ class TextEditWindow
 
   // [O]
   public: virtual bool OnIdle(uint);
+  private: virtual LRESULT OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam);
   public: void OnLeftButtonDown(uint flags, const Point&);
   public: void OnLeftButtonUp(uint flags, const Point&);
-  protected: virtual LRESULT onMessage(UINT, WPARAM, LPARAM);
   public: void OnMouseMove(uint flags, const Point&);
   protected: void onVScroll(uint);
 
   // [R]
-  public: void Realize(HWND hwnd, const gfx::Graphics& gfx, const Rect& rect);
+  public: void Realize(const widgets::ContainerWidget& container,
+                       const gfx::Graphics& gfx, const Rect& rect);
   public: void Redraw();
   protected: void redraw(bool);
   private: void Render();

@@ -69,13 +69,12 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: virtual void DidChangeOwnerFrame() = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(const gfx::Graphics&) { }
-    public: virtual LeafBox* FindLeafBoxFromWindow(
+    public: virtual LeafBox* FindLeafBoxFromWidget(
         const Widget&) const = 0;
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
     public: virtual LeafBox* GetFirstLeafBox() const = 0;
 
     public: virtual HitTestResult HitTest(Point) const = 0;
-    public: virtual void Hide() {}
 
     public: virtual bool IsLeafBox() const = 0;
 
@@ -86,7 +85,6 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: void Removed();
 
     public: virtual void SetRect(const Rect&);
-    public: virtual void Show() {}
 
     DISALLOW_COPY_AND_ASSIGN(Box);
 };
@@ -108,14 +106,8 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual void MoveSplitter(const Point&, Box&) = 0;
   public: virtual LeafBox* GetActiveLeafBox() const override final;
   public: virtual LeafBox* GetFirstLeafBox() const override final;
-  public: virtual LeafBox* FindLeafBoxFromWindow(
+  public: virtual LeafBox* FindLeafBoxFromWidget(
       const Widget&) const override final;
-
-  // [H]
-  public: virtual void Hide() override {
-    for (auto& box: boxes_)
-      box.Hide();
-  }
 
   public: virtual bool IsLeafBox() const override final { return false; }
   public: bool IsSingle() const;
@@ -128,11 +120,6 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual LeafBox& Split(Box&, int) = 0;
 
   public: virtual void StopSplitter(const Point&, Box&) = 0;
-
-  public: virtual void Show() override {
-    for (auto& box: boxes_)
-      box.Show();
-  }
 
   // [U]
   public: void UpdateSplitters();
@@ -165,19 +152,13 @@ class EditPane::LeafBox final : public EditPane::Box {
   // [G]
   public: virtual LeafBox* GetActiveLeafBox() const override;
   public: virtual LeafBox* GetFirstLeafBox() const override;
-  public: virtual LeafBox* FindLeafBoxFromWindow(
+  public: virtual LeafBox* FindLeafBoxFromWidget(
       const Widget&) const override;
   public: Window* GetWindow() const { return m_pWindow; }
 
   // [H]
   private: bool HasSibling() const { return GetNext() || GetPrev(); }
   public: virtual HitTestResult HitTest(Point) const override;
-
-  public: virtual void Hide() {
-    if (m_hwndVScrollBar)
-      ::ShowWindow(m_hwndVScrollBar, SW_HIDE);
-    m_pWindow->Hide();
-  }
 
   // [I]
   public: virtual bool IsLeafBox() const override final { return true; }
@@ -191,12 +172,6 @@ class EditPane::LeafBox final : public EditPane::Box {
 
   // [S]
   public: virtual void SetRect(const Rect&) override;
-
-  public: virtual void Show() {
-    if (m_hwndVScrollBar)
-      ::ShowWindow(m_hwndVScrollBar, SW_SHOW);
-    m_pWindow->Show();
-  }
 };
 
 class EditPane::HorizontalLayoutBox final : public EditPane::LayoutBox {
@@ -656,11 +631,11 @@ void EditPane::LayoutBox::Destroy() {
   }
 }
 
-EditPane::LeafBox* EditPane::LayoutBox::FindLeafBoxFromWindow(
+EditPane::LeafBox* EditPane::LayoutBox::FindLeafBoxFromWidget(
     const Widget& window) const {
   ASSERT(!is_removed());
   foreach (BoxList::Enum, it, boxes_) {
-    if (auto const box = it->FindLeafBoxFromWindow(window)) {
+    if (auto const box = it->FindLeafBoxFromWidget(window)) {
       return box;
     }
   }
@@ -736,7 +711,7 @@ void EditPane::LayoutBox::Replace(Box& new_box, Box& old_box) {
 }
 
 void EditPane::LayoutBox::UpdateSplitters() {
-  if (is_removed() || !edit_pane_->is_showed())
+  if (is_removed() || !edit_pane_->is_showing())
     return;
   auto& gfx = edit_pane_->frame().gfx();
   gfx::Graphics::DrawingScope drawing_scope(gfx);
@@ -771,9 +746,11 @@ void EditPane::LeafBox::Destroy() {
 }
 
 void EditPane::LeafBox::DidChangeOwnerFrame() {
+#if 0
   if (m_hwndVScrollBar)
     ::SetParent(m_hwndVScrollBar, edit_pane_->frame());
   ::SetParent(*m_pWindow, edit_pane_->frame());
+#endif
 }
 
 void EditPane::LeafBox::DetachWindow() {
@@ -814,7 +791,7 @@ EditPane::LeafBox* EditPane::LeafBox::GetFirstLeafBox() const {
   return const_cast<LeafBox*>(this);
 }
 
-EditPane::LeafBox* EditPane::LeafBox::FindLeafBoxFromWindow(
+EditPane::LeafBox* EditPane::LeafBox::FindLeafBoxFromWidget(
     const Widget& window) const {
   return window == m_pWindow ? const_cast<LeafBox*>(this) : nullptr;
 }
@@ -852,7 +829,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
         nullptr, // title
         WS_CHILD | WS_VISIBLE | SBS_VERT,
         rect.left, rect.top, rect.width(), rect.height(),
-        edit_pane->frame(),
+        edit_pane->AssociatedHwnd(),
         nullptr, // menu
         g_hInstance,
         nullptr);
@@ -861,8 +838,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
                      reinterpret_cast<LONG_PTR>(this));
 
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
-  m_pWindow->Realize(*edit_pane->GetFrame(), edit_pane_->GetFrame()->gfx(),
-                     window_rect);
+  m_pWindow->Realize(*edit_pane, edit_pane_->GetFrame()->gfx(), window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
   SetRect(rect);
 }
@@ -1224,8 +1200,7 @@ void EditPane::SplitterController::Stop() {
 EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
       root_box_(*new VerticalLayoutBox(this, nullptr)),
-      splitter_controller_(new SplitterController()),
-      showed_(false) {
+      splitter_controller_(new SplitterController()) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
   root_box_->Add(*box);
@@ -1254,30 +1229,24 @@ void EditPane::CloseAllBut(Window* window) {
   root_box_->CloseAllBut(window);
 }
 
-void EditPane::Destroy() {
-  root_box_->Destroy();
-}
-
 void EditPane::DidChangeOwnerFrame() {
  root_box_->DidChangeOwnerFrame();
  auto const rect = frame().GetPaneRect();
- if (showed_) {
+ if (is_showing()) {
    gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
-   Resize(rect);
+   ResizeTo(rect);
  } else {
-   Resize(rect);
+   ResizeTo(rect);
  }
 }
 
-void EditPane::DidKillFocus() {
-  auto const box = GetActiveLeafBox();
-  if (!box)
-    return;
-  box->GetWindow()->DidKillFocus();
+void EditPane::DidRealize() {
+  m_eState = State_Realized;
+  root_box_->Realize(this, rect());
 }
 
 void EditPane::DidRealizeWindow(const Window& window) {
-  auto const box = root_box_->FindLeafBoxFromWindow(window);
+  auto const box = root_box_->FindLeafBoxFromWidget(window);
   if (!box)
     return;
 
@@ -1291,24 +1260,12 @@ void EditPane::DidRealizeWindow(const Window& window) {
     m_oWindows.Append(box->GetWindow());
 }
 
-void EditPane::DidSetFocus() {
-  #if DEBUG_FOCUS
-    DEBUG_PRINTF("%p show=%d |%ls|\n", showed_, GetName());
-  #endif
-  ASSERT(showed_);
-  ASSERT(m_eState == State_Realized);
-  auto const window = GetActiveWindow();
-  if (!window)
-    return;
-  window->DidSetFocus();
-  window->GetBuffer()->UpdateFileStatus(true);
-}
-
-Pane::MessageResult EditPane::ForwardMessage(uint message, WPARAM wParam,
-                                             LPARAM lParam) {
-  if (auto const window = GetActiveWindow())
-    return window->ForwardMessage(message, wParam, lParam);
-  return MessageResult();
+void EditPane::DidResize() {
+  DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rect().left, rect().top,
+    rect().right, rect().bottom);
+  root_box_->SetRect(rect());
+  if (is_showing())
+    root_box_->DrawSplitters(frame().gfx());
 }
 
 // Returns the last active Box.
@@ -1387,26 +1344,18 @@ int EditPane::GetTitle(char16* out_wszTitle, int cchTitle) {
   return static_cast<int>(pwch - out_wszTitle);
 }
 
-bool EditPane::HasFocus() const {
-  return ::GetFocus() == *GetActiveWindow();
-}
-
-void EditPane::Hide() {
-  ASSERT(m_eState == State_Realized);
-  ASSERT(showed_);
-  showed_ = false;
-  root_box_->Hide();
-}
-
 Command::KeyBindEntry* EditPane::MapKey(uint nKey) {
   return GetActiveWindow()->MapKey(nKey);
 }
 
 void EditPane::OnDeprecatedVScroll(uint code, HWND hwnd) {
+  DEBUG_PRINTF("code=%d hwnd=%p\n", code, hwnd);
+#if 0
   auto const box = reinterpret_cast<LeafBox*>(
       ::GetWindowLongPtr(hwnd, GWLP_USERDATA));
   if (auto const window = box ->GetWindow())
     window->SendMessage(WM_VSCROLL, code);
+#endif
 }
 
 bool EditPane::OnIdle(uint count) {
@@ -1418,13 +1367,13 @@ void EditPane::OnLeftButtonDown(uint flags, const Point& point) {
   switch (result.type) {
     case HitTestResult::HSplitter:
     case HitTestResult::VSplitter:
-      splitter_controller_->Start(frame(),
+      splitter_controller_->Start(AssociatedHwnd(),
                                   SplitterController::State_Drag,
                                   *result.box);
       break;
 
     case HitTestResult::VSplitterBig:
-      splitter_controller_->Start(frame(),
+      splitter_controller_->Start(AssociatedHwnd(),
                                   SplitterController::State_DragSingle,
                                   *result.box);
       break;
@@ -1460,32 +1409,6 @@ void EditPane::OnMouseMove(uint flags, const Point& point) {
   }
 }
 
-void EditPane::Realize() {
-  ASSERT(!IsRealized());
-  m_eState = State_Realized;
-  m_rc = frame().GetPaneRect();
-  root_box_->Realize(this, m_rc);
-}
-
-void EditPane::Resize(const RECT& rc) {
-  DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rc.left, rc.top, rc.right,
-      rc.bottom);
-  m_rc = rc;
-  root_box_->SetRect(m_rc);
-  if (showed_)
-    root_box_->DrawSplitters(frame().gfx());
-}
-
-void EditPane::SetFocus() {
-  CAN_NOT_HAPPEN();
-#if 0
-  auto const window = GetActiveWindow();
-  if (!window)
-    return;
-  window->SetFocus();
-#endif
-}
-
 void EditPane::setupStatusBar() {
   static const int rgiWidth[] = {
       25, // ins/ovf
@@ -1505,15 +1428,6 @@ void EditPane::setupStatusBar() {
     iRight -= rgiWidth[i];
   }
   frame().SetStatusBarParts(rgiRight, lengthof(rgiRight));
-}
-
-void EditPane::Show() {
-  DEBUG_PRINTF("%p %ls\n", this, GetName());
-  ASSERT(m_eState == State_Realized);
-  ASSERT(!showed_);
-  showed_ = true;
-  root_box_->Show();
-  root_box_->UpdateSplitters();
 }
 
 EditPane::Window* EditPane::SplitHorizontally() {
@@ -1618,8 +1532,12 @@ void EditPane::UpdateStatusBar() {
       pBuffer->GetStart());
 }
 
-void EditPane::WillDestroyWindow(const Window& window) {
-  auto const box = root_box_->FindLeafBoxFromWindow(window);
+void EditPane::WillDestroyWidget() {
+  root_box_->Destroy();
+}
+
+void EditPane::WillDestroyChildWidget(const Widget& child) {
+  auto const box = root_box_->FindLeafBoxFromWidget(child);
   if (!box)
     return;
 

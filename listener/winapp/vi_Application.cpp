@@ -246,7 +246,7 @@ bool Application::KillBuffer(Buffer* pBuffer, bool fForce)
     {
         Buffer::Window* pWindow = pBuffer->GetWindow();
         when (NULL == pWindow) break;
-        ::DestroyWindow(*pWindow);
+        pWindow->Destroy();
     } // for each window
 
     m_oBuffers.Delete(pBuffer);

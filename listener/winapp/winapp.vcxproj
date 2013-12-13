@@ -286,11 +286,12 @@
     <ClCompile Include="vi_Listener.cpp" />
     <ClCompile Include="vi_Page.cpp" />
     <ClCompile Include="vi_Pane.cpp" />
-    <ClCompile Include="vi_PseudoWindow.cpp" />
     <ClCompile Include="vi_Selection.cpp" />
     <ClCompile Include="vi_Style.cpp" />
     <ClCompile Include="vi_TextEditWindow.cpp" />
-    <ClCompile Include="widgets\Widget.cpp" />
+    <ClCompile Include="widgets\container_widget.cpp" />
+    <ClCompile Include="widgets\naitive_window.cpp" />
+    <ClCompile Include="widgets\widget.cpp" />
     <ClCompile Include="z_debug.cpp" />
     <ClCompile Include="ctrl_StatusBar.cpp" />
     <ClCompile Include="ctrl_TabBand.cpp" />
@@ -381,7 +382,9 @@
     <ClInclude Include="IStringCursor.h" />
     <ClInclude Include="RegexMatch.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="widgets\Widget.h" />
+    <ClInclude Include="widgets\container_widget.h" />
+    <ClInclude Include="widgets\naitive_window.h" />
+    <ClInclude Include="widgets\widget.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico" />

@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_visual_IoManager_h)
 #define INCLUDE_visual_IoManager_h
 
-#include "widgets/Widget.h"
+#include "widgets/naitive_window.h"
 
 class Buffer;
 
@@ -19,7 +19,7 @@ class Buffer;
 //
 // IoManager
 //
-class IoManager : public Widget
+class IoManager : public widgets::NaitiveWindow
 {
     // [F]
     public: static void FinishLoad(
@@ -46,7 +46,7 @@ class IoManager : public Widget
         Count );
 
     // [O]
-    protected: virtual LRESULT onMessage(UINT, WPARAM, LPARAM) override;
+    protected: virtual LRESULT OnMessage(UINT, WPARAM, LPARAM) override;
 
     // [R]
     public: void Realize();

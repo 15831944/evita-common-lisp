@@ -77,6 +77,11 @@ void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
   m_nTimerId = 0;
 }
 
+void TextEditWindow::ScrollBar::ShowWindow(int code) const {
+  if (m_hwnd)
+    ::ShowWindow(m_hwnd, code);
+}
+
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
     : caret_(new Caret()),
       m_eDragMode(DragMode_None),
@@ -114,7 +119,7 @@ void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
   Redraw();
   if (!m_nBlinkTimerId) {
     m_nBlinkTimerId = MyTimerId_Blink;
-    ::SetTimer(m_hwnd, m_nBlinkTimerId, nMillisecond, nullptr);
+    ::SetTimer(AssociatedHwnd(), m_nBlinkTimerId, nMillisecond, nullptr);
   }
 }
 
@@ -210,9 +215,12 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
   }
 }
 
-void TextEditWindow::Destroy() {
-  GetHost<EditPane>()->WillDestroyWindow(*this);
-  delete this;
+void TextEditWindow::DidHide() {
+  #if DEBUG_SHOW_HIDE
+    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
+                 GetBuffer()->GetName());
+  #endif
+  m_oHoriScrollBar.ShowWindow(SW_HIDE);
 }
 
 void TextEditWindow::DidKillFocus() {
@@ -233,6 +241,21 @@ void TextEditWindow::DidSetFocus() {
   caret_->Take(*m_gfx);
   s_active_tick += 1;
   m_nActiveTick = s_active_tick;
+}
+
+void TextEditWindow::DidShow() {
+  #if DEBUG_SHOW_HIDE
+    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
+        show_count_, GetBuffer()->GetName());
+  #endif
+  m_oHoriScrollBar.ShowWindow(SW_SHOW);
+  m_oVertScrollBar.ShowWindow(SW_SHOW);
+  ++show_count_;
+  if (show_count_ == 1) {
+    m_pPage->Reset();
+    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+    Redraw();
+  }
 }
 
 Posn TextEditWindow::EndOfLine(Posn lPosn) {
@@ -296,14 +319,6 @@ HWND TextEditWindow::GetScrollBarHwnd(int nBar) const {
 Posn TextEditWindow::GetStart() {
   updateScreen();
  return m_pPage->GetStart();
-}
-
-void TextEditWindow::Hide() {
-  #if DEBUG_SHOW_HIDE
-    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
-                 GetBuffer()->GetName());
-  #endif
-  show_count_ = 0;
 }
 
 int TextEditWindow::LargeScroll(int, int iDy, bool fRender) {
@@ -425,7 +440,7 @@ void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
     selectWord(lPosn);
   } else {
     m_eDragMode = DragMode_Selection;
-    ::SetCapture(m_hwnd);
+    ::SetCapture(AssociatedHwnd());
   }
 }
 
@@ -436,40 +451,7 @@ void TextEditWindow::OnLeftButtonUp(uint, const Point&) {
   stopDrag();
 }
 
-LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-  return Widget::onMessage(uMsg, wParam, lParam);
-}
-
-void TextEditWindow::OnMouseMove(uint, const Point& point) {
-  if (m_eDragMode == DragMode_None) {
-    // We have nothing to do if mouse isn't dragged.
-    return;
-  }
-
-  if (::GetCapture() != m_hwnd){
-    // Someone takes mouse capture.
-    stopDrag();
-    return;
-  }
-
-  auto const lPosn = MapPointToPosn(point);
-  if (lPosn >= 0)
-    selection_->MoveTo(lPosn, true);
-
-  #if DEBUG_FORMAT
-    DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
-  #endif // DEBUG_FORMAT
-
-  if (point.y < m_rc.top)
-    m_oAutoScroll.Start(m_hwnd, -1);
-  else if (point.y > m_rc.bottom)
-    m_oAutoScroll.Start(m_hwnd, 1);
-  else
-    m_oAutoScroll.Stop(m_hwnd);
-}
-
-TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
-    uint uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
   if (WM_SYSTIMER == uMsg) { // WM_SYSTIMER for blinking caret
     DEBUG_PRINTF("WM_SYSTIMER %p\r\n", this);
   }
@@ -545,33 +527,6 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
       return 0;
     }
 
-    case WM_PAINT: {
-      #if DEBUG_PAINT
-        DEBUG_PRINTF("~~~~~~~~~~ WM_PAINT Start\n");
-      #endif
-      // Note: We don't need to show/hide caret. See MSDN/Carets/Using
-      // Carets/Hiding a Caret
-      {
-        RECT rc;
-        if (::GetUpdateRect(m_hwnd, &rc, false)) {
-          DEBUG_PRINTF("update_rect=(%d,%d)-(%d,%d)\n", rc.left, rc.top,
-                       rc.right, rc.bottom);
-        } else {
-          DEBUG_PRINTF("GetUpdateRectFailed\n");
-        }
-
-        gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-        (*m_gfx)->Clear(gfx::ColorF(gfx::ColorF::Red));
-        m_pPage->Reset();
-        m_pPage->Render(*m_gfx);
-      }
-      ::ValidateRect(*this, nullptr);
-      #if DEBUG_PAINT
-        DEBUG_PRINTF("~~~~~~~~~~ WM_PAINT End\n");
-      #endif
-      return 0;
-    }
-
     case WM_SETCURSOR:
       if (HTCLIENT == LOWORD(lParam)) {
         ::SetCursor(GetCursorAt(Point()));
@@ -609,15 +564,15 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
               }
 
               if (!k) {
-                m_oAutoScroll.Stop(m_hwnd);
+                m_oAutoScroll.Stop(AssociatedHwnd());
               } else {
-                m_oAutoScroll.Continue(m_hwnd);
+                m_oAutoScroll.Continue(AssociatedHwnd());
               }
           }
           break;
 
         case MyTimerId_Blink:
-          ::KillTimer(m_hwnd, wParam);
+          ::KillTimer(AssociatedHwnd(), wParam);
           m_nBlinkTimerId = 0;
           m_fBlink = false;
           break;
@@ -640,7 +595,7 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
                      this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
       #endif
       Rect rect;
-      ::GetClientRect(m_hwnd, &rect);
+      ::GetClientRect(AssociatedHwnd(), &rect);
       Resize(rect);
       return 0;
     }
@@ -678,7 +633,36 @@ TextEditWindow::MessageResult TextEditWindow::ForwardMessage(
       return 0;
     #endif // SUPPORT_IME
   }
-  return MessageResult();
+  return ParentClass::OnMessage(uMsg, wParam, lParam);
+}
+
+
+void TextEditWindow::OnMouseMove(uint, const Point& point) {
+  if (m_eDragMode == DragMode_None) {
+    // We have nothing to do if mouse isn't dragged.
+    return;
+  }
+
+  if (::GetCapture() != AssociatedHwnd()){
+    // Someone takes mouse capture.
+    stopDrag();
+    return;
+  }
+
+  auto const lPosn = MapPointToPosn(point);
+  if (lPosn >= 0)
+    selection_->MoveTo(lPosn, true);
+
+  #if DEBUG_FORMAT
+    DEBUG_PRINTF("WM_MOUSEMOVE: %d@%d\n", pt.x, pt.y);
+  #endif // DEBUG_FORMAT
+
+  if (point.y < m_rc.top)
+    m_oAutoScroll.Start(AssociatedHwnd(), -1);
+  else if (point.y > m_rc.bottom)
+    m_oAutoScroll.Start(AssociatedHwnd(), 1);
+  else
+    m_oAutoScroll.Stop(AssociatedHwnd());
 }
 
 void TextEditWindow::onVScroll(uint nCode) {
@@ -722,15 +706,16 @@ void TextEditWindow::onVScroll(uint nCode) {
   }
 }
 
-void TextEditWindow::Realize(HWND hwnd, const gfx::Graphics& gfx,
-                             const Rect& rect) {
+void TextEditWindow::Realize(const widgets::ContainerWidget& container,
+                             const gfx::Graphics& gfx, const Rect& rect) {
   ASSERT(!m_gfx);
   ASSERT(!show_count_);
-  set_owner_window(hwnd);
+  // TODO: We should not touch AssociatedHwnd().
   m_gfx = &gfx;
+  ParentClass::Realize(container, rect);
+  GetHost<EditPane>()->DidRealizeWindow(*this);
   show_count_ = 1;
   Resize(rect);
-  GetHost<EditPane>()->DidRealizeWindow(*this);
 }
 
 void TextEditWindow::Redraw() {
@@ -891,21 +876,8 @@ void TextEditWindow::selectWord(Posn lPosn) {
 }
 
 void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
-  if (nBar == SB_VERT)
-    m_oVertScrollBar.Set(hwnd, hwnd == *this ? SB_VERT : SB_CTL);
-}
-
-void TextEditWindow::Show() {
-  #if DEBUG_SHOW_HIDE
-    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
-        show_count_, GetBuffer()->GetName());
-  #endif
-  ++show_count_;
-  if (show_count_ == 1) {
-    m_pPage->Reset();
-    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-    Redraw();
-  }
+  ASSERT(nBar == SB_VERT)
+  m_oVertScrollBar.Set(hwnd, SB_VERT);
 }
 
 int TextEditWindow::SmallScroll(int, int iDy) {
@@ -991,7 +963,7 @@ Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn) {
 }
 
 void TextEditWindow::stopDrag() {
-  m_oAutoScroll.Stop(m_hwnd);
+  m_oAutoScroll.Stop(AssociatedHwnd());
  m_eDragMode = DragMode_None;
 }
 
@@ -1059,7 +1031,7 @@ class Imc {
 };
 
 void TextEditWindow::onImeComposition(LPARAM lParam) {
-  Imc imc(m_hwnd);
+  Imc imc(AssociatedHwnd());
   if (!imc)
     return;
 
@@ -1277,7 +1249,7 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd) {
   auto const p = reinterpret_cast<RECONVERTSTRING*>(pb);
   setReconvert(p, lStart, lEnd);
 
-  Imc imc(m_hwnd);
+  Imc imc(AssociatedHwnd());
   fSucceeded = ::ImmSetCompositionString(
       imc,
       SCS_QUERYRECONVERTSTRING,
@@ -1335,7 +1307,7 @@ uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart,
 
 // Set left top coordinate of IME candiate window.
 BOOL TextEditWindow::showImeCaret(SIZE sz, POINT pt) {
-  Imc imc(m_hwnd);
+  Imc imc(AssociatedHwnd());
   if (!imc)
     return FALSE;
 

@@ -13,8 +13,6 @@
 
 #include "./vi_Frame.h"
 
-extern uint g_nDropTargetMsg;
-
 
 Pane::Pane()
     : m_nActiveTick(0),
@@ -25,25 +23,3 @@ void Pane::Activate() {
   ++m_nActiveTick;
   GetFrame()->DidActivePane(this);
 }
-
-Pane::MessageResult Pane::ForwardMessage(uint, WPARAM, LPARAM) {
-  return MessageResult();
-}
-
-LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
-    switch (uMsg)
-    {
-    case WM_SETFOCUS:
-        m_nActiveTick = ::GetTickCount();
-        return 0;
-
-    default:
-        if (g_nDropTargetMsg && g_nDropTargetMsg == uMsg)
-        {
-            return reinterpret_cast<LRESULT>(this);
-        }
-        break;
-    } // switch uMsg
-
-    return Widget::onMessage(uMsg, wParam, lParam);
-} // Pane::onMessage

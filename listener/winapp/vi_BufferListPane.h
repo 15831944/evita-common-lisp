@@ -17,30 +17,7 @@
 
 class Buffer;
 
-class NativePane : public CommandWindow_<NativePane, Pane> {
-  // [D]
-  public: virtual void DidChangeOwnerFrame() override;
-
-  // [G]
-  public: static const char16* GetClass_() { return L"NativePane"; }
-
-  // [H]
-  public: virtual void Hide() override;
-
-  // [O]
-  protected: virtual LRESULT onMessage(UINT uMsg, WPARAM wParam,
-                                       LPARAM lParam) override;
-
-  // [R]
-  public: virtual void Realize() override;
-  public: virtual void Resize(const RECT&) override;
-
-  // [S]
-  public: virtual void SetFocus() override;
-  public: virtual void Show() override;
-};
-
-class BufferListPane : public CommandWindow_<BufferListPane, NativePane> {
+class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   private: enum Constant {
       ListViewId = 1234,
   };
@@ -82,7 +59,7 @@ class BufferListPane : public CommandWindow_<BufferListPane, NativePane> {
   // [O]
   private: void onCreate(CREATESTRUCT*);
   private: void onKeyDown(uint);
-  private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
+  private: virtual LRESULT OnMessage(uint, WPARAM, LPARAM) override;
 };
 
 #endif //!defined(INCLUDE_visual_BufferListPane_h)

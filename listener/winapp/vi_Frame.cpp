@@ -16,11 +16,10 @@
 #define DEBUG_WINDOWPOS _DEBUG
 #include "./vi_Frame.h"
 
+#include "./ctrl_TabBand.h"
 #include "./ed_Mode.h"
 #include "./gfx_base.h"
-
 #include "./vi_defs.h"
-
 #include "./vi_Application.h"
 #include "./vi_Buffer.h"
 #include "./vi_EditPane.h"
@@ -28,11 +27,12 @@
 #include "./vi_Selection.h"
 #include "./vi_Style.h"
 #include "./vi_util.h"
-
-#include "./ctrl_TabBand.h"
+#include "widgets/naitive_window.h"
 
 #include <dwmapi.h>
 #pragma comment(lib, "dwmapi.lib")
+
+extern uint g_nDropTargetMsg;
 
 static int const kPaddingBottom = 0;
 static int const kPaddingLeft = 0;
@@ -102,29 +102,33 @@ Frame::~Frame() {
   }
 }
 
+Frame::operator HWND() const {
+  return *naitive_window();
+}
+
 bool Frame::Activate() {
-  return ::SetForegroundWindow(*this);
+  return ::SetForegroundWindow(*naitive_window());
 }
 
 void Frame::AddPane(Pane* const pane) {
   ASSERT(!!pane);
   ASSERT(!pane->GetFrame());
-  ASSERT(!pane->IsRealized());
+  ASSERT(!pane->is_realized());
   m_oPanes.Append(this, pane);
-  if (IsRealized()) {
-    pane->Realize();
+  if (is_realized()) {
+    pane->Realize(*this, GetPaneRect());
     AddTab(pane);
   }
 }
 
 void Frame::AdoptPane(Pane* const pane) {
   ASSERT(!!pane);
-  ASSERT(pane->IsRealized());
+  ASSERT(pane->is_realized());
 
   auto const frame = pane->GetFrame();
   ASSERT(!!frame);
   ASSERT(frame != this);
-  ASSERT(frame->IsRealized());
+  ASSERT(frame->is_realized());
 
   auto const tab_index = frame->getTabFromPane(pane);
   ASSERT(tab_index >= 0);
@@ -133,7 +137,7 @@ void Frame::AdoptPane(Pane* const pane) {
   frame->m_oPanes.Delete(pane);
   m_oPanes.Append(this, pane);
 
-  if (!IsRealized())
+  if (!is_realized())
     return;
 
   pane->Hide();
@@ -144,8 +148,8 @@ void Frame::AdoptPane(Pane* const pane) {
 }
 
 void Frame::AddTab(Pane* const pane) {
-  ASSERT(IsRealized());
-  ASSERT(pane->IsRealized());
+  ASSERT(is_realized());
+  ASSERT(pane->is_realized());
   ASSERT(m_hwndTabBand);
   TCITEM tab_item;
   tab_item.mask = TCIF_TEXT | TCIF_PARAM;
@@ -187,9 +191,88 @@ void Frame::DidActivePane(Pane* const pane) {
     TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
 }
 
-void Frame::DidKillFocus() {
-  if (m_pActivePane)
-    m_pActivePane->DidKillFocus();
+void Frame::DidCreateNaitiveWindow() {
+  ::DragAcceptFiles(*naitive_window(), TRUE);
+
+  {
+    m_hwndTabBand = ::CreateWindowEx(
+        0,
+        L"TabBandClass",
+        nullptr,
+        WS_CHILD | WS_VISIBLE | TCS_TOOLTIPS,
+        0, 0, 0, 0,
+        *naitive_window(),
+        reinterpret_cast<HMENU>(CtrlId_TabBand),
+        g_hInstance,
+        nullptr);
+
+    ::SendMessage(
+       m_hwndTabBand,
+       TCM_SETIMAGELIST,
+       0,
+       reinterpret_cast<LPARAM>(
+          Application::Get()->GetIconList()));
+
+    RECT rc;
+    ::GetWindowRect(m_hwndTabBand, &rc);
+    m_cyTabBand = rc.bottom - rc.top;
+  }
+
+  m_oStatusBar.Realize(*naitive_window(), CtrlId_StatusBar);
+  m_oTitleBar.Realize(*naitive_window());
+
+  CompositionState::Update(*naitive_window());
+  gfx_->Init(*naitive_window());
+
+  ASSERT(!m_oPanes.IsEmpty());
+  auto const pane_rect = GetPaneRect();
+  for (auto& pane: m_oPanes) {
+    if (pane.is_realized())
+      pane.DidChangeOwnerFrame();
+    else
+      pane.Realize(*this, pane_rect);
+    AddTab(&pane);
+  }
+
+  if (m_oPanes.GetFirst())
+    m_oPanes.GetFirst()->Activate();
+}
+
+void Frame::DidResize() {
+  // Tab Band
+  ::SetWindowPos(m_hwndTabBand, nullptr, rect().left, rect().top,
+                 rect().width(), m_cyTabBand, SWP_NOZORDER);
+
+  // Status Bar
+  //  message, code page, newline, line num, column, char, ins/ovr
+  if (m_oStatusBar) {
+    ::SetWindowPos(m_oStatusBar, nullptr, rect().left,
+                   rect().bottom - m_oStatusBar.GetCy(), rect().width(),
+                   m_oStatusBar.GetCy(), SWP_NOZORDER);
+
+    ::SendMessage(m_oStatusBar, SB_SIMPLE, 1, 0);
+
+    char16 wsz[100];
+    ::wsprintf(wsz, L"Resizing... %dx%d",
+        rect().right - rect().left,
+        rect().bottom - rect().top);
+
+    ::SendMessage(m_oStatusBar, SB_SETTEXT, SB_SIMPLEID | SBT_NOBORDERS,
+                  reinterpret_cast<LPARAM>(wsz));
+  }
+
+  gfx_->Resize(rect());
+  {
+    gfx::Graphics::DrawingScope drawing_scope(*gfx_);
+    (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Green));
+
+    const auto rc = GetPaneRect();
+    for (auto& pane: m_oPanes) {
+      pane.ResizeTo(rc);
+    }
+  }
+
+  Paint();
 }
 
 void Frame::DidSetFocus() {
@@ -199,7 +282,7 @@ void Frame::DidSetFocus() {
       return;
   }
   Application::Get()->SetActiveFrame(this);
-  m_pActivePane->DidSetFocus();
+  m_pActivePane->SetFocus();
 }
 
 Pane* Frame::GetActivePane() {
@@ -216,7 +299,7 @@ Pane* Frame::GetActivePane() {
 }
 
 int Frame::GetCxStatusBar() const {
-  auto const cx = m_rc.right - m_rc.left -
+  auto const cx = rect().right - rect().left -
       ::GetSystemMetrics(SM_CXVSCROLL);  // remove size grip
   return cx;
 }
@@ -253,10 +336,10 @@ int Frame::getTabFromPane(Pane* const pane) const {
 }
 
 Rect Frame::GetPaneRect() const {
-  return Rect(m_rc.left + k_edge_size + kPaddingLeft,
-              m_rc.top + m_cyTabBand + k_edge_size * 2 + kPaddingLeft,
-              m_rc.right - k_edge_size + kPaddingRight,
-              m_rc.bottom - m_oStatusBar.GetCy() + k_edge_size +
+  return Rect(rect().left + k_edge_size + kPaddingLeft,
+              rect().top + m_cyTabBand + k_edge_size * 2 + kPaddingLeft,
+              rect().right - k_edge_size + kPaddingRight,
+              rect().bottom - m_oStatusBar.GetCy() + k_edge_size +
                   kPaddingBottom);
 }
 
@@ -314,10 +397,6 @@ const char16* Frame::getToolTip(NMTTDISPINFO* const pDisp) const {
     return m_wszToolTip;
 }
 
-bool Frame::hasFocus() const {
-  return m_pActivePane && m_pActivePane->HasFocus();
-}
-
 void Frame::onDropFiles(HDROP const hDrop) {
   uint nIndex = 0;
   for (;;) {
@@ -357,7 +436,7 @@ void Frame::onDropFiles(HDROP const hDrop) {
 void Frame::Paint() {
 #if USE_TABBAND_EDGE
   {
-    RECT rc = m_rc;
+    RECT rc = rect_;
 
     #if DEBUG_REDRAW
       DEBUG_PRINTF("frame=%p %dx%d+%d+%d\n",
@@ -422,7 +501,7 @@ bool Frame::OnIdle(uint const nCount) {
   }; // Local
 
   if (!nCount) {
-    if (hasFocus()) {
+    if (has_focus()) {
       updateTitleBar();
 
       if (auto const pEditPane = m_pActivePane->DynamicCast<EditPane>()) {
@@ -457,11 +536,11 @@ bool Frame::OnIdle(uint const nCount) {
   return fMore;
 }
 
-LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
+LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
                          LPARAM const lParam) {
   switch (uMsg) {
     case WM_DWMCOMPOSITIONCHANGED:
-      CompositionState::Update(m_hwnd);
+      CompositionState::Update(*naitive_window());
       // FALLTHROUGH
 
     case WM_ACTIVATE: {
@@ -470,7 +549,8 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
         margins.cxRightWidth = 0;
         margins.cyBottomHeight = 0;
         margins.cyTopHeight = CompositionState::IsEnabled() ? m_cyTabBand : 0;
-        auto const hr = ::DwmExtendFrameIntoClientArea(m_hwnd, &margins);
+        auto const hr = ::DwmExtendFrameIntoClientArea(*naitive_window(),
+                                                       &margins);
         if (FAILED(hr)) {
           DEBUG_PRINTF("DwmExtendFrameIntoClientArea hr=0x%08X\n", hr);
         }
@@ -481,56 +561,6 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       if (canClose())
         break;
       return 0;
-
-    case WM_CREATE: {
-      ::DragAcceptFiles(m_hwnd, TRUE);
-
-      {
-        m_hwndTabBand = ::CreateWindowEx(
-            0,
-            L"TabBandClass",
-            nullptr,
-            WS_CHILD | WS_VISIBLE | TCS_TOOLTIPS,
-            0, 0, 0, 0,
-            m_hwnd,
-            reinterpret_cast<HMENU>(CtrlId_TabBand),
-            g_hInstance,
-            nullptr);
-
-        ::SendMessage(
-           m_hwndTabBand,
-           TCM_SETIMAGELIST,
-           0,
-           reinterpret_cast<LPARAM>(
-              Application::Get()->GetIconList()));
-
-        RECT rc;
-        ::GetWindowRect(m_hwndTabBand, &rc);
-        m_cyTabBand = rc.bottom - rc.top;
-      }
-
-      m_oStatusBar.Realize(m_hwnd, CtrlId_StatusBar);
-      m_oTitleBar.Realize(m_hwnd);
-
-      ::GetClientRect(m_hwnd, &m_rc);
-
-      CompositionState::Update(m_hwnd);
-      gfx_->Init(m_hwnd);
-
-      ASSERT(!m_oPanes.IsEmpty());
-      for (auto& pane: m_oPanes) {
-        if (pane.IsRealized())
-          pane.DidChangeOwnerFrame();
-        else
-          pane.Realize();
-        AddTab(&pane);
-      }
-
-      if (m_oPanes.GetFirst()) {
-        m_oPanes.GetFirst()->Activate();
-      }
-      break;
-    }
 
     case WM_DROPFILES:
       onDropFiles(reinterpret_cast<HDROP>(wParam));
@@ -572,19 +602,19 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
     case WM_NCHITTEST:
       if (CompositionState::IsEnabled()) {
         LRESULT lResult;
-        if (::DwmDefWindowProc(m_hwnd, uMsg, wParam, lParam, &lResult))
+        if (::DwmDefWindowProc(*naitive_window(), uMsg, wParam, lParam, &lResult))
             return lResult;
 
         POINT const ptMouse = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
         RECT rcWindow;
-        ::GetWindowRect(m_hwnd, &rcWindow);
+        ::GetWindowRect(*naitive_window(), &rcWindow);
 
         RECT rcClient = { 0 };
         ::AdjustWindowRectEx(
             &rcClient,
-            ::GetWindowLong(m_hwnd, GWL_STYLE),
+            ::GetWindowLong(*naitive_window(), GWL_STYLE),
             false,
-            ::GetWindowLong(m_hwnd, GWL_EXSTYLE));
+            ::GetWindowLong(*naitive_window(), GWL_EXSTYLE));
 
         if (ptMouse.y >= rcWindow.top
             && ptMouse.y < rcWindow.top - rcClient.top + m_cyTabBand) {
@@ -651,7 +681,7 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       #if DEBUG_PAINT
         DEBUG_PRINTF("WM_PAINT Start %p\n", this);
       #endif
-      ::ValidateRect(m_hwnd, nullptr);
+      ::ValidateRect(*naitive_window(), nullptr);
       #if DEBUG_PAINT
         DEBUG_PRINTF("WM_PAINT End %p\n", this);
       #endif
@@ -682,7 +712,7 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
     case WM_SETCURSOR:
       if (auto const pane = GetActivePane()) {
         Point point;
-        if (::GetCursorPos(&point) && ScreenToClient(m_hwnd, &point))
+        if (::GetCursorPos(&point) && ScreenToClient(*naitive_window(), &point))
           if (auto const hCursor = pane->GetCursorAt(point)) {
             ::SetCursor(hCursor);
             return true;
@@ -697,133 +727,19 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
                                   reinterpret_cast<HWND>(lParam));
       return 0;
 
-    case WM_WINDOWPOSCHANGED: {
-      // DefWindowProc sents WM_SIZE and WM_MOVE, so handling
-      // WM_WINDPOSCHANGED is faster than DefWindowProc.
-      //
-      // #define SWP_NOSIZE          0x0001
-      // #define SWP_NOMOVE          0x0002
-      // #define SWP_NOZORDER        0x0004
-      // #define SWP_NOREDRAW        0x0008
-      // #define SWP_NOACTIVATE      0x0010
-      // #define SWP_FRAMECHANGED    0x0020  /* The frame changed: send WM_NCCALCSIZE */
-      // #define SWP_SHOWWINDOW      0x0040
-      // #define SWP_HIDEWINDOW      0x0080
-      // #define SWP_NOCOPYBITS      0x0100
-      // #define SWP_NOOWNERZORDER   0x0200  /* Don't do owner Z ordering */
-      // #define SWP_NOSENDCHANGING  0x0400  /* Don't send WM_WINDOWPOSCHANGING */
-      //
-      // #define SWP_DRAWFRAME       SWP_FRAMECHANGED
-      // #define SWP_NOREPOSITION    SWP_NOOWNERZORDER
-      //
-      //#if(WINVER >= 0x0400)
-      // #define SWP_DEFERERASE      0x2000
-      // #define SWP_ASYNCWINDOWPOS  0x4000
-      //#endif /* WINVER >= 0x0400 */
-
-      // undocumented SWP flags. See http://www.winehq.org.
-      #if !defined(SWP_NOCLIENTSIZE)
-          #define SWP_NOCLIENTSIZE    0x0800
-          #define SWP_NOCLIENTMOVE    0x1000
-      #endif // !defined(SWP_NOCLIENTSIZE)
-      // Create   0x10001843  NOCLIENTMOVE NOCLIENTSIZE SHOWWINDOW NOMOV NOSIZE
-      // Minimize 0x00008130
-      // Restore  0x00008124
-      // Move     0x00000A15
-      // Destroy  0x20001897  NOCLIENTMOVE NOCLIENTSIZE HIDEWINDOW NOACTIVATE NOZORDER NOMOVE NOSIZE
-      //if (wp->flags & SWP_NOSIZE) return 0;
-
-      auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
-
-      if (wp->flags & SWP_HIDEWINDOW) {
-        // We don't take care hidden window.
-        return 0;
-      }
-
-      if (!(wp->flags & 0x10000000) && (wp->flags & SWP_NOSIZE))
-        return 0;
-
-      if (::IsIconic(m_hwnd)) {
-        // We don't take care miminize window.
-        return 0;
-      }
-
-      #if DEBUG_WINDOWPOS
-        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
-                     this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
-      #endif // DEBUG_WINDOWPOS
-
-      ::GetClientRect(m_hwnd, &m_rc);
-
-      // Tab Band
-      {
-        ::SetWindowPos(
-            m_hwndTabBand,
-            nullptr,
-            m_rc.left,
-            m_rc.top,
-            m_rc.right - m_rc.left,
-            m_rc.top + m_cyTabBand,
-            SWP_NOZORDER);
-      }
-
-      // Status Bar
-      //  message, code page, newline, line num, column, char, ins/ovr
-      if (m_oStatusBar) {
-          ::SetWindowPos(
-              m_oStatusBar,
-              nullptr,
-              m_rc.left,
-              m_rc.bottom - m_oStatusBar.GetCy(),
-              m_rc.right - m_rc.left,
-              m_oStatusBar.GetCy(),
-              SWP_NOZORDER);
-
-          ::SendMessage(m_oStatusBar, SB_SIMPLE, 1, 0);
-
-          char16 wsz[100];
-          ::wsprintf(wsz, L"Resizing... %dx%d",
-              m_rc.right - m_rc.left,
-              m_rc.bottom - m_rc.top);
-
-          ::SendMessage(
-              m_oStatusBar,
-              SB_SETTEXT,
-              SB_SIMPLEID | SBT_NOBORDERS,
-              reinterpret_cast<LPARAM>(wsz));
-      }
-
-      gfx_->Resize(m_rc);
-      const auto rc = GetPaneRect();
-      {
-        gfx::Graphics::DrawingScope drawing_scope(*gfx_);
-        (*gfx_)->Clear(gfx::ColorF(gfx::ColorF::Green));
-
-        for (auto& pane: m_oPanes) {
-          pane.Resize(rc);
-        }
-      }
-
-      Paint();
-      return 0;
-    }
-
     default:
       if (uMsg == g_TabBand__TabDragMsg) {
         return onTabDrag(
             static_cast<TabBandDragAndDrop>(wParam),
             reinterpret_cast<HWND>(lParam));
       }
+
+      if (g_nDropTargetMsg && g_nDropTargetMsg == uMsg)
+        return reinterpret_cast<LRESULT>(this);
       break;
   }
 
-  if (auto const pane = GetActivePane()) {
-    const auto result = pane->ForwardMessage(uMsg, wParam, lParam);
-    if (result.is_handled())
-      return result.lResult();
-  }
-
-  return Widget::onMessage(uMsg, wParam, lParam);
+  return Widget::OnMessage(uMsg, wParam, lParam);
 }
 
 bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
@@ -900,14 +816,9 @@ void Frame::Realize() {
 
   auto const cx = rc.right  - rc.left;
   auto const cy = (rcWork.bottom - rcWork.top) * 4 / 5;
-
+  rc.left = CW_USEDEFAULT;
   // See WM_GETMINMAXINFO
-  CreateWindowEx(dwExStyle,
-                 L"This is Window Text.",
-                 dwStyle,
-                 nullptr,
-                 CW_USEDEFAULT, CW_USEDEFAULT,
-                 cx, cy);
+  widgets::ContainerWidget::Realize(dwExStyle, dwStyle, cx, cy);
   SetStatusBar(0, L"Ready");
 }
 

@@ -62,15 +62,12 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   private: ScopedRefCount_<LayoutBox> root_box_;
   private: const base::OwnPtr<SplitterController> splitter_controller_;
   private: Windows m_oWindows;
-  private: RECT m_rc;
-  private: bool showed_;
 
   // ctro/dtor
   public: explicit EditPane(Buffer*, Posn = 0);
   public: virtual ~EditPane();
 
   public: Frame& frame() const;
-  public: bool is_showed() const { return showed_; }
 
   // [A]
   public: virtual void Activate() override;
@@ -79,15 +76,10 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: void CloseAllBut(Window*);
 
   // [D]
-  public: virtual void Destroy() override;
   public: virtual void DidChangeOwnerFrame() override;
-  public: virtual void DidKillFocus() override;
+  public: void DidRealize();
   public: void DidRealizeWindow(const Window&);
-  private: virtual void DidSetFocus() override;
-
-  // [F]
-  public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,
-                                               LPARAM lParam) override;
+  private: virtual void DidResize() override;
 
   // [G]
   private: LeafBox* GetActiveLeafBox() const;
@@ -101,12 +93,8 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   public: virtual int GetTitle(char16*, int) override;
 
-  // [H]
-  public: virtual bool HasFocus() const override;
-  public: virtual void Hide() override;
-
   // [I]
-  public: virtual bool IsRealized() const override {
+  public: bool IsRealized() const {
     return m_eState == State_Realized;
   }
 
@@ -120,14 +108,8 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: virtual void OnLeftButtonUp(uint flags, const Point&) override;
   public: virtual void OnMouseMove(uint flags, const Point&) override;
 
-  // [R]
-  public: virtual void Realize() override;
-  public: virtual void Resize(const RECT& rc) override;
-
   // [S]
-  public: virtual void SetFocus() override;
   private: void setupStatusBar();
-  public: virtual void Show() override;
   public: Window* SplitHorizontally();
   public: Window* SplitVertically();
 
@@ -135,7 +117,8 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: virtual void UpdateStatusBar() override;
 
   // [W]
-  public: void WillDestroyWindow(const TextEditWindow&);
+  private: virtual void WillDestroyWidget() override;
+  private: virtual void WillDestroyChildWidget(const Widget& child);
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_EditPane_h)

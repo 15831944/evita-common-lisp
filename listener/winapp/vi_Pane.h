@@ -12,14 +12,16 @@
 #define INCLUDE_vi_Pane_h
 
 #include "./vi_CommandWindow.h"
+#include "widgets/container_widget.h"
 
 namespace gfx {
 class Graphics;
 }
 
+class Frame;
 struct Point;
 
-class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
+class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
   protected: uint             m_nActiveTick;
   protected: const char16*    m_pwszName;
 
@@ -30,7 +32,7 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   public: virtual void Activate();
 
   // [D]
-  public: virtual void DidChangeOwnerFrame() = 0;
+  public: virtual void DidChangeOwnerFrame() {}
 
   public: virtual bool DidCreateHwnd(HWND) {
     // TODO: Once make EditPane isn't derived from Pane, we should remove
@@ -43,21 +45,14 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
     return false;
   }
 
-  // [F]
-  public: virtual MessageResult ForwardMessage(uint message, WPARAM wParam,
-                                               LPARAM lParam);
-
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
+  public: static const char16* GetClass_() { return L"Pane"; }
   public: virtual HCURSOR GetCursorAt(const Point&) const { return nullptr; }
 
   public: Frame*   GetFrame() const { return m_pParent; }
   public: const char16*  GetName()  const { return m_pwszName; }
   public: virtual int    GetTitle(char16* pwsz, int) = 0;
-
-  // [H]
-  public: virtual bool HasFocus() const { return ::GetFocus() == m_hwnd; }
-  public: virtual void Hide() = 0;
 
   // [I]
   public: virtual bool IsPane() const override { return true; }
@@ -72,22 +67,6 @@ class Pane : public CommandWindow, public ChildNode_<Frame, Pane> {
   public: virtual void OnLeftButtonUp(uint, const Point&) {}
   protected: LRESULT onMessage(uint, WPARAM, LPARAM);
   public: virtual void OnMouseMove(uint, const Point&) {}
-
-  // [R]
-  public: void virtual Realize() {
-    // TODO: Once make EditPane isn't derived from Pane, we should remove
-    // Pane::Realize().
-    CAN_NOT_HAPPEN();
-  }
-
-  public: virtual void Resize(const RECT&) {
-    // TODO: We shoule make Pane::Resize() as abstract member function.
-    CAN_NOT_HAPPEN();
-  }
-
-  // [S]
-  public: virtual void SetFocus() = 0;
-  public: virtual void Show() = 0;
 
   // [U]
   public: virtual void UpdateStatusBar() {}

@@ -186,13 +186,16 @@
     <ClCompile Include="gfx_base.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="vi_PseudoWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vi_Caret.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="widgets\Widget.cpp">
+    <ClCompile Include="widgets\container_widget.cpp">
+      <Filter>Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\widget.cpp">
+      <Filter>Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\naitive_window.cpp">
       <Filter>Widgets</Filter>
     </ClCompile>
   </ItemGroup>
@@ -377,7 +380,13 @@
     <ClInclude Include="vi_Caret.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="widgets\Widget.h">
+    <ClInclude Include="widgets\widget.h">
+      <Filter>Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\container_widget.h">
+      <Filter>Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\naitive_window.h">
       <Filter>Widgets</Filter>
     </ClInclude>
   </ItemGroup>

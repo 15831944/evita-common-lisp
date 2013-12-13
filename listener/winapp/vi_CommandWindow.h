@@ -11,23 +11,17 @@
 #if !defined(INCLUDE_visual_CommandWindow_h)
 #define INCLUDE_visual_CommandWindow_h
 
-#include "widgets/Widget.h"
+#include "widgets/container_widget.h"
 
-namespace Command
-{
-    class KeyBindEntry;
-} // Command
-
-
-class Frame;
-class Pane;
+namespace Command {
+class KeyBindEntry;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
 // CommandWindow
 //
-class CommandWindow : public Widget
-{
+class CommandWindow : public widgets::ContainerWidget {
     // [D]
     public: template<class T> T* DynamicCast()
         { return Is<T>() ? static_cast<T*>(this) : NULL; }

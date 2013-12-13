@@ -67,49 +67,6 @@ static HCURSOR loadCursor(HCURSOR* inout_hCursor,
 
 //////////////////////////////////////////////////////////////////////
 //
-// NativePane
-//
-
-void NativePane::DidChangeOwnerFrame() {
-  ::SetParent(*this, *GetFrame());
-}
-
-void NativePane::Hide() {
-  ::ShowWindow(*this, SW_HIDE);
-}
-
-LRESULT NativePane::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-  if (uMsg == WM_DESTROY) {
-    GetFrame()->WillDestroyPane(this);
-    return 0;
-  }
-  return Pane::onMessage(uMsg, wParam, lParam);
-}
-
-void NativePane::Realize() {
-  ASSERT(!IsRealized());
-  const auto& frame = *GetFrame();
-  const auto rect = frame.GetPaneRect();
-  CreateWindowEx(0, nullptr, WS_CHILD | WS_VISIBLE, frame,
-                 rect.left, rect.top, rect.width(), rect.height());
-}
-
-void NativePane::Resize(const RECT& rect) {
-  ::SetWindowPos(*this, nullptr, rect.left, rect.top, rect.right - rect.left,
-                 rect.bottom - rect.top, SWP_NOZORDER);
-}
-
-void NativePane::SetFocus() {
-  ASSERT(IsRealized());
-  ::SetFocus(*this);
-}
-
-void NativePane::Show() {
-  ::ShowWindow(*this, SW_SHOW);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // BufferListPane
 //
 
@@ -156,7 +113,7 @@ void BufferListPane::dragFinish(POINT pt) {
     return;
   auto const buffer = m_pDragItem;
   dragStop();
-  if (auto const pane = Application::Get()->FindPane(m_hwnd, pt)) {
+  if (auto const pane = Application::Get()->FindPane(AssociatedHwnd(), pt)) {
     // Drop to pane contains specified point.
     pane->GetFrame()->ShowBuffer(buffer);
   } else {
@@ -171,12 +128,12 @@ void BufferListPane::dragMove(POINT pt) {
   if (!m_pDragItem)
     return;
 
-  if (::GetCapture() != m_hwnd) {
+  if (::GetCapture() != AssociatedHwnd()) {
     dragStop();
     return;
   }
 
-  auto const pPane = Application::Get()->FindPane(m_hwnd, pt);
+  auto const pPane = Application::Get()->FindPane(AssociatedHwnd(), pt);
 
   HCURSOR hCursor;
   if (pPane && pPane->Is<EditPane>())
@@ -203,7 +160,7 @@ void BufferListPane::dragStart(int iItem) {
     if (runner == pBuffer) {
         m_pDragItem = pBuffer;
         ::SetCursor(loadCursor(&sm_hDragCursor, L"ole32.dll", 3));
-        ::SetCapture(m_hwnd);
+        ::SetCapture(AssociatedHwnd());
         return;
     }
   }
@@ -248,7 +205,7 @@ void BufferListPane::onCreate(CREATESTRUCT* p) {
                                     nullptr,           // title
                                     dwStyle,
                                     0, 0, p->cx, p->cy,
-                                    *this,  // parent
+                                    AssociatedHwnd(),
                                     reinterpret_cast<HMENU>(ListViewId),
                                     g_hInstance,
                                     nullptr);
@@ -294,7 +251,7 @@ void BufferListPane::onKeyDown(uint nVKey) {
   Application::Get()->Execute(this, nKey, 0);
 }
 
-LRESULT BufferListPane::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT BufferListPane::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
   switch (uMsg) {
     case WM_CREATE:
       onCreate(reinterpret_cast<CREATESTRUCT*>(lParam));
@@ -351,7 +308,7 @@ LRESULT BufferListPane::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
   }
-  return NativePane::onMessage(uMsg, wParam, lParam);
+  return Pane::OnMessage(uMsg, wParam, lParam);
 }
 
 void BufferListPane::Refresh() {
@@ -457,7 +414,7 @@ DEFCOMMAND(ListBuffer) {
         if (pPane->GetFrame() != pCtx->GetFrame())
           pCtx->GetFrame()->AddPane(pPane);
         pPane->Activate();
-        ::InvalidateRect(*pPane, nullptr, 0);
+        ::InvalidateRect(pPane->AssociatedHwnd(), nullptr, 0);
         pPane->Refresh();
         return;
       }

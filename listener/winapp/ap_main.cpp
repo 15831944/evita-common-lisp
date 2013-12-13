@@ -336,7 +336,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
     g_TabBand__TabDragMsg = ::RegisterWindowMessage(TabBand__TabDragMsgStr);
 
-    if (auto const exit_code = Widget::Init())
-    return exit_code;
   return MainLoop(&oEnumArg);
 }

@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_visual_Frame_h)
 #define INCLUDE_visual_Frame_h
 
-#include "widgets/Widget.h"
+#include "widgets/container_widget.h"
 
 #include "./ctrl_StatusBar.h"
 #include "./ctrl_TabBand.h"
@@ -39,12 +39,14 @@ enum MessageLevel
 }; // MessageLevel
 
 class Buffer;
+class Pane;
 
 /// <summary>
 ///   Represents a frame window aka toplevel window. This window communicates
 ///   with window manager.
 /// </summary>
-class Frame final : public Widget, public DoubleLinkedNode_<Frame> {
+class Frame final : public widgets::ContainerWidget,
+                    public DoubleLinkedNode_<Frame> {
   private: enum CtrlId {
     CtrlId_TabBand  = 1,
     CtrlId_StatusBar,
@@ -59,12 +61,14 @@ class Frame final : public Widget, public DoubleLinkedNode_<Frame> {
   private: StatusBar m_oStatusBar;
   private: TitleBar m_oTitleBar;
   private: Pane* m_pActivePane;
-  private: RECT m_rc;   // client rect
   private: char16* m_rgpwszMessage[MessageLevel_Limit];
   private: mutable char16 m_wszToolTip[1024];
 
   public: Frame();
   private: virtual ~Frame();
+
+  // TODO: We should not use Frame to HWDN.
+  public: operator HWND() const;
 
   public: gfx::Graphics& gfx() const { return *gfx_; }
   public: const Panes& panes() const { return m_oPanes; }
@@ -81,7 +85,8 @@ class Frame final : public Widget, public DoubleLinkedNode_<Frame> {
 
   // [D]
   public: void DidActivePane(Pane*);
-  private: virtual void DidKillFocus() override;
+  private: virtual void DidCreateNaitiveWindow() override;
+  private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
 
   // [G]
@@ -106,15 +111,15 @@ class Frame final : public Widget, public DoubleLinkedNode_<Frame> {
   // [O]
   private: void onDropFiles(HDROP);
   public: virtual bool OnIdle(uint) override;
-  private: virtual LRESULT onMessage(uint, WPARAM, LPARAM) override;
+  private: virtual LRESULT OnMessage(uint, WPARAM, LPARAM) override;
   private: bool onTabDrag(TabBandDragAndDrop, HWND);
 
   // [P]
   private: void Paint();
 
   // [R]
-  public: void Realize();
   public: void ResetMessages();
+  public: void Realize();
 
   // [S]
   public: void SetStatusBar(int, const char16*);
