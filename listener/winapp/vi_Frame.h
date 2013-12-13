@@ -19,9 +19,8 @@
 
 namespace gfx {
 class Graphics;
-}
-
 struct Rect;
+}
 
 /// <summary>
 ///   Sevirity of message.
@@ -91,13 +90,14 @@ class Frame final : public widgets::ContainerWidget,
 
   // [G]
   public: Pane* GetActivePane();
+  public: virtual const char* GetClass() const { return "Frame"; }
   public: int GetCxStatusBar() const;
 
   public: Pane* GetFirstPane() const { return m_oPanes.GetFirst(); }
   public: Pane* GetLastPane() const { return m_oPanes.GetLast(); }
 
   private: Pane* getPaneFromTab(int) const;
-  public: Rect GetPaneRect() const;
+  public: gfx::Rect GetPaneRect() const;
   private: int getTabFromPane(Pane*) const;
   private: const char16* getToolTip(NMTTDISPINFO*) const;
 

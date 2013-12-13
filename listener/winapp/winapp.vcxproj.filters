@@ -198,6 +198,9 @@
     <ClCompile Include="widgets\naitive_window.cpp">
       <Filter>Widgets</Filter>
     </ClCompile>
+    <ClCompile Include="gfx\rect.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -388,6 +391,15 @@
     </ClInclude>
     <ClInclude Include="widgets\naitive_window.h">
       <Filter>Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\size.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\point.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\rect.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

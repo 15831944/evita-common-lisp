@@ -45,14 +45,14 @@ class IoManager : public widgets::NaitiveWindow
         const char16*, 
         Count );
 
-    // [O]
-    protected: virtual LRESULT OnMessage(UINT, WPARAM, LPARAM) override;
-
     // [R]
     public: void Realize();
 
     // [V]
     private: void visitFile(const char16*);
+
+    // [W]
+    protected: virtual LRESULT WindowProc(UINT, WPARAM, LPARAM) override;
 }; // IoManager
 
 

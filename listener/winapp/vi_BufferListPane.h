@@ -44,7 +44,7 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   private: void dragStop();
 
   // [G]
-  public: static const char16* GetClass_() { return L"BufferListPane"; }
+  public: static const char* GetClass_() { return "BufferListPane"; }
 
   public: HWND GetListWindow() const { return m_hwndListView; }
 

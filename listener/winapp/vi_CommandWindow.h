@@ -26,9 +26,6 @@ class CommandWindow : public widgets::ContainerWidget {
     public: template<class T> T* DynamicCast()
         { return Is<T>() ? static_cast<T*>(this) : NULL; }
 
-    // [G]
-    public: virtual const char16* GetClass() const = 0;
-
     // [I]
     public: virtual bool IsPane() const { return false; }
 
@@ -51,8 +48,9 @@ class CommandWindow_ : public Parent_
       return p ? p->DynamicCast<T>() : nullptr;
     }
 
-    public: virtual const char16* GetClass() const override
-        { return T::GetClass_(); }
+    public: virtual const char* GetClass() const override {
+      return T::GetClass_();
+    }
 }; // CommandWindow_
 
 #endif //!defined(INCLUDE_visual_CommandWindow_h)

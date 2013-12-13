@@ -19,7 +19,6 @@ class Graphics;
 }
 
 class Frame;
-struct Point;
 
 class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
   protected: uint             m_nActiveTick;
@@ -47,8 +46,8 @@ class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
 
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
-  public: static const char16* GetClass_() { return L"Pane"; }
-  public: virtual HCURSOR GetCursorAt(const Point&) const { return nullptr; }
+  public: static const char* GetClass_() { return "Pane"; }
+  public: virtual HCURSOR GetCursorAt(const gfx::Point&) const { return nullptr; }
 
   public: Frame*   GetFrame() const { return m_pParent; }
   public: const char16*  GetName()  const { return m_pwszName; }
@@ -58,15 +57,6 @@ class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
   public: virtual bool IsPane() const override { return true; }
 
   public: static bool Is_(const CommandWindow* p) { return p->IsPane(); }
-
-  // [O]
-  // TODO: Once we have scroll bar widget, we don't use
-  // |OnDeprecatedVScroll()|.
-  public: virtual void OnDeprecatedVScroll(uint, HWND) {}
-  public: virtual void OnLeftButtonDown(uint, const Point&) {}
-  public: virtual void OnLeftButtonUp(uint, const Point&) {}
-  protected: LRESULT onMessage(uint, WPARAM, LPARAM);
-  public: virtual void OnMouseMove(uint, const Point&) {}
 
   // [U]
   public: virtual void UpdateStatusBar() {}

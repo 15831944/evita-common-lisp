@@ -234,10 +234,10 @@ IoManager::InsertString(
 
 //////////////////////////////////////////////////////////////////////
 //
-// IoManager::onMessage
+// IoManager::WindowProc
 //
 LRESULT
-IoManager::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+IoManager::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -322,7 +322,7 @@ IoManager::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
     } // switch message
 
-    return DefWindowProc(uMsg, wParam, lParam);
+    return NaitiveWindow::WindowProc(uMsg, wParam, lParam);
 } // IoManager::onMessage
 
 
@@ -332,7 +332,7 @@ IoManager::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 //
 void IoManager::Realize()
 {
-    CreateWindowEx(0, 0, HWND_MESSAGE, Rect());
+    CreateWindowEx(0, 0, HWND_MESSAGE, Point(), Size());
     ASSERT(NULL != *this);
 } // IoManager::Realize
 

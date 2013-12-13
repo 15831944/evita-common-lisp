@@ -1,13 +1,5 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - edit buffer
-// listener/winapp/ed_buffer.h
-//
-// Copyright (C) 1996-2007 by Project Vogue.
+// Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.h#1 $
-//
 #if !defined(INCLUDE_widgets_native_widget_h)
 #define INCLUDE_widgets_native_widget_h
 
@@ -31,13 +23,17 @@ class NaitiveWindow {
   protected: NaitiveWindow();
   protected: virtual ~NaitiveWindow();
 
-  public: operator HWND() const { return hwnd_; }
+  public: operator HWND() const {
+    ASSERT(hwnd_);
+    return hwnd_;
+  }
 
   public: bool operator==(const NaitiveWindow* other) const {
     return this == other;
   }
 
   public: bool operator==(HWND hwnd) const {
+    ASSERT(hwnd_);
     return hwnd_ == hwnd;
   }
 
@@ -46,12 +42,14 @@ class NaitiveWindow {
   }
 
   public: bool operator!=(HWND hwnd) const {
+    ASSERT(hwnd_);
     return hwnd_ == hwnd;
   }
 
   // [C]
   public: bool CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
-                              HWND parent_hwnd, const Rect& rect);
+                              HWND parent_hwnd, const gfx::Point& left_top,
+                              const gfx::Size& size);
 
   // [D]
   public: void Destroy();
@@ -64,10 +62,6 @@ class NaitiveWindow {
   // [M]
   protected: static NaitiveWindow* MapHwnToNaitiveWindow(HWND);
 
-  // [O]
-  protected: virtual LRESULT OnMessage(UINT message, WPARAM wParam,
-                                       LPARAM lParam);
-
   // [S]
   public: LRESULT SendMessage(uint uMsg, WPARAM wParam = 0,
                               LPARAM lParam = 0) {
@@ -77,6 +71,9 @@ class NaitiveWindow {
   // [W]
   private: static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg,
                                               WPARAM wParam, LPARAM lParam);
+
+  public: virtual LRESULT WindowProc(UINT message, WPARAM wParam,
+                                     LPARAM lParam);
 
   DISALLOW_COPY_AND_ASSIGN(NaitiveWindow);
 };

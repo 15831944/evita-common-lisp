@@ -1,14 +1,6 @@
 #include "precomp.h"
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - winapp - Widget
-// listener/winapp/winmain.cpp
-//
 // Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Pane.cpp#1 $
-//
 #include "widgets/widget.h"
 
 #include "widgets/container_widget.h"
@@ -17,7 +9,7 @@
 namespace widgets {
 
 namespace {
-class TopLevelWidget : public Widget {
+class TopLevelWidget : public ContainerWidget {
   private: virtual bool is_top_level() const { return true; }
 };
 }
@@ -34,11 +26,24 @@ Widget::~Widget() {
 }
 
 bool Widget::has_focus() const {
-  return container_widget().focus_widget() == this;
+  auto runner = this;
+  while (runner && !runner->is_top_level()) {
+    if (auto window = runner->naitive_window_) {
+      if (::GetFocus() != *window)
+        return false;
+      if (runner == this)
+        return true;
+      if (auto container = runner->ToContainer())
+        return container->focus_widget() == this;
+      return false;
+    }
+    runner = runner->container_widget_;
+  }
+  return false;
 }
 
-Widget& Widget::top_level_widget() {
-  static Widget* top_level_widget;
+ContainerWidget& Widget::top_level_widget() {
+  static ContainerWidget* top_level_widget;
   if (!top_level_widget)
     top_level_widget = new TopLevelWidget();
   return *top_level_widget;
@@ -51,7 +56,11 @@ HWND Widget::AssociatedHwnd() const {
       return *window;
     runner = runner->container_widget_;
   }
-  return nullptr;
+  CAN_NOT_HAPPEN();
+}
+
+bool Widget::Contains(const Widget&) const {
+  return false;
 }
 
 void Widget::Destroy() {
@@ -72,16 +81,123 @@ void Widget::DidDestroyNaitiveWindow() {
   naitive_window_ = nullptr;
 }
 
+HCURSOR Widget::GetCursorAt(const gfx::Point&) const {
+  return nullptr;
+}
+
 void Widget::Hide() {
   showing_ = 0;
   if (naitive_window_)
     ::ShowWindow(*naitive_window_, SW_HIDE);
+  else
+    DidHide();
+}
+
+bool Widget::OnIdle(uint) {
+  return false;
+}
+
+void Widget::OnLeftButtonDown(uint, const gfx::Point&) {
+}
+
+void Widget::OnLeftButtonUp(uint, const gfx::Point&) {
 }
 
 LRESULT Widget::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  if (naitive_window_)
+    return naitive_window_->DefWindowProc(uMsg, wParam, lParam);
+  return ::DefWindowProc(AssociatedHwnd(), uMsg, wParam, lParam);
+}
+
+void Widget::OnMouseMove(uint, const gfx::Point&) {
+}
+
+void Widget::OnPaint(const gfx::Rect) {
+}
+
+void Widget::Realize(const ContainerWidget& container_widget,
+                     const gfx::Rect& rect) {
+  ASSERT(!naitive_window_);
+  ASSERT(!realized_);
+  ASSERT(container_widget.is_realized());
+  container_widget_ = const_cast<ContainerWidget*>(&container_widget);
+  realized_ = true;
+  rect_ = rect;
+  auto const parent_style = ::GetWindowLong(AssociatedHwnd(), GWL_STYLE);
+  if (parent_style & WS_VISIBLE)
+    ++showing_;
+  DidRealize();
+  container_widget_->DidRealizeWidget(*this);
+}
+
+void Widget::Realize(const ContainerWidget& container_widget,
+                     const gfx::Rect& rect, DWORD dwExStyle, DWORD dwStyle) {
+  ASSERT(!naitive_window_);
+  ASSERT(!realized_);
+  ASSERT(container_widget.is_realized());
+  container_widget_ = const_cast<ContainerWidget*>(&container_widget);
+  realized_ = true;
+  naitive_window_ = new NaitiveWindow(*this);
+  naitive_window_->CreateWindowEx(dwExStyle, dwStyle, AssociatedHwnd(),
+                                  rect.left_top(), rect.size());
+}
+
+void Widget::Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size) {
+  ASSERT(!naitive_window_);
+  ASSERT(!realized_);
+  container_widget_ = &top_level_widget();
+  realized_ = true;
+  naitive_window_ = new NaitiveWindow(*this);
+  naitive_window_->CreateWindowEx(dwExStyle, dwStyle, nullptr,
+                                  gfx::Point(CW_USEDEFAULT, CW_USEDEFAULT), 
+                                  size);
+}
+
+void Widget::ReleaseCapture() {
+  container_widget().ReleaseCaptureFrom(*this);
+}
+
+void Widget::ResizeTo(const gfx::Rect& rect) {
+  ASSERT(realized_);
+  if (naitive_window_) {
+    ::SetWindowPos(*naitive_window_, nullptr, rect.left, rect.right,
+                   rect.width(), rect.height(), SWP_NOACTIVATE);
+  } else {
+    rect_ = rect;
+    DidResize();
+  }
+}
+
+void Widget::SetCapture() {
+  container_widget().SetCaptureTo(*this);
+}
+
+void Widget::SetFocus() {
+  container_widget().SetFocusTo(*this);
+}
+
+void Widget::Show() {
+  ++showing_;
+  if (naitive_window_) {
+    ::ShowWindow(*naitive_window_, SW_SHOW);
+  } else if (showing_ == 1) {
+    DidShow();
+    OnPaint(rect());
+  }
+}
+
+void Widget::WillDestroyWidget() {
+}
+
+void Widget::WillDestroyNaitiveWindow() {
+}
+
+LRESULT Widget::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
   ASSERT(naitive_window_);
   switch (uMsg) {
     case WM_CREATE:
+      if (reinterpret_cast<CREATESTRUCT*>(lParam)->style & WS_VISIBLE)
+        ++showing_;
       ::GetClientRect(*naitive_window_, &rect_);
       DidCreateNaitiveWindow();
       return 0;
@@ -92,6 +208,21 @@ LRESULT Widget::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_KILLFOCUS:
       DidKillFocus();
+      return 0;
+
+    case WM_LBUTTONDOWN:
+      OnLeftButtonDown(static_cast<uint>(wParam), 
+                       gfx::Point(MAKEPOINTS(lParam)));
+      return 0;
+
+    case WM_LBUTTONUP:
+      OnLeftButtonUp(static_cast<uint>(wParam), 
+                     gfx::Point(MAKEPOINTS(lParam)));
+      return 0;
+
+    case WM_MOUSEMOVE:
+      OnMouseMove(static_cast<uint>(wParam), 
+                  gfx::Point(MAKEPOINTS(lParam)));
       return 0;
 
     case WM_NCDESTROY:
@@ -159,63 +290,7 @@ LRESULT Widget::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
   }
-  return naitive_window_->DefWindowProc(uMsg, wParam, lParam);
-}
-
-void Widget::Realize(const ContainerWidget& container_widget,
-                     const Rect& rect) {
-  ASSERT(!naitive_window_);
-  ASSERT(!realized_);
-  container_widget_ = const_cast<ContainerWidget*>(&container_widget);
-  realized_ = true;
-  rect_ = rect;
-  DidRealize();
-  container_widget_->DidRealizeWidget(*this);
-}
-
-void Widget::Realize(const ContainerWidget& container_widget,
-                     const Rect& rect, DWORD dwExStyle, DWORD dwStyle) {
-  ASSERT(!naitive_window_);
-  ASSERT(!realized_);
-  Realize(container_widget, rect);
-  naitive_window_ = new NaitiveWindow(*this);
-  naitive_window_->CreateWindowEx(dwExStyle, dwStyle, AssociatedHwnd(), rect);
-}
-
-void Widget::Realize(DWORD dwExStyle, DWORD dwStyle, int cx, int cy) {
-  ASSERT(!naitive_window_);
-  ASSERT(!realized_);
-  realized_ = true;
-  naitive_window_ = new NaitiveWindow(*this);
-  naitive_window_->CreateWindowEx(dwExStyle, dwStyle, AssociatedHwnd(),
-                                  Rect(CW_USEDEFAULT, CW_USEDEFAULT, cx, cy));
-}
-
-void Widget::ResizeTo(const Rect& rect) {
-  ASSERT(realized_);
-  if (naitive_window_) {
-    ::SetWindowPos(*naitive_window_, nullptr, rect.left, rect.right,
-                   rect.width(), rect.height(), SWP_NOACTIVATE);
-  } else {
-    rect_ = rect;
-    DidResize();
-  }
-}
-
-void Widget::SetFocus() {
-  container_widget().SetFocusTo(*this);
-}
-
-void Widget::Show() {
-  ++showing_;
-  if (naitive_window_)
-    ::ShowWindow(*naitive_window_, SW_HIDE);
-}
-
-void Widget::WillDestroyWidget() {
-}
-
-void Widget::WillDestroyNaitiveWindow() {
+  return OnMessage(uMsg, wParam, lParam);
 }
 
 } // namespace widgets

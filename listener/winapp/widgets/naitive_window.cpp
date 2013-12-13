@@ -1,14 +1,6 @@
 #include "precomp.h"
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - winapp - winmain
-// listener/winapp/winmain.cpp
-//
-// Copyright (C) 1996-2007 by Project Vogue.
+// Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.cpp#3 $
-//
 #include "widgets/naitive_window.h"
 
 extern HINSTANCE g_hInstance;
@@ -38,7 +30,9 @@ NaitiveWindow::~NaitiveWindow() {
 }
 
 bool NaitiveWindow::CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
-                                  HWND parent_hwnd, const Rect& rect) {
+                                  HWND parent_hwnd, 
+                                  const gfx::Point& left_top,
+                                  const gfx::Size& size) {
   ASSERT(!s_creating_window);
   s_creating_window = this;
 
@@ -61,9 +55,8 @@ bool NaitiveWindow::CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
   }
 
   return ::CreateWindowEx(dwExStyle, MAKEINTATOM(s_window_class), nullptr,
-                          dwStyle, rect.left, rect.top, rect.width(),
-                          rect.height(), parent_hwnd, nullptr,
-                          g_hInstance, 0);
+                          dwStyle, left_top.x, left_top.y, size.cx, size.cy,
+                          parent_hwnd, nullptr, g_hInstance, 0);
 }
 
 void NaitiveWindow::Destroy() {
@@ -82,34 +75,34 @@ LRESULT NaitiveWindow::DefWindowProc(UINT message, WPARAM wParam,
   return ::DefWindowProc(hwnd_, message, wParam, lParam);
 }
 
-LRESULT NaitiveWindow::OnMessage(UINT uMsg, WPARAM wParam, LPARAM  lParam) {
-  if (widget_)
-    return widget_->OnMessage(uMsg, wParam, lParam);
-  return DefWindowProc(uMsg, wParam, lParam);
-}
-
-LRESULT CALLBACK NaitiveWindow::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
-                                          LPARAM  lParam) {
+LRESULT CALLBACK NaitiveWindow::WindowProc(HWND hwnd, UINT message,
+                                           WPARAM wParam, LPARAM  lParam) {
 
   if (auto const window = s_creating_window) {
     s_creating_window = nullptr;
     window->hwnd_ = hwnd;
     ::SetWindowLongPtrW(hwnd, GWLP_USERDATA,
                         static_cast<LONG>(reinterpret_cast<LONG_PTR>(window)));
-    return window->OnMessage(uMsg, wParam, lParam);
+    return window->WindowProc(message, wParam, lParam);
   }
 
   auto const window = MapHwnToNaitiveWindow(hwnd);
   ASSERT(window);
-  if (uMsg == WM_NCDESTROY) {
+  if (message == WM_NCDESTROY) {
     window->hwnd_ = nullptr;
-    if (window->widget_)
-      window->widget_->OnMessage(uMsg, wParam, lParam);
+    window->WindowProc(message, wParam, lParam);
     delete window;
     return 0;
   }
 
-  return window->OnMessage(uMsg, wParam, lParam);
+  return window->WindowProc(message, wParam, lParam);
+}
+
+LRESULT NaitiveWindow::WindowProc(UINT message, WPARAM wParam,
+                                  LPARAM lParam) {
+  if (widget_)
+    return widget_->WindowProc(message, wParam, lParam);
+  return DefWindowProc(message, wParam, lParam);
 }
 
 } // namespace widgets

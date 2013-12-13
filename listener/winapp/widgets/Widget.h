@@ -1,21 +1,10 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - edit buffer
-// listener/winapp/ed_buffer.h
-//
-// Copyright (C) 1996-2007 by Project Vogue.
+// Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.h#1 $
-//
 #if !defined(INCLUDE_widgets_widget_h)
 #define INCLUDE_widgets_widget_h
 
 #include "./li_util.h"
-#include "./vi_defs.h"
-
-#define MY_VK_CONTROL   0x100
-#define MY_VK_SHIFT     0x200
+#include "gfx/rect.h"
 
 namespace widgets {
 
@@ -30,16 +19,11 @@ class Widget {
   private: ContainerWidget* container_widget_;
   private: NaitiveWindow* naitive_window_;
   private: bool realized_;
-  private: Rect rect_;
+  private: gfx::Rect rect_;
   private: int showing_;
 
   protected: Widget();
   protected: ~Widget();
-
-  public: ContainerWidget& container_widget() const {
-    ASSERT(container_widget_);
-    return *container_widget_;
-  }
 
   public: bool operator==(const Widget* other) const {
     return this == other;
@@ -49,6 +33,10 @@ class Widget {
     return this != other;
   }
 
+  public: ContainerWidget& container_widget() const {
+    ASSERT(container_widget_);
+    return *container_widget_;
+  }
   public: bool has_focus() const;
   public: bool is_realized() const { return realized_; }
   public: bool is_showing() const { return showing_; }
@@ -56,11 +44,14 @@ class Widget {
   protected: NaitiveWindow* naitive_window() const {
     return naitive_window_;
   }
-  public: const Rect& rect() const { return rect_; }
-  public: static Widget& top_level_widget();
+  public: const gfx::Rect& rect() const { return rect_; }
+  public: static ContainerWidget& top_level_widget();
 
   // [A]
   public: HWND AssociatedHwnd() const;
+
+  // [C]
+  public: virtual bool Contains(const Widget& widget) const;
 
   // [D]
   public: void Destroy();
@@ -74,29 +65,51 @@ class Widget {
   public: virtual void DidShow() {}
 
   // [G]
-  public: static const char16* GetClass_() { return L"Widget"; }
+  public: virtual const char* GetClass() const { return "Widget"; }
+  public: virtual HCURSOR GetCursorAt(const gfx::Point& point) const;
 
-  public: void Hide();
+  // [H]
+  public: virtual void Hide();
 
   // [O]
-  public: virtual bool OnIdle(uint) { return false; }
-  public: virtual LRESULT OnMessage(UINT uMsg, WPARAM wParam,
-                                    LPARAM lParam);
+  public: virtual bool OnIdle(uint idle_count);
+  public: virtual void OnLeftButtonDown(uint flags, const gfx::Point& point);
+  public: virtual void OnLeftButtonUp(uint flags, const gfx::Point& point);
+  public: virtual LRESULT OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam);
+  public: virtual void OnMouseMove(uint flags, const gfx::Point& point);
+  public: virtual void OnPaint(const gfx::Rect rect);
 
   // [R]
-  public: void Realize(const ContainerWidget& container, const Rect& rect);
-  public: void Realize(const ContainerWidget& container, const Rect& rect,
+  // Realize widget, one of container must be realized with native widnow.
+  public: void Realize(const ContainerWidget& container,
+                       const gfx::Rect& rect);
+
+  // Realize widget with native window.
+  public: void Realize(const ContainerWidget& container,
+                       const gfx::Rect& rect,
                        DWORD dwExStyle, DWORD dwStyle);
-  public: void Realize(DWORD dwExStyle, DWORD dwStyle, int cx, int cy);
-  public: void ResizeTo(const Rect& rect);
+
+  // Realize top-level widget with native window.
+  public: void Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size);
+  public: void ReleaseCapture();
+  public: void ResizeTo(const gfx::Rect& rect);
 
   // [S]
+  public: void SetCapture();
   public: virtual void SetFocus();
-  public: void Show();
+  public: virtual void Show();
+
+  // [T]
+  public: virtual const ContainerWidget* ToContainer() const {
+    return nullptr;
+  }
+  public: virtual ContainerWidget* ToContainer() { return nullptr; }
 
   // [W]
   public: virtual void WillDestroyWidget();
   public: virtual void WillDestroyNaitiveWindow();
+  public: virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam,
+                                     LPARAM lParam);
 
   DISALLOW_COPY_AND_ASSIGN(Widget);
 };

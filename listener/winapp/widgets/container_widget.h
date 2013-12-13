@@ -1,13 +1,5 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - edit buffer
-// listener/winapp/ed_buffer.h
-//
-// Copyright (C) 1996-2007 by Project Vogue.
+// Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.h#1 $
-//
 #if !defined(INCLUDE_widgets_container_widget_h)
 #define INCLUDE_widgets_container_widget_h
 
@@ -17,30 +9,55 @@
 namespace widgets {
 
 class ContainerWidget : public Widget {
+  private: Widget* capture_widget_;
   private: std::vector<Widget*> child_widgets_;
   private: Widget* focus_widget_;
 
   public: ContainerWidget();
   public: virtual ~ContainerWidget();
 
-  private: bool contains(const Widget& widget) const;
   public: Widget* focus_widget() const { return focus_widget_; }
+
+  // [C]
+  private: virtual bool Contains(const Widget& widget) const override;
 
   // [D]
   public: virtual void DidRealizeWidget(const Widget& widget);
+  private: void DispatchPaintMessage();
 
   // [G]
-  public: static const char16* GetClass_() { return L"ContainerWidget"; }
+  public: virtual const char* GetClass() const override {
+    return "ContainerWidget";
+  }
+  private: Widget* GetWidgetAt(const gfx::Point& point) const;
+
+  // [H]
+  public: virtual void Hide();
 
   // [O]
-  protected: virtual LRESULT OnMessage(UINT uMsg, WPARAM  wParam,
-                                       LPARAM lParam) override;
+  protected: virtual bool OnIdle(uint idle_count) override;
+
+  // [R]
+  public: void ReleaseCaptureFrom(const Widget&);
 
   // [S]
+  public: void SetCaptureTo(const Widget&);
+  private: bool SetCursor();
   public: void SetFocusTo(const Widget&);
+  public: virtual void Show();
+
+  // [T]
+  public: virtual const ContainerWidget* ToContainer() const override {
+    return this;
+  }
+  public: virtual ContainerWidget* ToContainer() override {
+    return this;
+  }
 
   // [W]
   public: void WillDestroyWidget(const Widget&);
+  protected: virtual LRESULT WindowProc(UINT uMsg, WPARAM  wParam,
+                                        LPARAM lParam) override;
 
   DISALLOW_COPY_AND_ASSIGN(ContainerWidget);
 };

@@ -13,7 +13,6 @@
 
 #include "./vi_Frame.h"
 
-
 Pane::Pane()
     : m_nActiveTick(0),
       m_pwszName(L"") {

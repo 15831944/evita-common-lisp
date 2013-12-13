@@ -528,12 +528,7 @@ bool Frame::OnIdle(uint const nCount) {
     }
   }
 
-  auto fMore = false;
-  for (auto& pane: m_oPanes) {
-    if (pane.OnIdle(nCount))
-      fMore = true;
-  }
-  return fMore;
+  return ContainerWidget::OnIdle(nCount);
 }
 
 LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
@@ -573,31 +568,6 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
       pMinMax->ptMinTrackSize.y = 200;
       return 0;
     }
-
-    case WM_LBUTTONDOWN:
-      if (auto const pane = GetActivePane()) {
-        Point pt(MAKEPOINTS(lParam));
-        pane->OnLeftButtonDown(static_cast<uint>(wParam), pt);
-      }
-      return 0;
-
-    case WM_LBUTTONUP:
-      if (auto const pane = GetActivePane()) {
-        Point pt(MAKEPOINTS(lParam));
-        pane->OnLeftButtonUp(static_cast<uint>(wParam), pt);
-      }
-      return 0;
-
-    case WM_MOUSEMOVE:
-      if (auto const pane = GetActivePane()) {
-        Point pt(MAKEPOINTS(lParam));
-        pane->OnMouseMove(static_cast<uint>(wParam), pt);
-      }
-      return 0;
-
-    case WM_NCDESTROY:
-      delete this;
-      break;
 
     case WM_NCHITTEST:
       if (CompositionState::IsEnabled()) {
@@ -671,23 +641,6 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
         return 0;
     }
 
-    case WM_ERASEBKGND:
-      #if DEBUG_PAINT
-        DEBUG_PRINTF("WM_ERASEBKGND %p\n", this);
-      #endif
-      return TRUE;
-
-    case WM_PAINT: {
-      #if DEBUG_PAINT
-        DEBUG_PRINTF("WM_PAINT Start %p\n", this);
-      #endif
-      ::ValidateRect(*naitive_window(), nullptr);
-      #if DEBUG_PAINT
-        DEBUG_PRINTF("WM_PAINT End %p\n", this);
-      #endif
-      return 0;
-    }
-
     case WM_PARENTNOTIFY:
       switch (wParam) {
         case WM_DESTROY: {
@@ -721,11 +674,15 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
       // Ask Windows set cursor for non-client area.
       break;
 
-    case WM_VSCROLL:
-      if (auto const pane = GetActivePane())
-        pane->OnDeprecatedVScroll(LOWORD(wParam),
-                                  reinterpret_cast<HWND>(lParam));
-      return 0;
+    case WM_VSCROLL: {
+      auto const widget = reinterpret_cast<Widget*>(
+        ::GetWindowLongPtr(*naitive_window(), GWLP_USERDATA));
+      if (widget) {
+        widget->OnMessage(uMsg, wParam, lParam);
+        return 0;
+      }
+      break;
+    }
 
     default:
       if (uMsg == g_TabBand__TabDragMsg) {
@@ -807,18 +764,15 @@ void Frame::Realize() {
   gfx::SizeF size(font.GetCharWidth('M') * cColumns,
                   font.height() * cRows);
   gfx::RectF rect(gfx::PointF(), gfx::FactorySet::AlignToPixel(size));
-  RECT rc = rect;
+  Rect rc = rect;
   ::AdjustWindowRectEx(&rc, dwStyle, TRUE, dwExStyle);
   rc.right += ::GetSystemMetrics(SM_CXVSCROLL) + 10;
 
-  RECT rcWork;
+  Rect rcWork;
   ::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 
-  auto const cx = rc.right  - rc.left;
-  auto const cy = (rcWork.bottom - rcWork.top) * 4 / 5;
-  rc.left = CW_USEDEFAULT;
-  // See WM_GETMINMAXINFO
-  widgets::ContainerWidget::Realize(dwExStyle, dwStyle, cx, cy);
+  Size window_size(rc.width(), rcWork.height() * 4 / 5);
+  widgets::ContainerWidget::Realize(dwExStyle, dwStyle, window_size);
   SetStatusBar(0, L"Ready");
 }
 

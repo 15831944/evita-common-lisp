@@ -117,7 +117,6 @@ class TextEditWindow
   #endif // SUPPORT_IME
   protected: void* m_pvHost;
   protected: RECT m_rc;
-  private: int show_count_;
 
   // ctor/dtor
   public: TextEditWindow(void* pvHost, Buffer*, Posn = 0);
@@ -151,7 +150,7 @@ class TextEditWindow
   public: Buffer* GetBuffer() const;
   public: HCURSOR GetCursorAt(const Point&) const;
 
-  public: static const char16* GetClass_() { return L"TextEditWindow"; }
+  public: static const char* GetClass_() { return "TextEditWindow"; }
 
   public: Count GetColumn(Posn);
   public: Posn GetEnd();
@@ -173,9 +172,6 @@ class TextEditWindow
   public: Posn GetStart();
   public: size_t GetUndoSize() const;
 
-  // [H]
-  public: bool HasFocus() const { return m_fHasFocus; }
-
   // [L]
   public: int LargeScroll(int, int, bool = true);
 
@@ -186,12 +182,13 @@ class TextEditWindow
   public: gfx::RectF MapPosnToPoint(Posn);
 
   // [O]
-  public: virtual bool OnIdle(uint);
+  private: virtual bool OnIdle(uint) override;
   private: virtual LRESULT OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam);
-  public: void OnLeftButtonDown(uint flags, const Point&);
-  public: void OnLeftButtonUp(uint flags, const Point&);
-  public: void OnMouseMove(uint flags, const Point&);
-  protected: void onVScroll(uint);
+  private: virtual void OnLeftButtonDown(uint, const Point&) override;
+  private: virtual void OnLeftButtonUp(uint, const Point&) override;
+  private: virtual void OnMouseMove(uint, const Point&) override;
+  private: virtual void OnPaint(const gfx::Rect) override;
+  private: void onVScroll(uint);
 
   // [R]
   public: void Realize(const widgets::ContainerWidget& container,
@@ -204,7 +201,6 @@ class TextEditWindow
   // [S]
   protected: void selectWord(Posn);
   public: void SetScrollBar(HWND, int);
-  public: void Show();
   public: int SmallScroll(int, int);
   public: Posn StartOfLine(Posn);
   protected: Posn startOfLineAux(const gfx::Graphics&, Posn);

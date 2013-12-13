@@ -1,19 +1,13 @@
 #include "precomp.h"
-//////////////////////////////////////////////////////////////////////////////
-//
-// evcl - listener - winapp - Caret
-//
-// Copyright (C) 1996-2007 by Project Vogue.
+// Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-//
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_TextEditWindow.cpp#3 $
-//
-#define DEBUG_SHOW 0
 #include "./vi_Caret.h"
 
 #include "./gfx_base.h"
 #include <math.h>
 #include <utility>
+
+#define DEBUG_SHOW 0
 
 static const auto kBlinkInterval = 250; // milliseconds
 
@@ -110,8 +104,7 @@ void Caret::Hide(const gfx::Graphics& gfx) {
 
 void Caret::Show(const gfx::Graphics& gfx, const gfx::RectF& new_rect) {
   ASSERT(!!new_rect);
-  if (!taken_)
-    return;
+  ASSERT(taken_);
   ASSERT(!showing_);
   #if DEBUG_SHOW
     DEBUG_PRINTF("Move caret at (%d,%d) from (%d,%d)\n", 

@@ -80,6 +80,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: void DidRealize();
   public: void DidRealizeWindow(const Window&);
   private: virtual void DidResize() override;
+  private: virtual void DidSetFocus() override;
 
   // [G]
   private: LeafBox* GetActiveLeafBox() const;
@@ -87,7 +88,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: Window* GetActiveWindow() const;
   public: Buffer* GetBuffer() const;
 
-  public: static const char16* GetClass_() { return L"EditPane"; }
+  public: static const char* GetClass_() { return "EditPane"; }
   public: Window* GetFirstWindow() const { return m_oWindows.GetFirst(); }
   public: Window* GetLastWindow() const { return m_oWindows.GetLast(); }
 
@@ -102,11 +103,9 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
   // [O]
-  public: virtual void OnDeprecatedVScroll(uint code, HWND hwnd) override;
-  public: virtual bool OnIdle(uint) override;
-  public: virtual void OnLeftButtonDown(uint flags, const Point&) override;
-  public: virtual void OnLeftButtonUp(uint flags, const Point&) override;
-  public: virtual void OnMouseMove(uint flags, const Point&) override;
+  private: virtual void OnLeftButtonDown(uint flags, const Point&) override;
+  private: virtual void OnLeftButtonUp(uint flags, const Point&) override;
+  private: virtual void OnMouseMove(uint flags, const Point&) override;
 
   // [S]
   private: void setupStatusBar();

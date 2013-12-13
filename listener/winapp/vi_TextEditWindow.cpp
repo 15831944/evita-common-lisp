@@ -100,8 +100,7 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
         m_lImeEnd(0),
         m_lImeStart(0),
       #endif // SUPPORT_IME
-      m_pvHost(pvHost),
-      show_count_(0) {
+      m_pvHost(pvHost) {
   pBuffer->AddWindow(this);
 }
 
@@ -110,6 +109,10 @@ TextEditWindow::~TextEditWindow() {
 }
 
 void TextEditWindow::Activate() {
+  #if DEBUG_FOCUS
+    DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
+        is_showing(), GetBuffer()->GetName());
+  #endif
   SetFocus();
 }
 
@@ -217,16 +220,17 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
 
 void TextEditWindow::DidHide() {
   #if DEBUG_SHOW_HIDE
-    DEBUG_PRINTF("%p show=%d |%ls|\n", this, show_count_,
+    DEBUG_PRINTF("%p show=%d |%ls|\n", this, is_showing(),
                  GetBuffer()->GetName());
   #endif
   m_oHoriScrollBar.ShowWindow(SW_HIDE);
+  m_oVertScrollBar.ShowWindow(SW_HIDE);
 }
 
 void TextEditWindow::DidKillFocus() {
   #if DEBUG_FOCUS
     DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
-        show_count_, GetBuffer()->GetName());
+        is_showing(), GetBuffer()->GetName());
   #endif
   ParentClass::DidKillFocus();
   caret_->Give(*m_gfx);
@@ -235,27 +239,21 @@ void TextEditWindow::DidKillFocus() {
 void TextEditWindow::DidSetFocus() {
   #if DEBUG_FOCUS
     DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
-        show_count_, GetBuffer()->GetName());
+        is_showing(), GetBuffer()->GetName());
   #endif
-  ParentClass::DidSetFocus();
   caret_->Take(*m_gfx);
   s_active_tick += 1;
   m_nActiveTick = s_active_tick;
+  ASSERT(has_focus());
 }
 
 void TextEditWindow::DidShow() {
   #if DEBUG_SHOW_HIDE
     DEBUG_PRINTF("%p focus=%d show=%d |%ls|\n", this, has_focus(),
-        show_count_, GetBuffer()->GetName());
+        is_showing(), GetBuffer()->GetName());
   #endif
   m_oHoriScrollBar.ShowWindow(SW_SHOW);
   m_oVertScrollBar.ShowWindow(SW_SHOW);
-  ++show_count_;
-  if (show_count_ == 1) {
-    m_pPage->Reset();
-    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-    Redraw();
-  }
 }
 
 Posn TextEditWindow::EndOfLine(Posn lPosn) {
@@ -418,7 +416,7 @@ void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
   #if DEBUG_FOCUS
     DEBUG_PRINTF("%p (%d,%d) focus=%d show=%d p=%d |%ls|\n", this,
         point.x, point.y,
-        has_focus(), show_count_, lPosn, GetBuffer()->GetName());
+        has_focus(), is_showing(), lPosn, GetBuffer()->GetName());
   #endif
 
   if (lPosn < 0) {
@@ -440,14 +438,14 @@ void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
     selectWord(lPosn);
   } else {
     m_eDragMode = DragMode_Selection;
-    ::SetCapture(AssociatedHwnd());
+    SetCapture();
   }
 }
 
 void TextEditWindow::OnLeftButtonUp(uint, const Point&) {
   if (m_eDragMode == DragMode_None)
     return;
-  ::ReleaseCapture();
+  ReleaseCapture();
   stopDrag();
 }
 
@@ -527,13 +525,6 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
 
-    case WM_SETCURSOR:
-      if (HTCLIENT == LOWORD(lParam)) {
-        ::SetCursor(GetCursorAt(Point()));
-        return 1;
-      }
-      break;
-
     case WM_SIZE:
       #if DEBUG_RESIZE
         DEBUG_PRINTF("WM_SIZE %p %dx%d\n",
@@ -584,22 +575,6 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       onVScroll(LOWORD(wParam));
       return 0;
 
-    case WM_WINDOWPOSCHANGED: {
-      // DefWindowProc sents WM_SIZE and WM_MOVE, so handling
-      // WM_WINDPOSCHANGED is faster than DefWindowProc.
-      auto const wp = reinterpret_cast<const WINDOWPOS*>(lParam);
-      if (wp->flags & SWP_NOSIZE)
-        return 0;
-      #if DEBUG_REDRAW || DEBUG_RESIZE
-        DEBUG_PRINTF("WM_WINDOWPOSCHANGED %p 0x%X %dx%d+%d+%d\n",
-                     this, wp->flags, wp->cx, wp->cy, wp->x, wp->y);
-      #endif
-      Rect rect;
-      ::GetClientRect(AssociatedHwnd(), &rect);
-      Resize(rect);
-      return 0;
-    }
-
     #if SUPPORT_IME
     case WM_IME_COMPOSITION:
       onImeComposition(lParam);
@@ -636,7 +611,6 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
   return ParentClass::OnMessage(uMsg, wParam, lParam);
 }
 
-
 void TextEditWindow::OnMouseMove(uint, const Point& point) {
   if (m_eDragMode == DragMode_None) {
     // We have nothing to do if mouse isn't dragged.
@@ -663,6 +637,11 @@ void TextEditWindow::OnMouseMove(uint, const Point& point) {
     m_oAutoScroll.Start(AssociatedHwnd(), 1);
   else
     m_oAutoScroll.Stop(AssociatedHwnd());
+}
+
+void TextEditWindow::OnPaint(const gfx::Rect) {
+  m_pPage->Reset();
+  Redraw();
 }
 
 void TextEditWindow::onVScroll(uint nCode) {
@@ -709,12 +688,11 @@ void TextEditWindow::onVScroll(uint nCode) {
 void TextEditWindow::Realize(const widgets::ContainerWidget& container,
                              const gfx::Graphics& gfx, const Rect& rect) {
   ASSERT(!m_gfx);
-  ASSERT(!show_count_);
+  ASSERT(!is_showing());
   // TODO: We should not touch AssociatedHwnd().
   m_gfx = &gfx;
   ParentClass::Realize(container, rect);
   GetHost<EditPane>()->DidRealizeWindow(*this);
-  show_count_ = 1;
   Resize(rect);
 }
 
@@ -810,7 +788,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
 }
 
 void TextEditWindow::Render() {
-  if (show_count_ <= 0)
+  if (!is_showing())
     return;
 
   gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
@@ -856,10 +834,10 @@ void TextEditWindow::Render() {
 
 void TextEditWindow::Resize(const Rect& rect) {
   #if DEBUG_RESIZE
-    DEBUG_PRINTF("%p (%d,%d)x(%d,%d) show=%d |%ls|\n",
+    DEBUG_PRINTF("%p (%d,%d)x(%d,%d) focus=%d show=%d |%ls|\n",
         this,
         rect.left, rect.top, rect.width(), rect.height(),
-        show_count_,
+        has_focus(), is_showing(),
         GetBuffer()->GetName());
   #endif
   m_rc = rect;

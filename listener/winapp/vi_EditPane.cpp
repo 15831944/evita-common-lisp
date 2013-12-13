@@ -61,7 +61,7 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: Box* next_sibling() const { return GetNext(); }
     public: Box* previous_sibling() const { return GetPrev(); }
     public: LayoutBox* outer() const { return outer_; }
-    public: const Rect& rect() const { return rect_; }
+    public: const gfx::Rect& rect() const { return rect_; }
     public: Rect& rect() { return rect_; }
     public: void set_outer(LayoutBox& outer) { outer_ = &outer; }
     public: virtual void CloseAllBut(Window*) = 0;
@@ -78,13 +78,11 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
 
     public: virtual bool IsLeafBox() const = 0;
 
-    public: virtual bool OnIdle(uint) = 0;
-
-    public: virtual void Realize(EditPane*, const Rect&);
+    public: virtual void Realize(EditPane*, const gfx::Rect&);
     public: virtual void Redraw() const {}
     public: void Removed();
 
-    public: virtual void SetRect(const Rect&);
+    public: virtual void SetRect(const gfx::Rect&);
 
     DISALLOW_COPY_AND_ASSIGN(Box);
 };
@@ -102,8 +100,8 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual uint CountLeafBox() const override final;
   public: virtual void Destroy() override final;
   public: virtual void DidChangeOwnerFrame() override final;
-  protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) = 0;
-  public: virtual void MoveSplitter(const Point&, Box&) = 0;
+  protected: virtual void DidRemoveBox(Box*, Box*, const gfx::Rect&) = 0;
+  public: virtual void MoveSplitter(const gfx::Point&, Box&) = 0;
   public: virtual LeafBox* GetActiveLeafBox() const override final;
   public: virtual LeafBox* GetFirstLeafBox() const override final;
   public: virtual LeafBox* FindLeafBoxFromWidget(
@@ -112,14 +110,13 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual bool IsLeafBox() const override final { return false; }
   public: bool IsSingle() const;
   public: virtual bool IsVerticalLayoutBox() const = 0;
-  public: virtual bool OnIdle(uint) override final;
-  public: virtual void Realize(EditPane*, const Rect&) override;
+  public: virtual void Realize(EditPane*, const gfx::Rect&) override;
   public: virtual void Redraw() const override final;
   public: void RemoveBox(Box&);
   public: void Replace(Box&, Box&);
   public: virtual LeafBox& Split(Box&, int) = 0;
 
-  public: virtual void StopSplitter(const Point&, Box&) = 0;
+  public: virtual void StopSplitter(const gfx::Point&, Box&) = 0;
 
   // [U]
   public: void UpdateSplitters();
@@ -163,43 +160,40 @@ class EditPane::LeafBox final : public EditPane::Box {
   // [I]
   public: virtual bool IsLeafBox() const override final { return true; }
 
-  // [O]
-  public: virtual bool OnIdle(uint) override;
-
   // [R]
-  public: virtual void Realize(EditPane*, const Rect&) override;
+  public: virtual void Realize(EditPane*, const gfx::Rect&) override;
   public: virtual void Redraw() const override;
 
   // [S]
-  public: virtual void SetRect(const Rect&) override;
+  public: virtual void SetRect(const gfx::Rect&) override;
 };
 
 class EditPane::HorizontalLayoutBox final : public EditPane::LayoutBox {
   public: HorizontalLayoutBox(EditPane*, LayoutBox*);
   public: virtual ~HorizontalLayoutBox();
-  protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) override;
+  protected: virtual void DidRemoveBox(Box*, Box*, const gfx::Rect&) override;
   public: virtual HitTestResult HitTest(Point) const override;
   public: virtual void DrawSplitters(const gfx::Graphics&) override;
   public: virtual bool IsVerticalLayoutBox() const override;
-  public: virtual void MoveSplitter(const Point&, Box&) override;
-  public: virtual void Realize(EditPane*, const Rect&) override;
-  public: virtual void SetRect(const Rect&) override;
+  public: virtual void MoveSplitter(const gfx::Point&, Box&) override;
+  public: virtual void Realize(EditPane*, const gfx::Rect&) override;
+  public: virtual void SetRect(const gfx::Rect&) override;
   public: virtual LeafBox& Split(Box&, int) override;
-  public: virtual void StopSplitter(const Point&, Box&) override;
+  public: virtual void StopSplitter(const gfx::Point&, Box&) override;
 };
 
 class EditPane::VerticalLayoutBox final : public LayoutBox {
   public: VerticalLayoutBox(EditPane*, LayoutBox*);
   public: virtual ~VerticalLayoutBox();
-  protected: virtual void DidRemoveBox(Box*, Box*, const Rect&) override;
+  protected: virtual void DidRemoveBox(Box*, Box*, const gfx::Rect&) override;
   public: virtual HitTestResult HitTest(Point) const override;
   public: virtual void DrawSplitters(const gfx::Graphics&) override;
   public: virtual bool IsVerticalLayoutBox() const override;
-  public: virtual void MoveSplitter(const Point&, Box&) override;
-  public: virtual void Realize(EditPane*, const Rect&) override;
-  public: virtual void SetRect(const Rect&) override;
+  public: virtual void MoveSplitter(const gfx::Point&, Box&) override;
+  public: virtual void Realize(EditPane*, const gfx::Rect&) override;
+  public: virtual void SetRect(const gfx::Rect&) override;
   public: virtual LeafBox& Split(Box&, int) override;
-  public: virtual void StopSplitter(const Point&, Box&) override;
+  public: virtual void StopSplitter(const gfx::Point&, Box&) override;
 };
 
 class EditPane::SplitterController {
@@ -215,8 +209,8 @@ class EditPane::SplitterController {
   public: SplitterController();
   public: ~SplitterController();
   public: bool is_dragging() const { return m_eState != State_None; }
-  public: void End(const Point&);
-  public: void Move(const Point&);
+  public: void End(const gfx::Point&);
+  public: void Move(const gfx::Point&);
   public: void Start(HWND, State, Box&);
   public: void Stop();
   DISALLOW_COPY_AND_ASSIGN(SplitterController);
@@ -272,7 +266,7 @@ EditPane::Box::~Box() {
   ASSERT(!GetPrev());
 }
 
-void EditPane::Box::Realize(EditPane*, const Rect& rect) {
+void EditPane::Box::Realize(EditPane*, const gfx::Rect& rect) {
   rect_ = rect;
 }
 
@@ -283,7 +277,7 @@ void EditPane::Box::Removed() {
   outer_ = nullptr;
 }
 
-void EditPane::Box::SetRect(const Rect& rect) {
+void EditPane::Box::SetRect(const gfx::Rect& rect) {
   rect_ = rect;
 }
 
@@ -300,7 +294,7 @@ EditPane::HorizontalLayoutBox::~HorizontalLayoutBox() {
 void EditPane::HorizontalLayoutBox::DidRemoveBox(
     Box* const pAbove,
     Box* const pBelow,
-    const Rect& rc) {
+    const gfx::Rect& rc) {
   if (pAbove) {
     // Extend pane above.
     RECT rect = pAbove->rect();
@@ -363,7 +357,7 @@ bool EditPane::HorizontalLayoutBox::IsVerticalLayoutBox() const {
 }
 
 void EditPane::HorizontalLayoutBox::MoveSplitter(
-    const Point& pt,
+    const gfx::Point& pt,
     Box& right_box) {
   auto& left_box = right_box.GetPrev()
       ? *right_box.GetPrev()
@@ -385,7 +379,7 @@ void EditPane::HorizontalLayoutBox::MoveSplitter(
 
 void EditPane::HorizontalLayoutBox::Realize(
     EditPane* edit_pane,
-    const Rect& rect) {
+    const gfx::Rect& rect) {
   LayoutBox::Realize(edit_pane, rect);
 
   auto const num_boxes = boxes_.Count();
@@ -409,7 +403,7 @@ void EditPane::HorizontalLayoutBox::Realize(
   }
 }
 
-void EditPane::HorizontalLayoutBox::SetRect(const Rect& newRect) {
+void EditPane::HorizontalLayoutBox::SetRect(const gfx::Rect& newRect) {
   RECT rcOld = rect();
   LayoutBox::SetRect(newRect);
   auto const num_boxes = boxes_.Count();
@@ -531,7 +525,7 @@ EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
 }
 
 void EditPane::HorizontalLayoutBox::StopSplitter(
-    const Point& pt,
+    const gfx::Point& pt,
     Box& below_box) {
   DEBUG_PRINTF("%p\n", this);
   if (!below_box.GetPrev()) {
@@ -647,18 +641,7 @@ bool EditPane::LayoutBox::IsSingle() const {
   return !boxes_.IsEmpty() && boxes_.GetFirst() == boxes_.GetLast();
 }
 
-bool EditPane::LayoutBox::OnIdle(uint count) {
-  ASSERT(!is_removed());
-  auto more = false;
-  foreach (BoxList::Enum, it, boxes_) {
-    if (it->OnIdle(count)) {
-      more = true;
-    }
-  }
-  return more;
-}
-
-void EditPane::LayoutBox::Realize(EditPane* edit_pane, const Rect& rect) {
+void EditPane::LayoutBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
   ASSERT(!is_removed());
   Box::Realize(edit_pane, rect);
 }
@@ -810,11 +793,7 @@ EditPane::HitTestResult EditPane::LeafBox::HitTest(Point pt) const {
   return HitTestResult();
 }
 
-bool EditPane::LeafBox::OnIdle(uint count) {
-    return GetWindow()->OnIdle(count);
-}
-
-void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
+void EditPane::LeafBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
   Box::Realize(edit_pane, rect);
 
   auto const splitter_height = HasSibling() ? 0 : k_cySplitterBig;
@@ -835,7 +814,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const Rect& rect) {
         nullptr);
 
   ::SetWindowLongPtr(m_hwndVScrollBar, GWLP_USERDATA,
-                     reinterpret_cast<LONG_PTR>(this));
+                     reinterpret_cast<LONG_PTR>(m_pWindow));
 
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
   m_pWindow->Realize(*edit_pane, edit_pane_->GetFrame()->gfx(), window_rect);
@@ -847,7 +826,7 @@ void EditPane::LeafBox::Redraw() const {
   m_pWindow->Redraw();
 }
 
-void EditPane::LeafBox::SetRect(const Rect& rect) {
+void EditPane::LeafBox::SetRect(const gfx::Rect& rect) {
   Box::SetRect(rect);
 
   #if DEBUG_SPLIT
@@ -887,7 +866,7 @@ EditPane::VerticalLayoutBox::~VerticalLayoutBox() {
 void EditPane::VerticalLayoutBox::DidRemoveBox(
     Box* const pAbove,
     Box* const pBelow,
-    const Rect& rc) {
+    const gfx::Rect& rc) {
   if (pAbove) {
     // Extend pane above.
     RECT rect = pAbove->rect();
@@ -957,7 +936,7 @@ bool EditPane::VerticalLayoutBox::IsVerticalLayoutBox() const {
 }
 
 void EditPane::VerticalLayoutBox::MoveSplitter(
-    const Point& pt,
+    const gfx::Point& pt,
     Box& below_box) {
   auto const pBelow = &below_box;
   auto const pBelowPrev = pBelow->GetPrev();
@@ -981,7 +960,7 @@ void EditPane::VerticalLayoutBox::MoveSplitter(
 
 void EditPane::VerticalLayoutBox::Realize(
     EditPane* edit_pane,
-    const Rect& rect) {
+    const gfx::Rect& rect) {
   LayoutBox::Realize(edit_pane, rect);
 
   auto const num_boxes = boxes_.Count();
@@ -1005,7 +984,7 @@ void EditPane::VerticalLayoutBox::Realize(
   }
 }
 
-void EditPane::VerticalLayoutBox::SetRect(const Rect& newRect) {
+void EditPane::VerticalLayoutBox::SetRect(const gfx::Rect& newRect) {
   RECT rcOld = rect();
   LayoutBox::SetRect(newRect);
   auto const num_boxes = boxes_.Count();
@@ -1127,7 +1106,7 @@ EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
 }
 
 void EditPane::VerticalLayoutBox::StopSplitter(
-    const Point& pt,
+    const gfx::Point& pt,
     Box& below_box) {
   DEBUG_PRINTF("%p\n", this);
   if (!below_box.GetPrev()) {
@@ -1159,7 +1138,7 @@ EditPane::SplitterController::~SplitterController() {
   ASSERT(!m_pBox);
 }
 
-void EditPane::SplitterController::End(const Point& point) {
+void EditPane::SplitterController::End(const gfx::Point& point) {
   switch (m_eState) {
     case SplitterController::State_Drag:
     case SplitterController::State_DragSingle:
@@ -1169,7 +1148,7 @@ void EditPane::SplitterController::End(const Point& point) {
   }
 }
 
-void EditPane::SplitterController::Move(const Point& point) {
+void EditPane::SplitterController::Move(const gfx::Point& point) {
   switch (m_eState) {
     case SplitterController::State_Drag:
     case SplitterController::State_DragSingle:
@@ -1268,6 +1247,11 @@ void EditPane::DidResize() {
     root_box_->DrawSplitters(frame().gfx());
 }
 
+void EditPane::DidSetFocus() {
+  if (auto const widget = GetActiveWindow())
+    widget->SetFocus();
+}
+
 // Returns the last active Box.
 EditPane::LeafBox* EditPane::GetActiveLeafBox() const {
   return root_box_->GetActiveLeafBox();
@@ -1283,7 +1267,7 @@ Buffer* EditPane::GetBuffer() const {
   return GetActiveWindow()->GetBuffer();
 }
 
-HCURSOR EditPane::GetCursorAt(const Point& point) const {
+HCURSOR EditPane::GetCursorAt(const gfx::Point& point) const {
   auto const result = root_box_->HitTest(point);
   switch (result.type) {
     case HitTestResult::HSplitter:
@@ -1348,21 +1332,7 @@ Command::KeyBindEntry* EditPane::MapKey(uint nKey) {
   return GetActiveWindow()->MapKey(nKey);
 }
 
-void EditPane::OnDeprecatedVScroll(uint code, HWND hwnd) {
-  DEBUG_PRINTF("code=%d hwnd=%p\n", code, hwnd);
-#if 0
-  auto const box = reinterpret_cast<LeafBox*>(
-      ::GetWindowLongPtr(hwnd, GWLP_USERDATA));
-  if (auto const window = box ->GetWindow())
-    window->SendMessage(WM_VSCROLL, code);
-#endif
-}
-
-bool EditPane::OnIdle(uint count) {
-  return root_box_->OnIdle(count);
-}
-
-void EditPane::OnLeftButtonDown(uint flags, const Point& point) {
+void EditPane::OnLeftButtonDown(uint, const gfx::Point& point) {
   auto const result = root_box_->HitTest(point);
   switch (result.type) {
     case HitTestResult::HSplitter:
@@ -1377,35 +1347,20 @@ void EditPane::OnLeftButtonDown(uint flags, const Point& point) {
                                   SplitterController::State_DragSingle,
                                   *result.box);
       break;
-
-    case HitTestResult::Window:
-      static_cast<LeafBox*>(result.box)->GetWindow()->
-          OnLeftButtonDown(flags, point);
-      break;
   }
 }
 
-void EditPane::OnLeftButtonUp(uint flags, const Point& point) {
+void EditPane::OnLeftButtonUp(uint, const gfx::Point& point) {
   if (splitter_controller_->is_dragging()) {
     splitter_controller_->End(point);
     return;
   }
-  auto const result = root_box_->HitTest(point);
-  if (result.type == HitTestResult::Window) {
-    static_cast<LeafBox*>(result.box)->GetWindow()->
-        OnLeftButtonUp(flags, point);
-  }
 }
 
-void EditPane::OnMouseMove(uint flags, const Point& point) {
+void EditPane::OnMouseMove(uint, const gfx::Point& point) {
   if (splitter_controller_->is_dragging()) {
     splitter_controller_->Move(point);
     return;
-  }
-  auto const result = root_box_->HitTest(point);
-  if (result.type == HitTestResult::Window) {
-      static_cast<LeafBox*>(result.box)->GetWindow()->
-          OnMouseMove(flags, point);
   }
 }
 
@@ -1481,7 +1436,7 @@ void EditPane::UpdateStatusBar() {
       (
         pBuffer->IsNotReady()
             ? IDS_STATUS_BUSY
-            : GetActiveWindow()->HasFocus()
+            : GetActiveWindow()->has_focus()
                 ? IDS_STATUS_READY
                 : 0
      ));

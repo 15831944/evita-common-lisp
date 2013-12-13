@@ -12,39 +12,14 @@
 #define INCLUDE_listener_winapp_visual_defs_h
 
 #include "./resource.h"
+#include "gfx/rect.h"
 
-struct Point : POINT {
-  Point() {
-    x = y = 0;
-  }
-
-  Point(int x, int y) {
-    this->x = x;
-    this->y = y;
-  }
-
- Point(POINTS pt) {
-   x = pt.x; y = pt.y;
- }
-};
-
-struct Rect : RECT {
-  Rect() {
-    left = right = top = bottom =0;
-  }
-
-  Rect(int l, int t, int r, int b) {
-    left= l; right= r; top= t; bottom= b;
-  }
-
-  Rect(RECT rc) {
-    left = rc.left; right = rc.right; top = rc.top; bottom = rc.bottom;
-  }
-
-  operator bool() const { return !width() && !height(); }
-  int height() const { return bottom - top; }
-  int width() const { return right - left; }
-};
+// TODO: We should get rid of |using gfx::Point|.
+using gfx::Point;
+// TODO: We should get rid of |using gfx::Size|.
+using gfx::Size;
+// TODO: We should get rid of |using gfx::Rect|.
+using gfx::Rect;
 
 extern HINSTANCE g_hInstance;
 extern HINSTANCE g_hResource;
