@@ -7,28 +7,28 @@
 // Copyright (C) 1996-2007 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
 //
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_BaseWindow.cpp#3 $
+// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.cpp#3 $
 //
-#include "./vi_BaseWindow.h"
+#include "widgets/Widget.h"
 
 extern HINSTANCE g_hInstance;
 extern HINSTANCE g_hResource;
 
-ATOM BaseWindow::sm_atomWndClass;
-BaseWindow* BaseWindow::sm_pCreateWnd;
-static BaseWindow* s_focus_pseudo_window;
-static BaseWindow* s_set_focus_caller;
+ATOM Widget::sm_atomWndClass;
+Widget* Widget::sm_pCreateWnd;
+static Widget* s_focus_pseudo_window;
+static Widget* s_set_focus_caller;
 
-BaseWindow::~BaseWindow()
+Widget::~Widget()
 {
     #if DEBUG_DESTROY
         DEBUG_PRINTF("%p\n", this);
     #endif
 
     ASSERT(NULL == m_hwnd);
-} // BaseWindow::~BaseWindow
+} // Widget::~Widget
 
-bool BaseWindow::CreateWindowEx(
+bool Widget::CreateWindowEx(
     DWORD   dwExStyle,
     LPCWSTR pwszText,
     DWORD   dwStyle,
@@ -51,24 +51,24 @@ bool BaseWindow::CreateWindowEx(
         g_hInstance,
         0 );    // lParam
     return NULL != hwnd;
-} // BaseWindow::CreateWindowEx
+} // Widget::CreateWindowEx
 
-void BaseWindow::Destroy() {
+void Widget::Destroy() {
   ASSERT(IsRealized());
   ::DestroyWindow(m_hwnd);
 }
 
-void BaseWindow::DidSetFocus() {
+void Widget::DidSetFocus() {
   DEBUG_PRINTF("%p\n", this);
   s_focus_pseudo_window = this;
 }
 
-BaseWindow* BaseWindow::MapHwndToWindow(HWND const hwnd) {
-  return reinterpret_cast<BaseWindow*>(
+Widget* Widget::MapHwndToWindow(HWND const hwnd) {
+  return reinterpret_cast<Widget*>(
     static_cast<LONG_PTR>(::GetWindowLongPtrW(hwnd, GWLP_USERDATA)));
 }
 
-void BaseWindow::SetFocus() {
+void Widget::SetFocus() {
   ASSERT(m_hwnd);
   //ASSERT(!s_set_focus_caller);
   if (auto const focus_window = s_focus_pseudo_window) {
@@ -85,14 +85,14 @@ void BaseWindow::SetFocus() {
   ::SetFocus(m_hwnd);
 }
 
-// BaseWindow::windowProc
-LRESULT CALLBACK BaseWindow::windowProc(
+// Widget::windowProc
+LRESULT CALLBACK Widget::windowProc(
     HWND    hwnd,
     UINT    uMsg,
     WPARAM  wParam,
     LPARAM  lParam )
 {
-    BaseWindow* pWnd = MapHwndToWindow(hwnd);
+    Widget* pWnd = MapHwndToWindow(hwnd);
 
     if (NULL == pWnd)
     {
@@ -133,11 +133,11 @@ LRESULT CALLBACK BaseWindow::windowProc(
     }
 
     return pWnd->onMessage(uMsg, wParam, lParam);
-} // BaseWindow::windowProc
+} // Widget::windowProc
 
 
-// BaseWindow::Init
-int BaseWindow::Init()
+// Widget::Init
+int Widget::Init()
 {
     WNDCLASSEXW oWC;
         oWC.cbSize          = sizeof(oWC);
@@ -163,4 +163,4 @@ int BaseWindow::Init()
     }
 
     return 0;
-} // BaseWindow::init
+} // Widget::init

@@ -70,7 +70,7 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(const gfx::Graphics&) { }
     public: virtual LeafBox* FindLeafBoxFromWindow(
-        const BaseWindow&) const = 0;
+        const Widget&) const = 0;
     public: virtual LeafBox* GetActiveLeafBox() const = 0;
     public: virtual LeafBox* GetFirstLeafBox() const = 0;
 
@@ -109,7 +109,7 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual LeafBox* GetActiveLeafBox() const override final;
   public: virtual LeafBox* GetFirstLeafBox() const override final;
   public: virtual LeafBox* FindLeafBoxFromWindow(
-      const BaseWindow&) const override final;
+      const Widget&) const override final;
 
   // [H]
   public: virtual void Hide() override {
@@ -166,7 +166,7 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual LeafBox* GetActiveLeafBox() const override;
   public: virtual LeafBox* GetFirstLeafBox() const override;
   public: virtual LeafBox* FindLeafBoxFromWindow(
-      const BaseWindow&) const override;
+      const Widget&) const override;
   public: Window* GetWindow() const { return m_pWindow; }
 
   // [H]
@@ -657,7 +657,7 @@ void EditPane::LayoutBox::Destroy() {
 }
 
 EditPane::LeafBox* EditPane::LayoutBox::FindLeafBoxFromWindow(
-    const BaseWindow& window) const {
+    const Widget& window) const {
   ASSERT(!is_removed());
   foreach (BoxList::Enum, it, boxes_) {
     if (auto const box = it->FindLeafBoxFromWindow(window)) {
@@ -815,7 +815,7 @@ EditPane::LeafBox* EditPane::LeafBox::GetFirstLeafBox() const {
 }
 
 EditPane::LeafBox* EditPane::LeafBox::FindLeafBoxFromWindow(
-    const BaseWindow& window) const {
+    const Widget& window) const {
   return window == m_pWindow ? const_cast<LeafBox*>(this) : nullptr;
 }
 

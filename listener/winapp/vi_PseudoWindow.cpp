@@ -27,14 +27,14 @@ void PseudoWindow::set_owner_window(HWND hwnd) {
 void PseudoWindow::DidKillFocus() {
   ASSERT(has_focus_);
   has_focus_ = false;
-  BaseWindow::DidKillFocus();
+  Widget::DidKillFocus();
 }
 
 void PseudoWindow::DidSetFocus() {
   has_focus_ = true;
-  BaseWindow::DidSetFocus();
+  Widget::DidSetFocus();
 }
 
 void PseudoWindow::SetFocus() {
-  BaseWindow::SetFocus();
+  Widget::SetFocus();
 }

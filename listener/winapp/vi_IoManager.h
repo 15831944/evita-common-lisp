@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_visual_IoManager_h)
 #define INCLUDE_visual_IoManager_h
 
-#include "./vi_BaseWindow.h"
+#include "widgets/Widget.h"
 
 class Buffer;
 
@@ -19,7 +19,7 @@ class Buffer;
 //
 // IoManager
 //
-class IoManager : public BaseWindow
+class IoManager : public Widget
 {
     // [F]
     public: static void FinishLoad(

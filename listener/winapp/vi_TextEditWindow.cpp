@@ -437,7 +437,7 @@ void TextEditWindow::OnLeftButtonUp(uint, const Point&) {
 }
 
 LRESULT TextEditWindow::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-  return BaseWindow::onMessage(uMsg, wParam, lParam);
+  return Widget::onMessage(uMsg, wParam, lParam);
 }
 
 void TextEditWindow::OnMouseMove(uint, const Point& point) {

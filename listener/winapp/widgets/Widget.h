@@ -6,7 +6,7 @@
 // Copyright (C) 1996-2007 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
 //
-// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_BaseWindow.h#1 $
+// @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Widget.h#1 $
 //
 #if !defined(INCLUDE_visual_basewnd_h)
 #define INCLUDE_visual_basewnd_h
@@ -16,16 +16,16 @@
 #define MY_VK_CONTROL   0x100
 #define MY_VK_SHIFT     0x200
 
-class BaseWindow;
+class Widget;
 class FrameWindow;
 class Pane;
 
 
 //////////////////////////////////////////////////////////////////////
 //
-// BaseWindow
+// Widget
 //
-class BaseWindow
+class Widget
 {
   public: class MessageResult {
     private: LRESULT lResult_;
@@ -39,16 +39,16 @@ class BaseWindow
   };
 
     protected: static ATOM sm_atomWndClass;
-    static BaseWindow* sm_pCreateWnd;
+    static Widget* sm_pCreateWnd;
 
     protected: HWND m_hwnd;
 
-    public:    BaseWindow() : m_hwnd(NULL) {}
-    protected: virtual ~BaseWindow();
+    public:    Widget() : m_hwnd(NULL) {}
+    protected: virtual ~Widget();
 
     public: operator HWND() const { return m_hwnd; }
 
-    public: bool operator==(const BaseWindow* other) const {
+    public: bool operator==(const Widget* other) const {
       return this == other;
     }
 
@@ -56,7 +56,7 @@ class BaseWindow
       return m_hwnd == hwnd;
     }
 
-    public: bool operator!=(const BaseWindow* other) const {
+    public: bool operator!=(const Widget* other) const {
       return this != other;
     }
 
@@ -85,7 +85,7 @@ class BaseWindow
     public: virtual bool IsRealized() const { return m_hwnd; }
 
     // [M]
-    protected: static BaseWindow* MapHwndToWindow(HWND);
+    protected: static Widget* MapHwndToWindow(HWND);
 
     // [O]
     public: virtual bool OnIdle(uint) { return false; }
@@ -116,7 +116,7 @@ class BaseWindow
         WPARAM  wParam,
         LPARAM  lParam );
 
-    DISALLOW_COPY_AND_ASSIGN(BaseWindow);
-}; // BaseWindow
+    DISALLOW_COPY_AND_ASSIGN(Widget);
+}; // Widget
 
 #endif //!defined(INCLUDE_visual_basewnd_h)

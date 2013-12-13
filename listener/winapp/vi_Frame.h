@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_visual_Frame_h)
 #define INCLUDE_visual_Frame_h
 
-#include "./vi_BaseWindow.h"
+#include "widgets/Widget.h"
 
 #include "./ctrl_StatusBar.h"
 #include "./ctrl_TabBand.h"
@@ -44,7 +44,7 @@ class Buffer;
 ///   Represents a frame window aka toplevel window. This window communicates
 ///   with window manager.
 /// </summary>
-class Frame final : public BaseWindow, public DoubleLinkedNode_<Frame> {
+class Frame final : public Widget, public DoubleLinkedNode_<Frame> {
   private: enum CtrlId {
     CtrlId_TabBand  = 1,
     CtrlId_StatusBar,

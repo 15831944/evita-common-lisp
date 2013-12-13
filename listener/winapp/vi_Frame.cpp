@@ -823,7 +823,7 @@ LRESULT Frame::onMessage(uint const uMsg, WPARAM const wParam,
       return result.lResult();
   }
 
-  return BaseWindow::onMessage(uMsg, wParam, lParam);
+  return Widget::onMessage(uMsg, wParam, lParam);
 }
 
 bool Frame::onTabDrag(TabBandDragAndDrop const eAction,

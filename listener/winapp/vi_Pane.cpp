@@ -45,5 +45,5 @@ LRESULT Pane::onMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
         break;
     } // switch uMsg
 
-    return BaseWindow::onMessage(uMsg, wParam, lParam);
+    return Widget::onMessage(uMsg, wParam, lParam);
 } // Pane::onMessage

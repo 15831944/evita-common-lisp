@@ -122,6 +122,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CallingConvention>FastCall</CallingConvention>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions>/nxcompat %(AdditionalOptions)</AdditionalOptions>
@@ -193,6 +194,7 @@
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <CreateHotpatchableImage>false</CreateHotpatchableImage>
       <OpenMPSupport>false</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions>/nxcompat %(AdditionalOptions)</AdditionalOptions>
@@ -270,7 +272,6 @@
     <ClCompile Include="li_util.cpp" />
     <ClCompile Include="mode_Python.cpp" />
     <ClCompile Include="vi_Application.cpp" />
-    <ClCompile Include="vi_BaseWindow.cpp" />
     <ClCompile Include="vi_Buffer.cpp" />
     <ClCompile Include="vi_BufferListPane.cpp" />
     <ClCompile Include="vi_Caret.cpp" />
@@ -289,6 +290,7 @@
     <ClCompile Include="vi_Selection.cpp" />
     <ClCompile Include="vi_Style.cpp" />
     <ClCompile Include="vi_TextEditWindow.cpp" />
+    <ClCompile Include="widgets\Widget.cpp" />
     <ClCompile Include="z_debug.cpp" />
     <ClCompile Include="ctrl_StatusBar.cpp" />
     <ClCompile Include="ctrl_TabBand.cpp" />
@@ -334,7 +336,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="vi_Application.h" />
-    <ClInclude Include="vi_BaseWindow.h" />
     <ClInclude Include="vi_Buffer.h" />
     <ClInclude Include="vi_BufferListPane.h" />
     <ClInclude Include="vi_Caret.h" />
@@ -380,6 +381,7 @@
     <ClInclude Include="IStringCursor.h" />
     <ClInclude Include="RegexMatch.h" />
     <ClInclude Include="precomp.h" />
+    <ClInclude Include="widgets\Widget.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico" />

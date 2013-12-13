@@ -28,6 +28,9 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{d1749aaa-2980-425e-8e0a-039655e65171}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Widgets">
+      <UniqueIdentifier>{ac11ba63-fda4-4dc5-b766-8b126ca3eb27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ap_input_history.cpp">
@@ -52,9 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vi_Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vi_BaseWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vi_Buffer.cpp">
@@ -192,6 +192,9 @@
     <ClCompile Include="vi_Caret.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\Widget.cpp">
+      <Filter>Widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -222,9 +225,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vi_Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vi_BaseWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vi_Buffer.h">
@@ -376,6 +376,9 @@
     </ClInclude>
     <ClInclude Include="vi_Caret.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\Widget.h">
+      <Filter>Widgets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

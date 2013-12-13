@@ -11,7 +11,7 @@
 #if !defined(INCLUDE_visual_CommandWindow_h)
 #define INCLUDE_visual_CommandWindow_h
 
-#include "./vi_BaseWindow.h"
+#include "widgets/Widget.h"
 
 namespace Command
 {
@@ -26,7 +26,7 @@ class Pane;
 //
 // CommandWindow
 //
-class CommandWindow : public BaseWindow
+class CommandWindow : public Widget
 {
     // [D]
     public: template<class T> T* DynamicCast()
