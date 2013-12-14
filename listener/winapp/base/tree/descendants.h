@@ -38,8 +38,8 @@ descendants(ContainerClass& container) {
   return impl::Descendants_<ContainerClass::Node>(container);
 }
 
-template<class NodeClass, class ContainerClass>
-bool ContainerNode_<NodeClass, ContainerClass>::Contains(
+template<class NodeClass, class ContainerClass, typename... Params>
+bool ContainerNode_<NodeClass, ContainerClass, Params...>::Contains(
     const NodeClass& node) const {
   for (const auto& child: descendants(*this)) {
     if (child == node)

@@ -27,13 +27,8 @@ class DescendantsOrSelf_ {
         return *this;
       }
 
-      if (auto const next_sibling = node_->next_sibling()) {
-        node_ = next_sibling;
-        return *this;
-      }
-
-      while (node_->parent_node() != scope_) {
-        if (auto const next = node_->parent_node()->next_sibling()) {
+      while (node_ != scope_) {
+        if (auto const next = node_->next_sibling()) {
           node_ = next;
           return *this;
         }

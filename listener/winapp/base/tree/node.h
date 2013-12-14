@@ -6,12 +6,12 @@
 namespace base {
 namespace tree {
 
-template<class NodeClass, class ContainerClass>
+template<class NodeClass, class ContainerClass, typename... Params>
 class ContainerNode_;
 
-template<class NodeClass, class ContainerClass>
+template<class NodeClass, class ContainerClass, typename... Params>
 class Node_ {
-  friend class ContainerNode_<NodeClass, ContainerClass>;
+  friend class ContainerNode_<NodeClass, ContainerClass, Params...>;
   public: typedef ContainerClass Container;
   public: typedef NodeClass Node;
   private: NodeClass* next_sibling_;

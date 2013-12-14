@@ -11,7 +11,7 @@ namespace tree {
 
 template<typename ContainerType> class ChildNodes_;
 
-template<class NodeClass, class ContainerClass>
+template<class NodeClass, class ContainerClass, typename... Params>
 class ContainerNode_ : public NodeClass {
   public: typedef ContainerClass Container;
   public: typedef NodeClass Node;
@@ -22,8 +22,9 @@ class ContainerNode_ : public NodeClass {
   private: NodeClass* first_child_;
   private: NodeClass* last_child_;
 
-  public: ContainerNode_()
-    : first_child_(nullptr),
+  protected: ContainerNode_(Params... params)
+    : NodeClass(std::move(params...)),
+      first_child_(nullptr),
       last_child_(nullptr) {
   }
 
