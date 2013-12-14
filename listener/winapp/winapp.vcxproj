@@ -330,6 +330,7 @@
     <ClInclude Include="ap_lisp_thread.h" />
     <ClInclude Include="ap_listener_buffer.h" />
     <ClInclude Include="base\adoptors\reverse.h" />
+    <ClInclude Include="base\com_ptr.h" />
     <ClInclude Include="base\tree\abstract_node_iterator.h" />
     <ClInclude Include="base\tree\ancestors_or_self.h" />
     <ClInclude Include="base\tree\child_nodes.h" />

@@ -431,6 +431,9 @@
     <ClInclude Include="base\adoptors\reverse.h">
       <Filter>base\adoptors</Filter>
     </ClInclude>
+    <ClInclude Include="base\com_ptr.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico">

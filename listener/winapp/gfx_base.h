@@ -6,7 +6,7 @@
 #if !defined(INCLUDE_gfx_base_h)
 #define INCLUDE_gfx_base_h
 
-#include "base_com_ptr.h"
+#include "base/com_ptr.h"
 #include "./li_util.h"
 
 #include <d2d1.h>

@@ -1,3 +1,5 @@
+// Copyright (C) 1996-2013 by Project Vogue.
+// Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
 #if !defined(INCLUDE_base_com_ptr_h)
 #define INCLUDE_base_com_ptr_h
 
