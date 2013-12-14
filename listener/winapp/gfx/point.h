@@ -20,6 +20,10 @@ struct Point : POINT {
  }
 };
 
+#define DEBUG_POINT_FORMAT "(%d,%d)"
+#define DEBUG_POINT_ARG(mp_point) \
+ (mp_point).x, (mp_point).y
+
 } // namespace gfx
 
 #endif //!defined(INCLUDE_gfx_point_h)

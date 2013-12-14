@@ -42,6 +42,10 @@ struct Rect : RECT {
   Rect Intersect(const Rect&) const;
 };
 
+#define DEBUG_RECT_FORMAT "(%d,%d)+%dx%d"
+#define DEBUG_RECT_ARG(mp_rect) \
+ (mp_rect).left, (mp_rect).top, (mp_rect).width(), (mp_rect).height()
+
 } // namespace gfx
 
 #endif //!defined(INCLUDE_gfx_rect_h)

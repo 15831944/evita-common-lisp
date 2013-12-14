@@ -19,6 +19,10 @@ struct Size : SIZE {
   bool is_empty() const { return cx <= 0 || cx <= 0; }
 };
 
+#define DEBUG_SIZE_FORMAT "%dx%d"
+#define DEBUG_SIZE_ARG(mp_size) \
+ (mp_size).cx, (mp_size).cy
+
 } // namespace gfx
 
 #endif //!defined(INCLUDE_gfx_size_h)
