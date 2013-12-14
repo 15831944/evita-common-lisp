@@ -3,15 +3,17 @@
 #if !defined(INCLUDE_widgets_container_widget_h)
 #define INCLUDE_widgets_container_widget_h
 
+#include "base/tree/container_node.h"
 #include "widgets/widget.h"
-#include <vector>
 
 namespace widgets {
 
-class ContainerWidget : public Widget {
+class ChildWidgets;
+class ConstChildWidgets;
+
+class ContainerWidget 
+    : public base::tree::ContainerNode_<Widget, ContainerWidget> {
   private: Widget* capture_widget_;
-  // List of containing widgets in order of bottom to fron.
-  private: std::vector<Widget*> child_widgets_;
   private: Widget* focus_widget_;
 
   public: ContainerWidget();
@@ -19,9 +21,6 @@ class ContainerWidget : public Widget {
 
   public: Widget* focus_widget() const { return focus_widget_; }
   public: virtual bool is_container() const override { return true; }
-
-  // [C]
-  private: virtual bool Contains(const Widget& widget) const override;
 
   // [D]
   public: virtual void DidRealizeWidget(const Widget& widget);

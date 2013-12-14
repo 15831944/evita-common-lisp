@@ -3,8 +3,12 @@
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
 #include "widgets/widget.h"
 
+#include "base/tree/ancestors_or_self.h"
+#include "base/tree/descendants_or_self.h"
 #include "widgets/container_widget.h"
 #include "widgets/naitive_window.h"
+
+#define DEBUG_SHOW _DEBUG
 
 namespace widgets {
 
@@ -15,8 +19,7 @@ class TopLevelWidget : public ContainerWidget {
 }
 
 Widget::Widget()
-    : container_widget_(nullptr),
-      naitive_window_(nullptr),
+    : naitive_window_(nullptr),
       realized_(false),
       showing_(0) {
 }
@@ -26,18 +29,15 @@ Widget::~Widget() {
 }
 
 bool Widget::has_focus() const {
-  auto runner = this;
-  while (runner && !runner->is_top_level()) {
-    if (auto window = runner->naitive_window_) {
+  for (auto& runner: base::tree::ancestors_or_self(*this)) {
+    if (auto const window = runner.naitive_window_) {
       if (::GetFocus() != *window)
         return false;
       if (runner == this)
         return true;
-      if (auto container = runner->ToContainer())
+      if (auto const container = runner.ToContainer())
         return container->focus_widget() == this;
-      return false;
     }
-    runner = runner->container_widget_;
   }
   return false;
 }
@@ -50,17 +50,11 @@ ContainerWidget& Widget::top_level_widget() {
 }
 
 HWND Widget::AssociatedHwnd() const {
-  auto runner = this;
-  while (runner && !runner->is_top_level()) {
-    if (auto window = runner->naitive_window_)
+  for (auto& runner: base::tree::ancestors_or_self(*this)) {
+    if (auto const window = runner.naitive_window_)
       return *window;
-    runner = runner->container_widget_;
   }
   CAN_NOT_HAPPEN();
-}
-
-bool Widget::Contains(const Widget&) const {
-  return false;
 }
 
 void Widget::Destroy() {
@@ -69,7 +63,7 @@ void Widget::Destroy() {
     return;
   }
   WillDestroyWidget();
-  container_widget_->WillDestroyWidget(*this);
+  container_widget().WillDestroyWidget(*this);
   delete this;
 }
 
@@ -86,11 +80,17 @@ HCURSOR Widget::GetCursorAt(const gfx::Point&) const {
 }
 
 void Widget::Hide() {
+  #if DEBUG_SHOW
+    DEBUG_WIDGET_PRINTF("show=%d\n", showing_);
+  #endif
   showing_ = 0;
-  if (naitive_window_)
+  if (naitive_window_) {
     ::ShowWindow(*naitive_window_, SW_HIDE);
-  else
+  } else {
+    if (has_focus())
+      container_widget().SetFocus();
     DidHide();
+  }
 }
 
 bool Widget::OnIdle(uint) {
@@ -122,7 +122,7 @@ LRESULT Widget::OnMessage(UINT message, WPARAM wParam, LPARAM lParam) {
   }
   if (naitive_window_)
     return naitive_window_->DefWindowProc(message, wParam, lParam);
-  return container_widget_->OnMessage(message, wParam, lParam);
+  return container_widget().OnMessage(message, wParam, lParam);
 }
 
 void Widget::OnMouseMove(uint, const gfx::Point&) {
@@ -136,14 +136,15 @@ void Widget::Realize(const ContainerWidget& container_widget,
   ASSERT(!naitive_window_);
   ASSERT(!realized_);
   ASSERT(container_widget.is_realized());
-  container_widget_ = const_cast<ContainerWidget*>(&container_widget);
+  const_cast<ContainerWidget&>(container_widget).AppendChild(*this);
+  ASSERT(container_widget.Contains(*this));
   realized_ = true;
   rect_ = rect;
   auto const parent_style = ::GetWindowLong(AssociatedHwnd(), GWL_STYLE);
   if (parent_style & WS_VISIBLE)
     ++showing_;
   DidRealize();
-  container_widget_->DidRealizeWidget(*this);
+  this->container_widget().DidRealizeWidget(*this);
 }
 
 void Widget::Realize(const ContainerWidget& container_widget,
@@ -151,7 +152,8 @@ void Widget::Realize(const ContainerWidget& container_widget,
   ASSERT(!naitive_window_);
   ASSERT(!realized_);
   ASSERT(container_widget.is_realized());
-  container_widget_ = const_cast<ContainerWidget*>(&container_widget);
+  const_cast<ContainerWidget&>(container_widget).AppendChild(*this);
+  ASSERT(container_widget.Contains(*this));
   realized_ = true;
   naitive_window_ = new NaitiveWindow(*this);
   naitive_window_->CreateWindowEx(dwExStyle, dwStyle, AssociatedHwnd(),
@@ -161,7 +163,7 @@ void Widget::Realize(const ContainerWidget& container_widget,
 void Widget::Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size) {
   ASSERT(!naitive_window_);
   ASSERT(!realized_);
-  container_widget_ = &top_level_widget();
+  top_level_widget().AppendChild(*this);
   realized_ = true;
   naitive_window_ = new NaitiveWindow(*this);
   naitive_window_->CreateWindowEx(dwExStyle, dwStyle, nullptr,
@@ -169,7 +171,7 @@ void Widget::Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size) {
                                   size);
 }
 
-void Widget::ReleaseCapture() {
+void Widget::ReleaseCapture() const {
   container_widget().ReleaseCaptureFrom(*this);
 }
 
@@ -184,11 +186,12 @@ void Widget::ResizeTo(const gfx::Rect& rect) {
   }
 }
 
-void Widget::SetCapture() {
+void Widget::SetCapture() const {
   container_widget().SetCaptureTo(*this);
 }
 
 void Widget::SetFocus() {
+  // This wieget might be hidden during creating window.
   container_widget().SetFocusTo(*this);
 }
 
@@ -275,7 +278,16 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 
       if (wp->flags & SWP_HIDEWINDOW) {
         // We don't take care hidden window.
+        for (auto& widget: base::tree::descendants_or_self(*this)) {
+          widget.showing_ = 0;
+        }
         return 0;
+      }
+
+      if (wp->flags & SWP_SHOWWINDOW) {
+        for (auto& widget: base::tree::descendants_or_self(*this)) {
+          widget.showing_ = 1;
+        }
       }
 
       if (!(wp->flags & 0x10000000) && (wp->flags & SWP_NOSIZE))

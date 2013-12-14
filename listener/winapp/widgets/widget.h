@@ -3,6 +3,7 @@
 #if !defined(INCLUDE_widgets_widget_h)
 #define INCLUDE_widgets_widget_h
 
+#include "base/tree/node.h"
 #include "./li_util.h"
 #include "gfx/rect.h"
 
@@ -15,8 +16,7 @@ class NaitiveWindow;
 //
 // Widget
 //
-class Widget {
-  private: ContainerWidget* container_widget_;
+class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   private: NaitiveWindow* naitive_window_;
   private: bool realized_;
   private: gfx::Rect rect_;
@@ -25,17 +25,9 @@ class Widget {
   protected: Widget();
   protected: ~Widget();
 
-  public: bool operator==(const Widget* other) const {
-    return this == other;
-  }
-
-  public: bool operator!=(const Widget* other) const {
-    return this != other;
-  }
-
   public: ContainerWidget& container_widget() const {
-    ASSERT(container_widget_);
-    return *container_widget_;
+    ASSERT(parent_node());
+    return *parent_node();
   }
   public: bool has_focus() const;
   public: virtual bool is_container() const { return false; }
@@ -51,9 +43,6 @@ class Widget {
 
   // [A]
   public: HWND AssociatedHwnd() const;
-
-  // [C]
-  public: virtual bool Contains(const Widget& widget) const;
 
   // [D]
   public: void Destroy();
@@ -93,11 +82,11 @@ class Widget {
 
   // Realize top-level widget with native window.
   public: void Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size);
-  public: void ReleaseCapture();
+  public: void ReleaseCapture() const;
   public: void ResizeTo(const gfx::Rect& rect);
 
   // [S]
-  public: void SetCapture();
+  public: void SetCapture() const;
   public: virtual void SetFocus();
   public: virtual void Show();
 
@@ -114,6 +103,14 @@ class Widget {
                                      LPARAM lParam);
   DISALLOW_COPY_AND_ASSIGN(Widget);
 };
+
+#define DEBUG_WIDGET_PRINTF(mp_format, ...) \
+  DEBUG_PRINTF(DEBUG_WIDGET_FORMAT " " mp_format, \
+    DEBUG_WIDGET_ARG(this), __VA_ARGS__)
+
+#define DEBUG_WIDGET_FORMAT "%s@%p"
+#define DEBUG_WIDGET_ARG(mp_widget) \
+  ((mp_widget) ? (mp_widget)->GetClass() : "null"), (mp_widget)
 
 } // namespace widgets
 
