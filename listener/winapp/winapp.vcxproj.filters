@@ -25,9 +25,6 @@
     <Filter Include="Charset">
       <UniqueIdentifier>{a1443834-b863-4c30-9d59-8ac2827559da}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics">
-      <UniqueIdentifier>{d1749aaa-2980-425e-8e0a-039655e65171}</UniqueIdentifier>
-    </Filter>
     <Filter Include="base">
       <UniqueIdentifier>{a40d7178-153b-400b-afa3-f7b58d75d9a9}</UniqueIdentifier>
     </Filter>
@@ -39,6 +36,9 @@
     </Filter>
     <Filter Include="widgets">
       <UniqueIdentifier>{ac11ba63-fda4-4dc5-b766-8b126ca3eb27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gfx">
+      <UniqueIdentifier>{d1749aaa-2980-425e-8e0a-039655e65171}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -193,7 +193,7 @@
       <Filter>Modes</Filter>
     </ClCompile>
     <ClCompile Include="gfx_base.cpp">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClCompile>
     <ClCompile Include="vi_Caret.cpp">
       <Filter>Source Files</Filter>
@@ -208,7 +208,7 @@
       <Filter>widgets</Filter>
     </ClCompile>
     <ClCompile Include="gfx\rect.cpp">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -384,7 +384,7 @@
       <Filter>Modes</Filter>
     </ClInclude>
     <ClInclude Include="gfx_base.h">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClInclude>
     <ClInclude Include="vi_PseudoWindow.h">
       <Filter>Header Files</Filter>
@@ -402,13 +402,13 @@
       <Filter>widgets</Filter>
     </ClInclude>
     <ClInclude Include="gfx\size.h">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClInclude>
     <ClInclude Include="gfx\point.h">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClInclude>
     <ClInclude Include="gfx\rect.h">
-      <Filter>Graphics</Filter>
+      <Filter>gfx</Filter>
     </ClInclude>
     <ClInclude Include="base\tree\abstract_node_iterator.h">
       <Filter>base\tree</Filter>
@@ -433,6 +433,15 @@
     </ClInclude>
     <ClInclude Include="base\com_ptr.h">
       <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\size_f.h">
+      <Filter>gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\point_f.h">
+      <Filter>gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="gfx\rect_f.h">
+      <Filter>gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
