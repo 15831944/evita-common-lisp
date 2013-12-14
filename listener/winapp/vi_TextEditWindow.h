@@ -116,7 +116,6 @@ class TextEditWindow
   private: Posn m_lImeEnd;
   #endif // SUPPORT_IME
   protected: void* m_pvHost;
-  protected: RECT m_rc;
 
   // ctor/dtor
   public: TextEditWindow(void* pvHost, Buffer*, Posn = 0);
@@ -135,6 +134,7 @@ class TextEditWindow
   // [D]
   private: void DidHide();
   private: void DidKillFocus() override;
+  private: void DidResize() override;
   private: void DidSetFocus() override;
   private: void DidShow();
 
@@ -196,7 +196,6 @@ class TextEditWindow
   public: void Redraw();
   protected: void redraw(bool);
   private: void Render();
-  public: void Resize(const Rect& rect);
 
   // [S]
   protected: void selectWord(Posn);

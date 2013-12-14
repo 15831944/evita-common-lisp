@@ -196,26 +196,6 @@ class EditPane::VerticalLayoutBox final : public LayoutBox {
   public: virtual void StopSplitter(const gfx::Point&, Box&) override;
 };
 
-class EditPane::SplitterController {
-  public: enum State {
-    State_None,
-    State_Drag,
-    State_DragSingle,
-  };
-
-  private: Box* m_pBox;
-  private: State m_eState;
-
-  public: SplitterController();
-  public: ~SplitterController();
-  public: bool is_dragging() const { return m_eState != State_None; }
-  public: void End(const gfx::Point&);
-  public: void Move(const gfx::Point&);
-  public: void Start(HWND, State, Box&);
-  public: void Stop();
-  DISALLOW_COPY_AND_ASSIGN(SplitterController);
-};
-
 namespace {
 class StockCursor {
   private: HCURSOR hCursor_;
@@ -573,13 +553,16 @@ EditPane::LeafBox* EditPane::LayoutBox::GetActiveLeafBox() const {
     }
 
     private: static int activeTick(const LeafBox& box) {
-      return box.GetWindow()->GetActiveTick();
+      auto& window = *box.GetWindow();
+      return window.is_showing() ? window.GetActiveTick() : 0;
     }
   };
 
   auto candiate = static_cast<LeafBox*>(nullptr);
-  foreach (BoxList::Enum, it, boxes_) {
-    candiate = Local::SelectActiveBox(candiate, it->GetActiveLeafBox());
+  for (auto& box: boxes_) {
+    auto const other = box.GetActiveLeafBox();
+    //if (other && other->GetWindow()->is_showing())
+    candiate = Local::SelectActiveBox(candiate, other);
   }
   return candiate;
 }
@@ -852,7 +835,7 @@ void EditPane::LeafBox::SetRect(const gfx::Rect& rect) {
   }
 
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
-  m_pWindow->Resize(window_rect);
+  m_pWindow->ResizeTo(window_rect);
 }
 
 EditPane::VerticalLayoutBox::VerticalLayoutBox(EditPane* edit_pane,
@@ -1129,9 +1112,36 @@ void EditPane::VerticalLayoutBox::StopSplitter(
   }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
 // EditPane::SplitterController
-EditPane::SplitterController::SplitterController()
-    : m_eState(State_None),
+//
+class EditPane::SplitterController {
+  public: enum State {
+    State_None,
+    State_Drag,
+    State_DragSingle,
+  };
+
+  private: const EditPane& owner_;
+  private: Box* m_pBox;
+  private: State m_eState;
+
+  public: explicit SplitterController(const EditPane&);
+  public: ~SplitterController();
+
+  public: bool is_dragging() const { return m_eState != State_None; }
+  public: void End(const gfx::Point&);
+  public: void Move(const gfx::Point&);
+  public: void Start(State, Box&);
+  public: void Stop();
+
+  DISALLOW_COPY_AND_ASSIGN(SplitterController);
+};
+
+EditPane::SplitterController::SplitterController(const EditPane& owner)
+    : owner_(owner),
+      m_eState(State_None),
       m_pBox(nullptr) {}
 
 EditPane::SplitterController::~SplitterController() {
@@ -1157,9 +1167,9 @@ void EditPane::SplitterController::Move(const gfx::Point& point) {
   }
 }
 
-void EditPane::SplitterController::Start(HWND hwnd, State eState, Box& box) {
+void EditPane::SplitterController::Start(State eState, Box& box) {
   ASSERT(!!box.outer());
-  ::SetCapture(hwnd);
+  owner_.SetCapture();
   m_eState = eState;
   m_pBox = &box;
   box.AddRef();
@@ -1168,7 +1178,7 @@ void EditPane::SplitterController::Start(HWND hwnd, State eState, Box& box) {
 void EditPane::SplitterController::Stop() {
   if (m_eState != State_None) {
     ASSERT(!!m_pBox);
-    ::ReleaseCapture();
+    owner_.ReleaseCapture();
     m_eState = State_None;
     m_pBox->Release();
     m_pBox = nullptr;
@@ -1179,7 +1189,8 @@ void EditPane::SplitterController::Stop() {
 EditPane::EditPane(Buffer* pBuffer, Posn lStart)
     : m_eState(State_NotRealized),
       root_box_(*new VerticalLayoutBox(this, nullptr)),
-      splitter_controller_(new SplitterController()) {
+      ALLOW_THIS_IN_INITIALIZER_LIST(
+        splitter_controller_(new SplitterController(*this))) {
   auto pWindow = new TextEditWindow(this, pBuffer, lStart);
   ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
   root_box_->Add(*box);
@@ -1285,9 +1296,6 @@ HCURSOR EditPane::GetCursorAt(const gfx::Point& point) const {
     case HitTestResult::None:
       return nullptr;
 
-    case HitTestResult::Window:
-      return result.window()->GetCursorAt(point);
-
     default: {
       static StockCursor arrow_cursor(IDC_ARROW);
       return arrow_cursor;
@@ -1337,31 +1345,23 @@ void EditPane::OnLeftButtonDown(uint, const gfx::Point& point) {
   switch (result.type) {
     case HitTestResult::HSplitter:
     case HitTestResult::VSplitter:
-      splitter_controller_->Start(AssociatedHwnd(),
-                                  SplitterController::State_Drag,
+      splitter_controller_->Start(SplitterController::State_Drag,
                                   *result.box);
       break;
 
     case HitTestResult::VSplitterBig:
-      splitter_controller_->Start(AssociatedHwnd(),
-                                  SplitterController::State_DragSingle,
+      splitter_controller_->Start(SplitterController::State_DragSingle,
                                   *result.box);
       break;
   }
 }
 
 void EditPane::OnLeftButtonUp(uint, const gfx::Point& point) {
-  if (splitter_controller_->is_dragging()) {
-    splitter_controller_->End(point);
-    return;
-  }
+  splitter_controller_->End(point);
 }
 
 void EditPane::OnMouseMove(uint, const gfx::Point& point) {
-  if (splitter_controller_->is_dragging()) {
-    splitter_controller_->Move(point);
-    return;
-  }
+  splitter_controller_->Move(point);
 }
 
 void EditPane::setupStatusBar() {

@@ -187,7 +187,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CallingConvention>FastCall</CallingConvention>
@@ -329,6 +329,13 @@
     <ClInclude Include="ap_input_history.h" />
     <ClInclude Include="ap_lisp_thread.h" />
     <ClInclude Include="ap_listener_buffer.h" />
+    <ClInclude Include="base\adoptors\reverse.h" />
+    <ClInclude Include="base\tree\abstract_node_iterator.h" />
+    <ClInclude Include="base\tree\ancestors_or_self.h" />
+    <ClInclude Include="base\tree\child_nodes.h" />
+    <ClInclude Include="base\tree\container_node.h" />
+    <ClInclude Include="base\tree\descendants_or_self.h" />
+    <ClInclude Include="base\tree\node.h" />
     <ClInclude Include="cm_CmdProc.h" />
     <ClInclude Include="ctrl_TabBand.h" />
     <ClInclude Include="gfx\point.h" />
@@ -386,7 +393,6 @@
     <ClInclude Include="IStringCursor.h" />
     <ClInclude Include="RegexMatch.h" />
     <ClInclude Include="precomp.h" />
-    <ClInclude Include="widgets\adoptors\traverse.h" />
     <ClInclude Include="widgets\container_widget.h" />
     <ClInclude Include="widgets\naitive_window.h" />
     <ClInclude Include="widgets\widget.h" />
