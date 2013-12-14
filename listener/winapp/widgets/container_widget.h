@@ -12,18 +12,23 @@ class ChildWidgets;
 class ConstChildWidgets;
 
 class ContainerWidget 
-    : public base::tree::ContainerNode_<Widget, ContainerWidget> {
+    : public base::tree::ContainerNode_<Widget, ContainerWidget,
+                                        std::unique_ptr<NaitiveWindow>&&> {
   private: Widget* capture_widget_;
   private: Widget* focus_widget_;
 
-  public: ContainerWidget();
+  protected: explicit ContainerWidget(
+      std::unique_ptr<NaitiveWindow>&& naitive_window);
+  protected: ContainerWidget();
   public: virtual ~ContainerWidget();
 
   public: Widget* focus_widget() const { return focus_widget_; }
   public: virtual bool is_container() const override { return true; }
 
   // [D]
+  private: virtual void DidHide() override;
   public: virtual void DidRealizeWidget(const Widget& widget);
+  private: virtual void DidShow() override;
   private: void DispatchPaintMessage();
 
   // [G]

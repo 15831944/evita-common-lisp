@@ -19,6 +19,7 @@
 #include "./vi_Buffer.h"
 #include "./vi_EditPane.h"
 #include "./vi_Frame.h"
+#include "widgets/naitive_window.h"
 
 namespace Command {
 uint TranslateKey(uint);
@@ -71,7 +72,9 @@ static HCURSOR loadCursor(HCURSOR* inout_hCursor,
 //
 
 BufferListPane::BufferListPane()
-    : m_pDragItem(nullptr),
+    : ALLOW_THIS_IN_INITIALIZER_LIST(
+          CommandWindow_(widgets::NaitiveWindow::Create(*this))),
+      m_pDragItem(nullptr),
       m_hwndListView(nullptr) {
   m_pwszName = L"Buffer List";
 }
@@ -106,6 +109,14 @@ int CALLBACK BufferListPane::compareItems(LPARAM a, LPARAM b, LPARAM) {
   auto const pa = reinterpret_cast<Buffer*>(a);
   auto const pb = reinterpret_cast<Buffer*>(b);
   return ::lstrcmpW(pa->GetName(), pb->GetName());
+}
+
+// Creates host window for ListViewControl
+void BufferListPane::CreateNaitiveWindow() const {
+  naitive_window()->CreateWindowEx(0, WS_CHILD | WS_VISIBLE,
+                                   L"Buffer List",
+                                   container_widget().AssociatedHwnd(),
+                                   rect().left_top(), rect().size());
 }
 
 void BufferListPane::dragFinish(POINT pt) {
@@ -188,7 +199,7 @@ Command::KeyBindEntry* BufferListPane::MapKey(uint nKey) {
   return Command::g_pGlobalBinds->MapKey(nKey);
 }
 
-void BufferListPane::onCreate(CREATESTRUCT* p) {
+void BufferListPane::DidCreateNaitiveWindow() {
   auto const dwExStyle = LVS_EX_DOUBLEBUFFER |
                          LVS_EX_FULLROWSELECT |
                          // LVS_EX_GRIDLINES |
@@ -204,8 +215,9 @@ void BufferListPane::onCreate(CREATESTRUCT* p) {
                                     WC_LISTVIEW,
                                     nullptr,           // title
                                     dwStyle,
-                                    0, 0, p->cx, p->cy,
-                                    AssociatedHwnd(),
+                                    rect().left, rect().top,
+                                    rect().width(), rect().height(),
+                                    *naitive_window(),
                                     reinterpret_cast<HMENU>(ListViewId),
                                     g_hInstance,
                                     nullptr);
@@ -253,10 +265,6 @@ void BufferListPane::onKeyDown(uint nVKey) {
 
 LRESULT BufferListPane::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
   switch (uMsg) {
-    case WM_CREATE:
-      onCreate(reinterpret_cast<CREATESTRUCT*>(lParam));
-      break;
-
     case WM_LBUTTONUP: {
       POINT pt;
       pt.x = GET_X_LPARAM(lParam);

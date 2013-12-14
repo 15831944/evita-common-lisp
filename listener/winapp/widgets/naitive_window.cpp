@@ -29,8 +29,16 @@ NaitiveWindow::~NaitiveWindow() {
   ASSERT(!hwnd_);
 }
 
+std::unique_ptr<NaitiveWindow> NaitiveWindow::Create(const Widget& widget) {
+  return std::move(std::unique_ptr<NaitiveWindow>(new NaitiveWindow(widget)));
+}
+
+std::unique_ptr<NaitiveWindow> NaitiveWindow::Create() {
+  return std::unique_ptr<NaitiveWindow>();
+}
+
 bool NaitiveWindow::CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
-                                  HWND parent_hwnd, 
+                                  const char16* title, HWND parent_hwnd, 
                                   const gfx::Point& left_top,
                                   const gfx::Size& size) {
   ASSERT(!s_creating_window);
@@ -54,7 +62,7 @@ bool NaitiveWindow::CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
     ASSERT(s_window_class);
   }
 
-  return ::CreateWindowEx(dwExStyle, MAKEINTATOM(s_window_class), nullptr,
+  return ::CreateWindowEx(dwExStyle, MAKEINTATOM(s_window_class), title,
                           dwStyle, left_top.x, left_top.y, size.cx, size.cy,
                           parent_hwnd, nullptr, g_hInstance, 0);
 }

@@ -36,8 +36,10 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
 
   // [C]
   private: static int CALLBACK compareItems(LPARAM, LPARAM, LPARAM);
+  protected: virtual void CreateNaitiveWindow() const override;
 
   // [D]
+  private: void DidCreateNaitiveWindow();
   private: void dragFinish(POINT);
   private: void dragMove(POINT);
   private: void dragStart(int);
@@ -57,7 +59,6 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   public: virtual Command::KeyBindEntry* MapKey(uint) override;
 
   // [O]
-  private: void onCreate(CREATESTRUCT*);
   private: void onKeyDown(uint);
   private: virtual LRESULT OnMessage(uint, WPARAM, LPARAM) override;
 };

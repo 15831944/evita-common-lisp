@@ -19,9 +19,14 @@ class NaitiveWindow {
   protected: HWND hwnd_;
   private: Widget* widget_;
 
-  public: explicit NaitiveWindow(const Widget& widget);
-  protected: NaitiveWindow();
-  protected: virtual ~NaitiveWindow();
+  private: explicit NaitiveWindow(const Widget& widget);
+
+  // For Widget-less native window.
+  protected: explicit NaitiveWindow();
+
+  // Make destructor of NaitiveWindow for OwnPtr<T>. You should not
+  // call |delete| for NaitiveWindow.
+  public: virtual ~NaitiveWindow();
 
   public: operator HWND() const {
     ASSERT(hwnd_);
@@ -47,8 +52,11 @@ class NaitiveWindow {
   }
 
   // [C]
+  public: static std::unique_ptr<NaitiveWindow> Create(const Widget& widget);
+  public: static std::unique_ptr<NaitiveWindow> Create();
   public: bool CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
-                              HWND parent_hwnd, const gfx::Point& left_top,
+                              const char16* title, HWND parent_hwnd,
+                              const gfx::Point& left_top,
                               const gfx::Size& size);
 
   // [D]

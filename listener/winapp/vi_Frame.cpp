@@ -88,7 +88,9 @@ class CompositionState {
 extern uint g_TabBand__TabDragMsg;
 
 Frame::Frame()
-    : gfx_(new gfx::Graphics()),
+    : ALLOW_THIS_IN_INITIALIZER_LIST(
+          widgets::ContainerWidget(widgets::NaitiveWindow::Create(*this))),
+      gfx_(new gfx::Graphics()),
       m_hwndTabBand(nullptr),
       m_pActivePane(nullptr) {
   ::ZeroMemory(m_rgpwszMessage, sizeof(m_rgpwszMessage));
@@ -741,7 +743,7 @@ bool Frame::onTabDrag(TabBandDragAndDrop const eAction,
 /// <summary>
 ///   Realize this frame.
 /// </summary>
-void Frame::Realize() {
+void Frame::CreateNaitiveWindow() const {
   int const cColumns = 80;
   int const cRows    = 40;
 
@@ -771,9 +773,16 @@ void Frame::Realize() {
   Rect rcWork;
   ::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 
-  Size window_size(rc.width(), rcWork.height() * 4 / 5);
-  widgets::ContainerWidget::Realize(dwExStyle, dwStyle, window_size);
+  naitive_window()->CreateWindowEx(
+      dwExStyle, dwStyle, L"", nullptr,
+      gfx::Point(CW_USEDEFAULT, CW_USEDEFAULT),
+      gfx::Size(rc.width(), rcWork.height() * 4 / 5));
+
   SetStatusBar(0, L"Ready");
+}
+
+void Frame::Realize() {
+  RealizeTopLevelWidget();
 }
 
 /// <summary>
@@ -786,7 +795,7 @@ void Frame::ResetMessages() {
 /// <summary>
 ///   Set status bar message on specified part.
 /// </summary>
-void Frame::SetStatusBar(int const ePart, const char16* const pwszMsg) {
+void Frame::SetStatusBar(int const ePart, const char16* const pwszMsg) const {
   ::SendMessage(m_oStatusBar, SB_SIMPLE, 0, 0);
 
   ::SendMessage(

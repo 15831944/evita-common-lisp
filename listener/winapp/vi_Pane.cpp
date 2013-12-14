@@ -12,10 +12,16 @@
 #include "./vi_Pane.h"
 
 #include "./vi_Frame.h"
+#include "widgets/naitive_window.h"
+
+Pane::Pane(std::unique_ptr<widgets::NaitiveWindow>&& naitive_window)
+    : CommandWindow_(std::move(naitive_window)),
+      m_nActiveTick(0),
+      m_pwszName(L"") {
+}
 
 Pane::Pane()
-    : m_nActiveTick(0),
-      m_pwszName(L"") {
+    : Pane(std::move(std::unique_ptr<widgets::NaitiveWindow>())) {
 }
 
 void Pane::Activate() {

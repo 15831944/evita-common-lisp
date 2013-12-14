@@ -22,6 +22,14 @@ class KeyBindEntry;
 // CommandWindow
 //
 class CommandWindow : public widgets::ContainerWidget {
+    protected: CommandWindow(
+        std::unique_ptr<widgets::NaitiveWindow>&& naitive_window)
+        : widgets::ContainerWidget(std::move(naitive_window)) {
+    }
+
+    protected: CommandWindow() {
+    }
+
     // [D]
     public: template<class T> T* DynamicCast()
         { return Is<T>() ? static_cast<T*>(this) : NULL; }
@@ -38,8 +46,16 @@ class CommandWindow : public widgets::ContainerWidget {
 
 
 template<class T, class Parent_ = CommandWindow>
-class CommandWindow_ : public Parent_
+class CommandWindow_ : public Parent_ 
 {
+    protected: CommandWindow_(
+        std::unique_ptr<widgets::NaitiveWindow>&& naitive_window)
+      : Parent_(std::move(naitive_window)) {
+    }
+
+    protected: CommandWindow_() {
+    }
+
     public: static bool Is_(const CommandWindow* p)
         { return T::GetClass_() == p->GetClass(); }
 

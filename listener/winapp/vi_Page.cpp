@@ -10,9 +10,10 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Page.cpp#3 $
 //
 #define DEBUG_DIRTY  0
-#define DEBUG_FORMAT 0
+#define DEBUG_DISPBUF _DEBUG
+#define DEBUG_FORMAT _DEBUG
 #define DEBUG_HEAP   0
-#define DEBUG_RENDER 0
+#define DEBUG_RENDER _DEBUG
 #include "./vi_Page.h"
 
 #include "./ed_interval.h"
@@ -653,7 +654,9 @@ class Formatter {
 
 void Formatter::Format() {
   #if DEBUG_FORMAT
-    DEBUG_PRINTF("%p: lStart=%d\n", m_pPage, m_pPage->GetStart());
+    DEBUG_PRINTF("%p: start=%d " DEBUG_RECTF_FORMAT "\n",
+        m_pPage, m_pPage->GetStart(), 
+        DEBUG_RECTF_ARG(m_pPage->m_oFormatBuf.rect()));
   #endif
 
   auto const cyPage = m_pPage->m_oFormatBuf.height();
@@ -917,9 +920,13 @@ using namespace PageInternal;
 
 void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
   if (y < m_oFormatBuf.bottom()) {
-      gfx::RectF rc(m_oFormatBuf.left(), y, m_oFormatBuf.right(),
+    gfx::RectF rect(m_oFormatBuf.left(), y, m_oFormatBuf.right(),
                     m_oFormatBuf.bottom());
-      fillRect(gfx, rc, ColorToColorF(m_crBackground));
+    #if DEBUG_RENDER
+      DEBUG_PRINTF("fill rect #%06X " DEBUG_RECTF_FORMAT "\n",
+          m_crBackground, DEBUG_RECTF_ARG(rect));
+    #endif
+    fillRect(gfx, rect, ColorToColorF(m_crBackground));
   }
 
   // FIXME 2007-08-05 yosi@msn.com We should expose show/hide
@@ -1386,12 +1393,8 @@ class LineCopier {
                               gfx::SizeF(4.0f, dst_rect.height() - 4)),
                    gfx::ColorF::LightGreen);
       }
-      DEBUG_PRINTF("copy (%d,%d)+(%d,%d) to %d\n",
-        static_cast<uint>(src_rect.left * 100),
-        static_cast<uint>(src_rect.top * 100),
-        static_cast<uint>(src_rect.right * 100),
-        static_cast<uint>(src_rect.bottom * 100),
-        static_cast<uint>(dst_rect.top * 100));
+      DEBUG_PRINTF("copy " DEBUG_RECTF_FORMAT " to " DEBUG_RECTF_FORMAT "\n",
+          DEBUG_RECTF_ARG(src_rect), DEBUG_RECTF_ARG(dst_rect));
     #endif
   }
 
@@ -1482,15 +1485,12 @@ bool Page::Render(const gfx::Graphics& gfx) {
       DEBUG_PRINTF("%p"
                    " redraw=%d"
                    " r[%d, %d] s[%d, %d]"
-                   " rc=(%d,%d)+(%d,%d)\r\n",
+                   " screen=" DEBUG_RECTF_FORMAT "\n",
                    this,
                    number_of_rendering,
                    m_lStart, m_lEnd,
                    m_lSelStart, m_lSelEnd,
-                   static_cast<int>(m_oScreenBuf.left()),
-                   static_cast<int>(m_oScreenBuf.top()),
-                   static_cast<int>(m_oScreenBuf.right()),
-                   static_cast<int>(m_oScreenBuf.bottom()));
+                   DEBUG_RECTF_ARG(m_oScreenBuf.rect()));
     }
   #endif // DEBUG_RENDER
   return number_of_rendering > 0;
@@ -1656,7 +1656,11 @@ void Page::DisplayBuffer::Prepend(Line* line) {
   m_cy += line->GetHeight();
 }
 
-HANDLE Page::DisplayBuffer::Reset(const gfx::RectF& page_rect) {
+HANDLE Page::DisplayBuffer::Reset(const gfx::RectF& new_rect) {
+  #if DEBUG_DISPBUF
+    DEBUG_PRINTF("%p " DEBUG_RECTF_FORMAT " to " DEBUG_RECTF_FORMAT "\n",
+        this, DEBUG_RECTF_ARG(rect()), DEBUG_RECTF_ARG(new_rect));
+  #endif
   #if DEBUG_HEAP
     DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
   #endif // DEBUG_HEAP
@@ -1667,7 +1671,7 @@ HANDLE Page::DisplayBuffer::Reset(const gfx::RectF& page_rect) {
   m_hObjHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
   lines_.DeleteAll();
   m_cy = 0;
-  rect_ = page_rect;
+  rect_ = new_rect;
 
   #if DEBUG_HEAP
     DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);

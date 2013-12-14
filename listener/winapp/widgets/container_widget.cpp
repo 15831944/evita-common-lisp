@@ -18,16 +18,34 @@
 
 namespace widgets {
 
-ContainerWidget::ContainerWidget()
-    : capture_widget_(nullptr),
+ContainerWidget::ContainerWidget(
+    std::unique_ptr<NaitiveWindow>&& naitive_window)
+    : ContainerNode_(std::move(naitive_window)),
+      capture_widget_(nullptr),
       focus_widget_(nullptr) {
+}
+
+ContainerWidget::ContainerWidget()
+    : ContainerWidget(NaitiveWindow::Create()) {
 }
 
 ContainerWidget::~ContainerWidget() {
 }
 
+void ContainerWidget::DidHide() {
+  for (auto& child: child_nodes()) {
+    child.Hide();
+  }
+}
+
 void ContainerWidget::DidRealizeWidget(const Widget& widget) {
   AppendChild(const_cast<Widget&>(widget));
+}
+
+void ContainerWidget::DidShow() {
+  for (auto& child: child_nodes()) {
+    child.Show();
+  }
 }
 
 void ContainerWidget::DispatchPaintMessage() {

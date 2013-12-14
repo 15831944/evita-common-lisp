@@ -6,6 +6,7 @@
 #include "base/tree/node.h"
 #include "./li_util.h"
 #include "gfx/rect.h"
+#include <memory>
 
 namespace widgets {
 
@@ -16,12 +17,17 @@ class NaitiveWindow;
 //
 // Widget
 //
-class Widget : public base::tree::Node_<Widget, ContainerWidget> {
-  private: NaitiveWindow* naitive_window_;
+class Widget : public base::tree::Node_<Widget, ContainerWidget,
+                                        std::unique_ptr<NaitiveWindow>&&> {
+  // Life time of naitive_window_ ends at WM_NCDESTROY rather than
+  // destruction of Widget.
+  private: std::unique_ptr<NaitiveWindow> naitive_window_;
   private: bool realized_;
   private: gfx::Rect rect_;
   private: int shown_;
 
+  protected: explicit Widget(
+      std::unique_ptr<NaitiveWindow>&& naitive_window);
   protected: Widget();
   protected: ~Widget();
 
@@ -36,7 +42,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   // Expose |is_top_level()| for iterator.
   public: virtual bool is_top_level() const { return false; }
   protected: NaitiveWindow* naitive_window() const {
-    return naitive_window_;
+    return naitive_window_.get();
   }
   public: const gfx::Rect& rect() const { return rect_; }
   public: static ContainerWidget& top_level_widget();
@@ -44,9 +50,14 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   // [A]
   public: HWND AssociatedHwnd() const;
 
+  // [C]
+  protected: virtual void CreateNaitiveWindow() const;
+
   // [D]
   public: void Destroy();
+  // Called on WM_CREATE
   protected: virtual void DidCreateNaitiveWindow();
+  // Called on WM_CREATE
   protected: virtual void DidDestroyNaitiveWindow();
   public: virtual void DidHide() {}
   public: virtual void DidKillFocus() {}
@@ -75,13 +86,8 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   public: void Realize(const ContainerWidget& container,
                        const gfx::Rect& rect);
 
-  // Realize widget with native window.
-  public: void Realize(const ContainerWidget& container,
-                       const gfx::Rect& rect,
-                       DWORD dwExStyle, DWORD dwStyle);
-
   // Realize top-level widget with native window.
-  public: void Realize(DWORD dwExStyle, DWORD dwStyle, const gfx::Size& size);
+  public: void RealizeTopLevelWidget();
   public: void ReleaseCapture() const;
   public: void ResizeTo(const gfx::Rect& rect);
 

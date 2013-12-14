@@ -332,7 +332,7 @@ IoManager::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 //
 void IoManager::Realize()
 {
-    CreateWindowEx(0, 0, HWND_MESSAGE, Point(), Size());
+    CreateWindowEx(0, 0, L"IoManager", HWND_MESSAGE, Point(), Size());
     ASSERT(NULL != *this);
 } // IoManager::Realize
 

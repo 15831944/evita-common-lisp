@@ -15,7 +15,7 @@
 #define DEBUG_IDLE 0
 #define DEBUG_KEY 0
 #define DEBUG_PAINT _DEBUG
-#define DEBUG_REDRAW 0
+#define DEBUG_REDRAW _DEBUG
 #define DEBUG_RESIZE _DEBUG
 #define DEBUG_SCROLL 0
 #define DEBUG_SHOW_HIDE _DEBUG
@@ -770,7 +770,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
     auto const lStart = m_pViewRange->GetStart();
     if (m_pPage->IsDirty(rect(), *selection_, fSelectionIsActive)) {
       #if DEBUG_REDRAW
-        DEBUG_TEXT_EDITPRINTF("Page %p is dirty. lStart=%d\n",
+        DEBUG_TEXT_EDIT_PRINTF("Page %p is dirty. lStart=%d\n",
             m_pPage, lStart);
       #endif // DEBUG_REDRAW
       format(*m_gfx, startOfLineAux(*m_gfx, lStart));
@@ -798,7 +798,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
   Render();
 
   #if DEBUG_REDRAW
-    DEBUG_TExT_EDIT_PRINTF("~~~~~~~~~~ End Page=[%d,%d]\n",
+    DEBUG_TEXT_EDIT_PRINTF("~~~~~~~~~~ End Page=[%d,%d]\n",
         m_pPage->GetStart(), m_pPage->GetEnd());
   #endif
 }

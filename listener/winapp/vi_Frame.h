@@ -81,6 +81,7 @@ class Frame final : public widgets::ContainerWidget,
 
   // [C]
   private: bool canClose();
+  private: virtual void CreateNaitiveWindow() const override;
 
   // [D]
   public: void DidActivePane(Pane*);
@@ -118,11 +119,11 @@ class Frame final : public widgets::ContainerWidget,
   private: void Paint();
 
   // [R]
-  public: void ResetMessages();
   public: void Realize();
+  public: void ResetMessages();
 
   // [S]
-  public: void SetStatusBar(int, const char16*);
+  public: void SetStatusBar(int, const char16*) const;
   public: void SetStatusBarf(int, const char16*, ...);
   public: void SetStatusBarParts(const int*, int);
   public: bool ShowBuffer(Buffer*);
