@@ -20,7 +20,7 @@ class Caret {
 
   private: const base::OwnPtr<BackingStore> backing_store_;
   private: gfx::RectF rect_;
-  private: bool showing_;
+  private: bool shown_;
   private: bool taken_;
 
   public: Caret();

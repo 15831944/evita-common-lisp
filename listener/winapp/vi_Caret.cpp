@@ -66,13 +66,12 @@ void Caret::BackingStore::Save(const gfx::Graphics& gfx,
 //
 Caret::Caret()
   : backing_store_(new BackingStore()),
-    showing_(false),
+    shown_(false),
     taken_(false) {
 }
 
 Caret::~Caret() {
-  ASSERT(!showing_);
-  ASSERT(!taken_);
+  // We don't care showing caret state and ownership.
 }
 
 void Caret::Draw(const gfx::Graphics& gfx) {
@@ -80,7 +79,7 @@ void Caret::Draw(const gfx::Graphics& gfx) {
   backing_store_->Save(gfx, rect_);
   gfx::Brush fill_brush(gfx, gfx::ColorF::Black);
   gfx.FillRectangle(fill_brush, rect_);
-  showing_ = true;
+  shown_ = true;
 }
 
 void Caret::Give(const gfx::Graphics& gfx) {
@@ -96,16 +95,16 @@ void Caret::Give(const gfx::Graphics& gfx) {
 void Caret::Hide(const gfx::Graphics& gfx) {
   if (!taken_)
     return;
-  if (!showing_)
+  if (!shown_)
     return;
   backing_store_->Restore(gfx);
-  showing_ = false;
+  shown_ = false;
 }
 
 void Caret::Show(const gfx::Graphics& gfx, const gfx::RectF& new_rect) {
   ASSERT(!!new_rect);
   ASSERT(taken_);
-  ASSERT(!showing_);
+  ASSERT(!shown_);
   #if DEBUG_SHOW
     DEBUG_PRINTF("Move caret at (%d,%d) from (%d,%d)\n", 
         static_cast<uint>(new_rect.left), static_cast<uint>(new_rect.top),
