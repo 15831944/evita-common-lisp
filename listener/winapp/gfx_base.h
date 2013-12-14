@@ -7,9 +7,10 @@
 #define INCLUDE_gfx_base_h
 
 #include "base/com_ptr.h"
+#include "gfx/point_f.h"
+#include "gfx/size_f.h"
 #include "./li_util.h"
 
-#include <d2d1.h>
 #include <dwrite.h>
 #include <wincodec.h>
 
@@ -35,67 +36,6 @@ class SimpleObject_ : public Object {
 // Geometry objects
 //
 
-template<typename BaseType, typename UnitType>
-class Size_ : public BaseType {
-  public: typedef UnitType UnitType;
-
-  public: Size_() {
-    width = height = 0;
-  }
-  public: Size_(const BaseType& other) {
-    width = other.width;
-    height = other.height;
-  }
-  public: Size_(UnitType width, UnitType height) {
-    this->width = width;
-    this->height = height;
-  }
-  public: Size_(int width, int height) {
-    this->width = static_cast<UnitType>(width);
-    this->height = static_cast<UnitType>(height);
-  }
-  public: bool operator==(const Size_& other) const {
-    return width == other.width && height == other.height;
-  }
-  public: bool operator!=(const Size_& other) const {
-    return width != other.width && height != other.height;
-  }
-
-  public: Size_ operator+(const Size_& other) const {
-    return Size_(width + other.width, height + other.height);
-  }
-
-  public: Size_ operator+(UnitType scalar) const {
-    return Size_(width + scalar, height + scalar);
-  }
-
-  public: Size_ operator-(const Size_& other) const {
-    return Size_(width - other.width, height - other.height);
-  }
-
-  public: Size_ operator-(UnitType scalar) const {
-    return Size_(width - scalar, height - scalar);
-  }
-
-  public: Size_ operator*(const Size_& other) const {
-    return Size_(width * other.width, height * other.height);
-  }
-
-  public: Size_ operator*(UnitType scalar) const {
-    return Size_(width * scalar, height * scalar);
-  }
-
-  public: Size_ operator/(const Size_& other) const {
-    return Size_(width / other.width, height / other.height);
-  }
-
-  public: Size_ operator/(UnitType scalar) const {
-    return Size_(width / scalar, height / scalar);
-  }
-
-  public: bool is_empty() const { return width <= 0 || height <= 0; }
-  public: bool is_zero() const { return !width && !height; }
-};
 
 template<typename BaseType, typename SizeType>
 class Point_ : public BaseType {
