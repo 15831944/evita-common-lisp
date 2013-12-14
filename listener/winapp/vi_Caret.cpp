@@ -71,7 +71,7 @@ Caret::Caret()
 }
 
 Caret::~Caret() {
-  // We don't care showing caret state and ownership.
+  // We don't care shown caret state and ownership.
 }
 
 void Caret::Draw(const gfx::Graphics& gfx) {

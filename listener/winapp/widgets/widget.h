@@ -20,7 +20,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   private: NaitiveWindow* naitive_window_;
   private: bool realized_;
   private: gfx::Rect rect_;
-  private: int showing_;
+  private: int shown_;
 
   protected: Widget();
   protected: ~Widget();
@@ -32,7 +32,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget> {
   public: bool has_focus() const;
   public: virtual bool is_container() const { return false; }
   public: bool is_realized() const { return realized_; }
-  public: bool is_showing() const { return showing_; }
+  public: bool is_shown() const { return shown_; }
   // Expose |is_top_level()| for iterator.
   public: virtual bool is_top_level() const { return false; }
   protected: NaitiveWindow* naitive_window() const {

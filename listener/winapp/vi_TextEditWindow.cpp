@@ -114,7 +114,7 @@ TextEditWindow::~TextEditWindow() {
 
 void TextEditWindow::Activate() {
   #if DEBUG_FOCUS
-    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_showing());
+    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_shown());
   #endif
   SetFocus();
 }
@@ -224,7 +224,7 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
 void TextEditWindow::DidHide() {
   // Note: It is OK that hidden window have focus.
   #if DEBUG_SHOW_HIDE
-    DEBUG_TEXT_EDIT_PRINTF("show=%d\n", is_showing());
+    DEBUG_TEXT_EDIT_PRINTF("show=%d\n", is_shown());
   #endif
   m_oHoriScrollBar.ShowWindow(SW_HIDE);
   m_oVertScrollBar.ShowWindow(SW_HIDE);
@@ -232,7 +232,7 @@ void TextEditWindow::DidHide() {
 
 void TextEditWindow::DidKillFocus() {
   #if DEBUG_FOCUS
-    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_showing());
+    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_shown());
   #endif
   ParentClass::DidKillFocus();
   caret_->Give(*m_gfx);
@@ -241,7 +241,7 @@ void TextEditWindow::DidKillFocus() {
 void TextEditWindow::DidResize() {
   #if DEBUG_RESIZE
     DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d " DEBUG_RECT_FORMAT "\n",
-        has_focus(), is_showing(), DEBUG_RECT_ARG(rect()));
+        has_focus(), is_shown(), DEBUG_RECT_ARG(rect()));
   #endif
   m_pPage->Reset();
   Redraw();
@@ -249,7 +249,7 @@ void TextEditWindow::DidResize() {
 
 void TextEditWindow::DidSetFocus() {
   #if DEBUG_FOCUS
-    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_showing());
+    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_shown());
   #endif
   // Note: It is OK to set focus to hidden window.
   caret_->Take(*m_gfx);
@@ -260,7 +260,7 @@ void TextEditWindow::DidSetFocus() {
 
 void TextEditWindow::DidShow() {
   #if DEBUG_SHOW_HIDE
-    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_showing());
+    DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_shown());
   #endif
   m_oHoriScrollBar.ShowWindow(SW_SHOW);
   m_oVertScrollBar.ShowWindow(SW_SHOW);
@@ -426,7 +426,7 @@ void TextEditWindow::OnLeftButtonDown(uint flags, const Point& point) {
   #if DEBUG_FOCUS
     DEBUG_TEXT_EDIT_PRINTF(DEBUG_POINT_FORMAT " focus=%d show=%d p=%d\n",
         DEBUG_POINT_ARG(point),
-        has_focus(), is_showing(), lPosn);
+        has_focus(), is_shown(), lPosn);
   #endif
 
   if (lPosn < 0) {
@@ -704,7 +704,7 @@ void TextEditWindow::Realize(const widgets::ContainerWidget& container,
                          DEBUG_RECT_FORMAT "\n",
     DEBUG_WIDGET_ARG(&container), rect);
   ASSERT(!m_gfx);
-  ASSERT(!is_showing());
+  ASSERT(!is_shown());
   // TODO: We should not touch AssociatedHwnd().
   m_gfx = &gfx;
   ParentClass::Realize(container, rect);
@@ -804,7 +804,7 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
 }
 
 void TextEditWindow::Render() {
-  if (!is_showing())
+  if (!is_shown())
     return;
 
   gfx::Graphics::DrawingScope drawing_scope(*m_gfx);

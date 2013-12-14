@@ -21,7 +21,7 @@ class TopLevelWidget : public ContainerWidget {
 Widget::Widget()
     : naitive_window_(nullptr),
       realized_(false),
-      showing_(0) {
+      shown_(0) {
 }
 
 Widget::~Widget() {
@@ -81,9 +81,9 @@ HCURSOR Widget::GetCursorAt(const gfx::Point&) const {
 
 void Widget::Hide() {
   #if DEBUG_SHOW
-    DEBUG_WIDGET_PRINTF("show=%d\n", showing_);
+    DEBUG_WIDGET_PRINTF("show=%d\n", shown_);
   #endif
-  showing_ = 0;
+  shown_ = 0;
   if (naitive_window_) {
     ::ShowWindow(*naitive_window_, SW_HIDE);
   } else {
@@ -142,7 +142,7 @@ void Widget::Realize(const ContainerWidget& container_widget,
   rect_ = rect;
   auto const parent_style = ::GetWindowLong(AssociatedHwnd(), GWL_STYLE);
   if (parent_style & WS_VISIBLE)
-    ++showing_;
+    ++shown_;
   DidRealize();
   this->container_widget().DidRealizeWidget(*this);
 }
@@ -196,10 +196,10 @@ void Widget::SetFocus() {
 }
 
 void Widget::Show() {
-  ++showing_;
+  ++shown_;
   if (naitive_window_) {
     ::ShowWindow(*naitive_window_, SW_SHOW);
-  } else if (showing_ == 1) {
+  } else if (shown_ == 1) {
     DidShow();
     OnPaint(rect());
   }
@@ -216,7 +216,7 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
   switch (message) {
     case WM_CREATE:
       if (reinterpret_cast<CREATESTRUCT*>(lParam)->style & WS_VISIBLE)
-        ++showing_;
+        ++shown_;
       ::GetClientRect(*naitive_window_, &rect_);
       DidCreateNaitiveWindow();
       return 0;
@@ -279,14 +279,14 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
       if (wp->flags & SWP_HIDEWINDOW) {
         // We don't take care hidden window.
         for (auto& widget: base::tree::descendants_or_self(*this)) {
-          widget.showing_ = 0;
+          widget.shown_ = 0;
         }
         return 0;
       }
 
       if (wp->flags & SWP_SHOWWINDOW) {
         for (auto& widget: base::tree::descendants_or_self(*this)) {
-          widget.showing_ = 1;
+          widget.shown_ = 1;
         }
       }
 

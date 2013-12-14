@@ -554,14 +554,14 @@ EditPane::LeafBox* EditPane::LayoutBox::GetActiveLeafBox() const {
 
     private: static int activeTick(const LeafBox& box) {
       auto& window = *box.GetWindow();
-      return window.is_showing() ? window.GetActiveTick() : 0;
+      return window.is_shown() ? window.GetActiveTick() : 0;
     }
   };
 
   auto candiate = static_cast<LeafBox*>(nullptr);
   for (auto& box: boxes_) {
     auto const other = box.GetActiveLeafBox();
-    //if (other && other->GetWindow()->is_showing())
+    //if (other && other->GetWindow()->is_shown())
     candiate = Local::SelectActiveBox(candiate, other);
   }
   return candiate;
@@ -677,7 +677,7 @@ void EditPane::LayoutBox::Replace(Box& new_box, Box& old_box) {
 }
 
 void EditPane::LayoutBox::UpdateSplitters() {
-  if (is_removed() || !edit_pane_->is_showing())
+  if (is_removed() || !edit_pane_->is_shown())
     return;
   auto& gfx = edit_pane_->frame().gfx();
   gfx::Graphics::DrawingScope drawing_scope(gfx);
@@ -1222,7 +1222,7 @@ void EditPane::CloseAllBut(Window* window) {
 void EditPane::DidChangeOwnerFrame() {
  root_box_->DidChangeOwnerFrame();
  auto const rect = frame().GetPaneRect();
- if (is_showing()) {
+ if (is_shown()) {
    gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
    ResizeTo(rect);
  } else {
@@ -1254,7 +1254,7 @@ void EditPane::DidResize() {
   DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rect().left, rect().top,
     rect().right, rect().bottom);
   root_box_->SetRect(rect());
-  if (is_showing())
+  if (is_shown())
     root_box_->DrawSplitters(frame().gfx());
 }
 

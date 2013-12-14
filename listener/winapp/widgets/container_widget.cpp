@@ -45,7 +45,7 @@ void ContainerWidget::DispatchPaintMessage() {
   #endif
 
    for (auto& child : child_nodes()) {
-    if (!child.is_showing())
+    if (!child.is_shown())
       continue;
     auto const rect = exposed_rect.Intersect(child.rect());
     if (rect) {
@@ -73,7 +73,7 @@ ContainerWidget& ContainerWidget::GetHostContainer() const {
 
 Widget* ContainerWidget::GetWidgetAt(const gfx::Point& point) const {
   for (auto& child: base::adoptors::reverse(child_nodes())) {
-    if (!child.is_showing())
+    if (!child.is_shown())
       continue;
     if (child.rect().Contains(point)) {
       if (!child.is_container())
