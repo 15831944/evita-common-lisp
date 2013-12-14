@@ -37,65 +37,6 @@ class SimpleObject_ : public Object {
 //
 
 
-template<typename BaseType, typename SizeType>
-class Point_ : public BaseType {
-  public: typedef typename SizeType::UnitType UnitType;
-  public: Point_(const Point_& other) {
-    x = other.x;
-    y = other.y;
-  }
-  public: Point_(UnitType x, UnitType y) {
-    this->x = x;
-    this->y = y;
-  }
-  public: Point_(int x, int y) {
-    this->x = static_cast<UnitType>(x);
-    this->y = static_cast<UnitType>(y);
-  }
-  public: Point_(const POINT& point) {
-    x = static_cast<UnitType>(point.x);
-    y = static_cast<UnitType>(point.y);
-  }
-  public: Point_() {
-    this->x = static_cast<UnitType>(0);
-    this->y = static_cast<UnitType>(0);
-  }
-
-  public: Point_& operator=(const Point_& other) {
-    x = other.x;
-    y = other.y;
-    return *this;
-  }
-
-  public: Point_ operator+(const Point_& other) const {
-    return Point_(x + other.x, y + other.y);
-  }
-
-  public: Point_ operator+(const SizeType& size) const {
-    return Point_(x + size.width, y + size.height);
-  }
-
-  public: Point_ operator-(const Point_& other) const {
-    return Point_(x - other.x, y - other.y);
-  }
-
-  public: Point_ operator-(const SizeType& size) const {
-    return Point_(x - size.width, y - size.height);
-  }
-
-  public: Point_ operator*(const Point_& other) const {
-    return Point_(x * other.x, y * other.y);
-  }
-
-  public: Point_ operator*(const SizeType& size) const {
-    return Point_(x * size.width, y * size.height);
-  }
-
-  public: Point_ operator/(UnitType divisor) const {
-    return Point_(x / divisor, y / divisor);
-  }
-};
-
 template<typename BaseType, typename PointType, typename SizeType>
 class Rect_ : public BaseType {
   public: typedef typename SizeType::UnitType UnitType;
@@ -184,10 +125,6 @@ class Rect_ : public BaseType {
   public: UnitType width() const { return right - left; }
 };
 
-typedef Size_<D2D1_SIZE_F, float> SizeF;
-typedef Size_<D2D1_SIZE_U, uint> SizeU;
-typedef Point_<D2D1_POINT_2F, SizeF> PointF;
-typedef Point_<D2D1_POINT_2U, SizeU> PointU;
 typedef Rect_<D2D1_RECT_F, PointF, SizeF> RectF;
 typedef Rect_<D2D1_RECT_U, PointU, SizeU> RectU;
 
