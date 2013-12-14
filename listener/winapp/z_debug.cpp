@@ -61,6 +61,10 @@ void __declspec(noreturn) Fail(const char* psz, ...)
     ::wvsprintfA(sz, psz, args);
     va_end(args);
     ::OutputDebugStringA(sz);
+    // Since showing message box changes focus and it causes another
+    // assertion failure. We want to break before showing message box.
+    if (::IsDebuggerPresent())
+      __debugbreak();
     ::MessageBoxA(NULL, sz, "Evita Common Lisp", MB_ICONERROR);
     __debugbreak();
 } // Fail
