@@ -295,6 +295,7 @@ Graphics::~Graphics() {
 }
 
 void Graphics::BeginDraw() const {
+  DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
   ASSERT(render_target_);
   if (!batch_nesting_level_)
     render_target_->BeginDraw();
@@ -302,19 +303,31 @@ void Graphics::BeginDraw() const {
 }
 
 bool Graphics::EndDraw() {
+  DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
   ASSERT(drawing());
   ASSERT(render_target_);
   --batch_nesting_level_;
-  if (batch_nesting_level_)
-    return true;
-  auto const hr = render_target_->EndDraw();
-  if (SUCCEEDED(hr))
-    return true;
-  if (hr == D2DERR_RECREATE_TARGET) {
-    Debugger::Printf("Got D2DERR_RECREATE_TARGET\n", hr);
+  if (batch_nesting_level_) {
+    auto const hr = render_target_->Flush();
+    if (SUCCEEDED(hr))
+      return true;
+    if (hr == D2DERR_RECREATE_TARGET) {
+      Debugger::Printf("Got D2DERR_RECREATE_TARGET\n", hr);
+    } else {
+      Debugger::Printf("ID2D1RenderTarget::Flush failed hr=0x%0X\n", hr);
+    }
   } else {
-    Debugger::Printf("ID2D1RenderTarget::EndDraw failed hr=0x%0X\n", hr);
+      auto const hr = render_target_->EndDraw();
+      if (SUCCEEDED(hr))
+        return true;
+      if (hr == D2DERR_RECREATE_TARGET) {
+        Debugger::Printf("Got D2DERR_RECREATE_TARGET\n", hr);
+      } else {
+        Debugger::Printf("ID2D1RenderTarget::EndDraw failed hr=0x%0X\n", hr);
+      }
   }
+  if (::IsDebuggerPresent())
+    __debugbreak();
   render_target_->Release();
   const_cast<Graphics*>(this)->render_target_ = nullptr;
   const_cast<Graphics*>(this)->Reinitialize();
