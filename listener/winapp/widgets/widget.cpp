@@ -63,7 +63,7 @@ void Widget::Destroy() {
     return;
   }
   WillDestroyWidget();
-  container_widget().WillDestroyWidget(*this);
+  container_widget().WillDestroyChildWidget(*this);
   delete this;
 }
 

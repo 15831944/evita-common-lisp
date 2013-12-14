@@ -1492,6 +1492,7 @@ void EditPane::WillDestroyWidget() {
 }
 
 void EditPane::WillDestroyChildWidget(const Widget& child) {
+  Pane::WillDestroyChildWidget(child);
   auto const box = root_box_->FindLeafBoxFromWidget(child);
   if (!box)
     return;

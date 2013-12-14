@@ -189,7 +189,7 @@ void ContainerWidget::Show() {
   }
 }
 
-void ContainerWidget::WillDestroyWidget(const Widget& widget) {
+void ContainerWidget::WillDestroyChildWidget(const Widget& widget) {
   auto it = std::find(child_nodes().begin(), child_nodes().end(),
                       &widget);
   ASSERT(it != child_nodes().end());

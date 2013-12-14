@@ -117,7 +117,7 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
 
   // [W]
   private: virtual void WillDestroyWidget() override;
-  private: virtual void WillDestroyChildWidget(const Widget& child);
+  private: virtual void WillDestroyChildWidget(const Widget& child) override;
 };
 
 #endif //!defined(INCLUDE_listener_winapp_visual_EditPane_h)
