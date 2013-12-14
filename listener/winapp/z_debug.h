@@ -14,15 +14,16 @@
 #if _DEBUG
     #define ASSERT(mp_expr) \
     { \
+        bool const mp_result = static_cast<bool>(mp_expr); \
         Debugger::Assert( \
-            __FILE__, __LINE__, __FUNCTION__, #mp_expr, mp_expr ); \
-        __assume(mp_expr); \
+            __FILE__, __LINE__, __FUNCTION__, #mp_expr, mp_result); \
+        __assume(mp_result); \
     } // ASSERT
 
     #define DEBUG_PRINTF(mp_fmt, ...) \
         CPRINTF(mp_fmt, __VA_ARGS__)
 #else
-    #define ASSERT(mp_expr) __assume(mp_expr)
+    #define ASSERT(mp_expr) __assume(static_cast<bool>(mp_expr))
     #define DEBUG_PRINTF(mp_fmt, ...) __noop(__VA_ARGS__)
 #endif
 
