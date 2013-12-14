@@ -386,6 +386,7 @@
     <ClInclude Include="IStringCursor.h" />
     <ClInclude Include="RegexMatch.h" />
     <ClInclude Include="precomp.h" />
+    <ClInclude Include="widgets\adoptors\traverse.h" />
     <ClInclude Include="widgets\container_widget.h" />
     <ClInclude Include="widgets\naitive_window.h" />
     <ClInclude Include="widgets\widget.h" />

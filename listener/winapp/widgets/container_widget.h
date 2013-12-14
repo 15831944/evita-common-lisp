@@ -10,6 +10,7 @@ namespace widgets {
 
 class ContainerWidget : public Widget {
   private: Widget* capture_widget_;
+  // List of containing widgets in order of bottom to fron.
   private: std::vector<Widget*> child_widgets_;
   private: Widget* focus_widget_;
 
@@ -17,6 +18,7 @@ class ContainerWidget : public Widget {
   public: virtual ~ContainerWidget();
 
   public: Widget* focus_widget() const { return focus_widget_; }
+  public: virtual bool is_container() const override { return true; }
 
   // [C]
   private: virtual bool Contains(const Widget& widget) const override;
@@ -29,6 +31,7 @@ class ContainerWidget : public Widget {
   public: virtual const char* GetClass() const override {
     return "ContainerWidget";
   }
+  private: ContainerWidget& GetHostContainer() const;
   private: Widget* GetWidgetAt(const gfx::Point& point) const;
 
   // [H]

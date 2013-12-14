@@ -38,9 +38,11 @@ class Widget {
     return *container_widget_;
   }
   public: bool has_focus() const;
+  public: virtual bool is_container() const { return false; }
   public: bool is_realized() const { return realized_; }
   public: bool is_showing() const { return showing_; }
-  protected: virtual bool is_top_level() const { return false; }
+  // Expose |is_top_level()| for iterator.
+  public: virtual bool is_top_level() const { return false; }
   protected: NaitiveWindow* naitive_window() const {
     return naitive_window_;
   }
@@ -110,7 +112,6 @@ class Widget {
   public: virtual void WillDestroyNaitiveWindow();
   public: virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam,
                                      LPARAM lParam);
-
   DISALLOW_COPY_AND_ASSIGN(Widget);
 };
 

@@ -502,8 +502,9 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
 
+#if 0
     case WM_LBUTTONDOWN:
-      OnLeftButtonUp(static_cast<uint>(wParam), MAKEPOINTS(lParam));
+      OnLeftButtonDown(static_cast<uint>(wParam), MAKEPOINTS(lParam));
       return 0;
 
     case WM_LBUTTONUP:
@@ -513,6 +514,7 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_MOUSEMOVE:
       OnMouseMove(static_cast<uint>(wParam), MAKEPOINTS(lParam));
       return 0;
+#endif
 
     case WM_MOUSEWHEEL:
       SmallScroll(0, GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? -2 : 2);

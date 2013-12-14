@@ -4,11 +4,14 @@
 #include "widgets/container_widget.h"
 
 #include "widgets/naitive_window.h"
+
+#include "base/adoptors/reverse.h"
+#include "widgets/adoptors/traverse.h"
 #include <algorithm>
 
 #define DEBUG_FOCUS _DEBUG
+#define DEBUG_MOUSE _DEBUG
 #define DEBUG_PAINT _DEBUG
-
 
 namespace widgets {
 
@@ -75,10 +78,24 @@ void ContainerWidget::DispatchPaintMessage() {
   }
 }
 
+ContainerWidget& ContainerWidget::GetHostContainer() const {
+  for (auto& runner: adoptors::ancestory(*this)) {
+    if (runner.naitive_window())
+       return const_cast<ContainerWidget&>(runner);
+  }
+  CAN_NOT_HAPPEN();
+}
+
 Widget* ContainerWidget::GetWidgetAt(const gfx::Point& point) const {
-  for (auto const child: child_widgets_) {
-    if (child->rect().Contains(point))
-      return child;
+  for (auto const child: base::adoptors::reverse(child_widgets_)) {
+    if (!child->is_showing())
+      continue;
+    if (child->rect().Contains(point)) {
+      if (!child->is_container())
+        return child;
+      auto child_child = child->ToContainer()->GetWidgetAt(point);
+      return child_child ? child_child : child;
+    }
   }
   return nullptr;
 }
@@ -100,15 +117,17 @@ bool ContainerWidget::OnIdle(uint idle_count) {
 }
 
 void ContainerWidget::ReleaseCaptureFrom(const Widget& widget) {
-  ASSERT(widget == capture_widget_);
-  capture_widget_ = nullptr;
+  auto& host = GetHostContainer();
+  ASSERT(widget == host.capture_widget_);
+  host.capture_widget_ = nullptr;
   ::ReleaseCapture();
 }
 
 void ContainerWidget::SetCaptureTo(const Widget& widget) {
-  ASSERT(!capture_widget_);
-  ::SetCapture(*naitive_window());
-  capture_widget_ = const_cast<Widget*>(&widget);
+  auto& host = GetHostContainer();
+  ASSERT(!host.capture_widget_);
+  ::SetCapture(*host.naitive_window());
+  host.capture_widget_ = const_cast<Widget*>(&widget);
 }
 
 bool ContainerWidget::SetCursor() {
@@ -128,6 +147,11 @@ bool ContainerWidget::SetCursor() {
 }
 
 void ContainerWidget::SetFocusTo(const Widget& widget) {
+  if (!naitive_window()) {
+    GetHostContainer().SetFocusTo(widget);
+    return;
+  }
+
   #if DEBUG_FOCUS
     DEBUG_PRINTF("%s@%p native_focus=%d new=%s@%p cur=%s@%p\n",
         GetClass(), this,
@@ -135,11 +159,6 @@ void ContainerWidget::SetFocusTo(const Widget& widget) {
         widget.GetClass(), &widget,
         focus_widget_ ? focus_widget_->GetClass() : "null", focus_widget_);
   #endif
-
-  if (!naitive_window()) {
-    container_widget().SetFocusTo(widget);
-    return;
-  }
 
   ASSERT(Contains(widget));
 
@@ -180,7 +199,7 @@ LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
   switch(message) {
     case WM_KILLFOCUS:
       #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_KILLFOCUS %p cur=%s@%p\n", this,
+        DEBUG_PRINTF("WM_KILLFOCUS %s@%p cur=%s@%p\n", GetClass(), this,
             focus_widget_ ? focus_widget_->GetClass() : "null", focus_widget_);
       #endif
       if (auto widget = focus_widget_) {
@@ -202,7 +221,7 @@ LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
 
     case WM_SETFOCUS:
       #if DEBUG_FOCUS
-        DEBUG_PRINTF("WM_SETFOCUS %p cur=%s%p\n", this,
+        DEBUG_PRINTF("WM_SETFOCUS %s@%p cur=%s%p\n", GetClass(), this,
             focus_widget_ ? focus_widget_->GetClass() : "null", focus_widget_);
       #endif
       if (auto widget = focus_widget_) {
@@ -222,8 +241,14 @@ LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
       capture_widget_->OnMessage(message, wParam, lParam);
     } else {
       const gfx::Point point(MAKEPOINTS(lParam));
-      if (auto widget = GetWidgetAt(point))
-        return widget->OnMessage(message, wParam, lParam);
+      if (message == WM_LBUTTONDOWN) {
+        #if DEBUG_MOUSE
+          DEBUG_PRINTF("WM_LBUTTONDOWN %s@%p at (%d,%d)\n", GetClass(), this,
+              point.x, point.y);
+        #endif
+      }
+      if (auto child = GetWidgetAt(point))
+        return child->OnMessage(message, wParam, lParam);
     }
   }
 

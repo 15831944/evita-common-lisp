@@ -103,10 +103,26 @@ void Widget::OnLeftButtonDown(uint, const gfx::Point&) {
 void Widget::OnLeftButtonUp(uint, const gfx::Point&) {
 }
 
-LRESULT Widget::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT Widget::OnMessage(UINT message, WPARAM wParam, LPARAM lParam) {
+  switch (message) {
+    case WM_LBUTTONDOWN:
+      OnLeftButtonDown(static_cast<uint>(wParam), 
+                       gfx::Point(MAKEPOINTS(lParam)));
+      return 0;
+
+    case WM_LBUTTONUP:
+      OnLeftButtonUp(static_cast<uint>(wParam), 
+                     gfx::Point(MAKEPOINTS(lParam)));
+      return 0;
+
+    case WM_MOUSEMOVE:
+      OnMouseMove(static_cast<uint>(wParam), 
+                  gfx::Point(MAKEPOINTS(lParam)));
+      return 0;
+  }
   if (naitive_window_)
-    return naitive_window_->DefWindowProc(uMsg, wParam, lParam);
-  return ::DefWindowProc(AssociatedHwnd(), uMsg, wParam, lParam);
+    return naitive_window_->DefWindowProc(message, wParam, lParam);
+  return container_widget_->OnMessage(message, wParam, lParam);
 }
 
 void Widget::OnMouseMove(uint, const gfx::Point&) {
@@ -192,9 +208,9 @@ void Widget::WillDestroyWidget() {
 void Widget::WillDestroyNaitiveWindow() {
 }
 
-LRESULT Widget::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
   ASSERT(naitive_window_);
-  switch (uMsg) {
+  switch (message) {
     case WM_CREATE:
       if (reinterpret_cast<CREATESTRUCT*>(lParam)->style & WS_VISIBLE)
         ++showing_;
@@ -208,21 +224,6 @@ LRESULT Widget::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_KILLFOCUS:
       DidKillFocus();
-      return 0;
-
-    case WM_LBUTTONDOWN:
-      OnLeftButtonDown(static_cast<uint>(wParam), 
-                       gfx::Point(MAKEPOINTS(lParam)));
-      return 0;
-
-    case WM_LBUTTONUP:
-      OnLeftButtonUp(static_cast<uint>(wParam), 
-                     gfx::Point(MAKEPOINTS(lParam)));
-      return 0;
-
-    case WM_MOUSEMOVE:
-      OnMouseMove(static_cast<uint>(wParam), 
-                  gfx::Point(MAKEPOINTS(lParam)));
       return 0;
 
     case WM_NCDESTROY:
@@ -290,7 +291,7 @@ LRESULT Widget::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
   }
-  return OnMessage(uMsg, wParam, lParam);
+  return OnMessage(message, wParam, lParam);
 }
 
 } // namespace widgets

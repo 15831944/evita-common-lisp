@@ -401,6 +401,9 @@
     <ClInclude Include="gfx\rect.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="widgets\adoptors\traverse.h">
+      <Filter>Widgets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico">
