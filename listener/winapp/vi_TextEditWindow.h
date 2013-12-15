@@ -132,11 +132,11 @@ class TextEditWindow
   protected: Posn computeGoalX(float, Posn);
 
   // [D]
-  private: void DidHide();
-  private: void DidKillFocus() override;
-  private: void DidResize() override;
-  private: void DidSetFocus() override;
-  private: void DidShow();
+  private: virtual void DidHide() override;
+  private: virtual void DidKillFocus() override;
+  private: virtual void DidResize() override;
+  private: virtual void DidSetFocus() override;
+  private: virtual void DidShow() override;
 
   // [E]
   public: Posn EndOfLine(Posn);
