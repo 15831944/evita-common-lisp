@@ -179,7 +179,7 @@ bool Frame::canClose() {
   return Application::Get()->CanExit();
 }
 
-void Frame::DidActivePane(Pane* const pane) {
+void Frame::DidActivatePane(Pane* const pane) {
   auto const tab_index = getTabFromPane(pane);
   if (tab_index < 0)
     return;

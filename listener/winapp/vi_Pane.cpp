@@ -26,5 +26,5 @@ Pane::Pane()
 
 void Pane::Activate() {
   ++m_nActiveTick;
-  GetFrame()->DidActivePane(this);
+  GetFrame()->DidActivatePane(this);
 }
