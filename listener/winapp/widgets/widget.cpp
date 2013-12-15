@@ -8,7 +8,13 @@
 #include "widgets/container_widget.h"
 #include "widgets/naitive_window.h"
 
-#define DEBUG_SHOW _DEBUG
+#define DEBUG_FOCUS 0
+#define DEBUG_RESIZE 0
+#define DEBUG_SHOW 0
+
+#if DEBUG_RESIZE
+#include <string>
+#endif
 
 namespace widgets {
 
@@ -105,16 +111,13 @@ HCURSOR Widget::GetCursorAt(const gfx::Point&) const {
 
 void Widget::Hide() {
   #if DEBUG_SHOW
-    DEBUG_WIDGET_PRINTF("show=%d\n", shown_);
+    DEBUG_WIDGET_PRINTF("focus=%d show=%d\n", has_focus(), shown_);
   #endif
   shown_ = 0;
-  if (naitive_window_) {
+  if (naitive_window_)
     ::ShowWindow(*naitive_window_.get(), SW_HIDE);
-  } else {
-    if (has_focus())
-      container_widget().SetFocus();
+  else
     DidHide();
-  }
 }
 
 bool Widget::OnIdle(uint) {
@@ -193,7 +196,7 @@ void Widget::ReleaseCapture() const {
 void Widget::ResizeTo(const gfx::Rect& rect) {
   ASSERT(realized_);
   if (naitive_window_) {
-    ::SetWindowPos(*naitive_window_.get(), nullptr, rect.left, rect.right,
+    ::SetWindowPos(*naitive_window_.get(), nullptr, rect.left, rect.top,
                    rect.width(), rect.height(), SWP_NOACTIVATE);
   } else {
     rect_ = rect;
@@ -210,6 +213,9 @@ void Widget::SetCapture() const {
 }
 
 void Widget::SetFocus() {
+  #if DEBUG_FOCUS
+    DEBUG_WIDGET_PRINTF("focus=%d show=%d\n", has_focus(), shown_);
+  #endif
   // This wieget might be hidden during creating window.
   if (naitive_window_) {
     ::SetFocus(*naitive_window_.get());
@@ -219,6 +225,9 @@ void Widget::SetFocus() {
 }
 
 void Widget::Show() {
+  #if DEBUG_SHOW
+    DEBUG_WIDGET_PRINTF("focus=%d show=%d\n", has_focus(), shown_);
+  #endif
   ++shown_;
   if (naitive_window_) {
     ::ShowWindow(*naitive_window_.get(), SW_SHOW);
@@ -262,7 +271,7 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 
     case WM_NCDESTROY:
       ASSERT(naitive_window_);
-      // NativeWindow::WindowProc() will delete |native_window_|.
+      // NaitiveWindow::WindowProc() will delete |naitive_window_|.
       naitive_window_.release();
       DidDestroyNaitiveWindow();
       return 0;
@@ -274,27 +283,6 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_WINDOWPOSCHANGED: {
       // DefWindowProc sents WM_SIZE and WM_MOVE, so handling
       // WM_WINDPOSCHANGED is faster than DefWindowProc.
-      //
-      // #define SWP_NOSIZE          0x0001
-      // #define SWP_NOMOVE          0x0002
-      // #define SWP_NOZORDER        0x0004
-      // #define SWP_NOREDRAW        0x0008
-      // #define SWP_NOACTIVATE      0x0010
-      // #define SWP_FRAMECHANGED    0x0020  /* The frame changed: send WM_NCCALCSIZE */
-      // #define SWP_SHOWWINDOW      0x0040
-      // #define SWP_HIDEWINDOW      0x0080
-      // #define SWP_NOCOPYBITS      0x0100
-      // #define SWP_NOOWNERZORDER   0x0200  /* Don't do owner Z ordering */
-      // #define SWP_NOSENDCHANGING  0x0400  /* Don't send WM_WINDOWPOSCHANGING */
-      //
-      // #define SWP_DRAWFRAME       SWP_FRAMECHANGED
-      // #define SWP_NOREPOSITION    SWP_NOOWNERZORDER
-      //
-      //#if(WINVER >= 0x0400)
-      // #define SWP_DEFERERASE      0x2000
-      // #define SWP_ASYNCWINDOWPOS  0x4000
-      //#endif /* WINVER >= 0x0400 */
-
       // undocumented SWP flags. See http://www.winehq.org.
       #if !defined(SWP_NOCLIENTSIZE)
           #define SWP_NOCLIENTSIZE    0x0800
@@ -309,6 +297,31 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
       //if (wp->flags & SWP_NOSIZE) return 0;
 
       auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
+
+      #if DEBUG_RESIZE
+      {
+        std::string flags;
+        #define CHECK_FLAG(name) \
+          if (wp->flags & SWP_ ##name) flags += " " #name;
+        CHECK_FLAG(NOSIZE) // 0x0001
+        CHECK_FLAG(NOMOVE) // 0x0002
+        CHECK_FLAG(NOZORDER) // 0x0004
+        CHECK_FLAG(NOREDRAW) // 0x0008
+        CHECK_FLAG(NOACTIVATE) // 0x0010
+        CHECK_FLAG(FRAMECHANGED) // 0x0020
+        CHECK_FLAG(SHOWWINDOW) // 0x0040
+        CHECK_FLAG(HIDEWINDOW) // 0x0080
+        CHECK_FLAG(NOCOPYBITS) // 0x0100
+        CHECK_FLAG(DEFERERASE) // 0x0200
+        CHECK_FLAG(NOSENDCHANGING) // 0x0400
+        CHECK_FLAG(NOCLIENTSIZE) // 0x0800
+        CHECK_FLAG(NOCLIENTMOVE) // 0x1000
+        CHECK_FLAG(DEFERERASE) // 0x2000
+        CHECK_FLAG(ASYNCWINDOWPOS) // 0x4000
+        DEBUG_WIDGET_PRINTF("WM_WINDOWPOSCHANGED (%d,%d)+%dx%d %08X%s\n",
+            wp->x, wp->y, wp->cx, wp->cy, wp->flags, flags.c_str());
+      }
+      #endif
 
       if (wp->flags & SWP_HIDEWINDOW) {
         // We don't take care hidden window.
@@ -337,6 +350,7 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
   }
+
   return OnMessage(message, wParam, lParam);
 }
 

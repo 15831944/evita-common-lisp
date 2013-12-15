@@ -11,10 +11,10 @@
 #include "widgets/naitive_window.h"
 #include <algorithm>
 
-#define DEBUG_FOCUS _DEBUG
+#define DEBUG_FOCUS 0
 #define DEBUG_IDLE 0
-#define DEBUG_MOUSE _DEBUG
-#define DEBUG_PAINT _DEBUG
+#define DEBUG_MOUSE 0
+#define DEBUG_PAINT 0
 
 namespace widgets {
 
@@ -171,18 +171,19 @@ void ContainerWidget::SetFocusTo(const Widget& widget) {
     return;
   }
 
+  auto const hwnd = static_cast<HWND>(*naitive_window());
+
   #if DEBUG_FOCUS
-    DEBUG_WIDGET_PRINTF("native_focus=%d"
+    DEBUG_WIDGET_PRINTF("naitive_focus=%d"
                         " new=" DEBUG_WIDGET_FORMAT
                         " cur=" DEBUG_WIDGET_FORMAT "\n",
-        ::GetFocus() == AssociatedHwnd(),
+        ::GetFocus() == hwnd,
         DEBUG_WIDGET_ARG(&widget),
         DEBUG_WIDGET_ARG(focus_widget_));
   #endif
 
   ASSERT(Contains(widget));
 
-  auto const hwnd = static_cast<HWND>(*naitive_window());
   if (::GetFocus() != hwnd) {
     ASSERT(!focus_widget_);
     focus_widget_ = const_cast<Widget*>(&widget);

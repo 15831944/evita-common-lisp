@@ -32,6 +32,7 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   public: BufferListPane();
 
   // [A]
+  public: virtual void Activate() override;
   private: void ActivateBuffers(bool);
 
   // [C]

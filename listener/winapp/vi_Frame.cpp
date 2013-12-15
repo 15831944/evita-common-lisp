@@ -10,10 +10,10 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Frame.cpp#5 $
 //
 #define DEBUG_DROPFILES 0
-#define DEBUG_FOCUS     _DEBUG
+#define DEBUG_FOCUS     0
 #define DEBUG_PAINT     0
-#define DEBUG_REDRAW    _DEBUG
-#define DEBUG_WINDOWPOS _DEBUG
+#define DEBUG_REDRAW    0
+#define DEBUG_WINDOWPOS 0
 #include "./vi_Frame.h"
 
 #include "./ctrl_TabBand.h"
@@ -185,12 +185,61 @@ void Frame::DidActivePane(Pane* const pane) {
     return;
   auto const selected_index = TabCtrl_GetCurSel(m_hwndTabBand);
   #if DEBUG_FOCUS
-   DEBUG_PRINTF("%p cur=%p@%d new=%p@%d\n", this, m_pActivePane,
-                selected_index, pane, tab_index);
+   DEBUG_WIDGET_PRINTF("selected_index=%d"
+                       " cur=" DEBUG_WIDGET_FORMAT ".focus=%d"
+                       " new=" DEBUG_WIDGET_FORMAT ".focus=%d at %d\n",
+        selected_index,
+        DEBUG_WIDGET_ARG(m_pActivePane), m_pActivePane->has_focus(),
+        DEBUG_WIDGET_ARG(pane), pane->has_focus(), tab_index);
   #endif
 
   if (tab_index != selected_index)
     TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
+}
+
+void Frame::DidChangeTabSelection(int selected_index) {
+  auto const pane = getPaneFromTab(selected_index);
+  #if DEBUG_FOCUS
+    DEBUG_WIDGET_PRINTF("Start selected_index=%d"
+        " cur=" DEBUG_WIDGET_FORMAT
+        " new=" DEBUG_WIDGET_FORMAT "\n",
+        selected_index,
+        DEBUG_WIDGET_ARG(m_pActivePane),
+        DEBUG_WIDGET_ARG(pane));
+  #endif
+  if (!pane) {
+    #if DEBUG_FOCUS
+      DEBUG_WIDGET_PRINTF("selected_index(%d) doesn't have pane!\n",
+          selected_index);
+    #endif
+    return;
+  }
+  if (m_pActivePane == pane) {
+    #if DEBUG_FOCUS
+      DEBUG_WIDGET_PRINTF("Active pane isn't changed. why?\n",
+          selected_index);
+    #endif
+    return;
+  }
+  if (m_pActivePane) {
+    m_pActivePane->Hide();
+  } else {
+    #if DEBUG_FOCUS
+      DEBUG_WIDGET_PRINTF("Why we don't have acitve pane?\n");
+    #endif
+  }
+  m_pActivePane = pane;
+  pane->Show();
+  pane->Activate();
+  updateTitleBar();
+  #if DEBUG_FOCUS
+    DEBUG_WIDGET_PRINTF("End selected_index=%d"
+        " cur=" DEBUG_WIDGET_FORMAT
+        " new=" DEBUG_WIDGET_FORMAT "\n",
+        selected_index,
+        DEBUG_WIDGET_ARG(m_pActivePane),
+        DEBUG_WIDGET_ARG(pane));
+  #endif
 }
 
 void Frame::DidCreateNaitiveWindow() {
@@ -620,26 +669,9 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
             case TABBAND_NOTIFY_QUERY_CLOSE:
               return HasMultiplePanes() || canClose();
 
-            case TCN_SELCHANGE: {
-              auto const iCurSel = TabCtrl_GetCurSel(m_hwndTabBand);
-              auto const pPane = getPaneFromTab(iCurSel);
-              DEBUG_PRINTF("TCN_SELCHANGE: index=%d active=%p pane=%p\n",
-                  iCurSel, m_pActivePane, pPane);
-              if (!pPane)
-                break;
-              if (m_pActivePane == pPane)
-                  break;
-
-              if (m_pActivePane)
-                m_pActivePane->Hide();
-
-              m_pActivePane = pPane;
-              pPane->Show();
-              pPane->Activate();
-              updateTitleBar();
+            case TCN_SELCHANGE:
+              DidChangeTabSelection(TabCtrl_GetCurSel(m_hwndTabBand));
               break;
-            }
-            break;
           }
         }
         return 0;

@@ -21,6 +21,8 @@
 #include "./vi_Frame.h"
 #include "widgets/naitive_window.h"
 
+#define DEBUG_FOCUS _DEBUG
+
 namespace Command {
 uint TranslateKey(uint);
 DEFCOMMAND(KillBuffers);
@@ -77,6 +79,11 @@ BufferListPane::BufferListPane()
       m_pDragItem(nullptr),
       m_hwndListView(nullptr) {
   m_pwszName = L"Buffer List";
+}
+
+void BufferListPane::Activate() {
+  Pane::Activate();
+  ::SetFocus(m_hwndListView);
 }
 
 // Activates the first selected buffer in-place.
@@ -387,6 +394,10 @@ void BufferListPane::Refresh() {
   } // for each bufer
 
   ListView_SortItems(m_hwndListView, compareItems, nullptr);
+
+  // TODO We should select the last active window rather than the first one.
+  uint const state = LVIS_SELECTED | LVIS_FOCUSED;
+  ListView_SetItemState(m_hwndListView, 0, state, state);
 }
 
 namespace Command {
@@ -422,7 +433,6 @@ DEFCOMMAND(ListBuffer) {
         if (pPane->GetFrame() != pCtx->GetFrame())
           pCtx->GetFrame()->AddPane(pPane);
         pPane->Activate();
-        ::InvalidateRect(pPane->AssociatedHwnd(), nullptr, 0);
         pPane->Refresh();
         return;
       }

@@ -85,6 +85,7 @@ class Frame final : public widgets::ContainerWidget,
 
   // [D]
   public: void DidActivePane(Pane*);
+  private: void DidChangeTabSelection(int selected_index);
   private: virtual void DidCreateNaitiveWindow() override;
   private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
