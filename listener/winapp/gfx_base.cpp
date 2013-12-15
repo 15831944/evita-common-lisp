@@ -361,9 +361,13 @@ void Graphics::Reinitialize() {
       DXGI_FORMAT_B8G8R8A8_UNORM,
       D2D1_ALPHA_MODE_PREMULTIPLIED);
   auto const size = SizeU(rc.right - rc.left, rc.bottom - rc.top);
+  // TODO: When should use D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE?
+  //auto const usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+  auto const usage = D2D1_RENDER_TARGET_USAGE_NONE;
   COM_VERIFY(FactorySet::d2d1().CreateHwndRenderTarget(
       D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
-                                   pixel_format),
+                                   pixel_format, 0.0f, 0.0f,
+                                   usage),
       D2D1::HwndRenderTargetProperties(hwnd_, size,
                                        D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS),
       &render_target_));
