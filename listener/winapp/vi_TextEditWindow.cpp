@@ -14,11 +14,11 @@
 #define DEBUG_FOCUS 0
 #define DEBUG_IDLE 0
 #define DEBUG_KEY 0
-#define DEBUG_PAINT _DEBUG
-#define DEBUG_REDRAW _DEBUG
-#define DEBUG_RESIZE _DEBUG
+#define DEBUG_PAINT 0
+#define DEBUG_REDRAW 0
+#define DEBUG_RESIZE 0
 #define DEBUG_SCROLL 0
-#define DEBUG_SHOW_HIDE _DEBUG
+#define DEBUG_SHOW_HIDE 0
 #include "./vi_TextEditWindow.h"
 
 #include "./ed_Style.h"

@@ -10,10 +10,10 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_Page.cpp#3 $
 //
 #define DEBUG_DIRTY  0
-#define DEBUG_DISPBUF _DEBUG
-#define DEBUG_FORMAT _DEBUG
+#define DEBUG_DISPBUF 0
+#define DEBUG_FORMAT 0
 #define DEBUG_HEAP   0
-#define DEBUG_RENDER _DEBUG
+#define DEBUG_RENDER 0
 #include "./vi_Page.h"
 
 #include "./ed_interval.h"
