@@ -29,6 +29,10 @@ Widget::Widget()
 }
 
 Widget::~Widget() {
+  #if DEBUG_DESTROY
+    DEBUG_WIDGET_PRINTF("realized=%d show=%d " DEBUG_RECT_FORMAT "\n",
+        realized_, shown_, DEBUG_RECT_ARG(rect_));
+  #endif
   ASSERT(!naitive_window_);
 }
 
@@ -65,6 +69,10 @@ void Widget::CreateNaitiveWindow() const {
 }
 
 void Widget::Destroy() {
+  #if DEBUG_DESTROY
+    DEBUG_WIDGET_PRINTF("realized=%d show=%d " DEBUG_RECT_FORMAT "\n",
+        realized_, shown_, DEBUG_RECT_ARG(rect_));
+  #endif
   if (naitive_window_) {
     ::DestroyWindow(*naitive_window_.get());
     return;
@@ -78,6 +86,14 @@ void Widget::DidCreateNaitiveWindow() {
 }
 
 void Widget::DidDestroyNaitiveWindow() {
+  #if DEBUG_DESTROY
+    DEBUG_WIDGET_PRINTF("realized=%d show=%d " DEBUG_RECT_FORMAT "\n",
+        realized_, shown_, DEBUG_RECT_ARG(rect_));
+  #endif
+  ASSERT(!naitive_window_);
+  // Since naitive window, which handles UI, is destroyed, this widget should
+  // be destroyed too.
+  Destroy();
 }
 
 HCURSOR Widget::GetCursorAt(const gfx::Point&) const {
@@ -210,9 +226,17 @@ void Widget::Show() {
 }
 
 void Widget::WillDestroyWidget() {
+  #if DEBUG_DESTROY
+    DEBUG_WIDGET_PRINTF("realized=%d show=%d " DEBUG_RECT_FORMAT "\n",
+        realized_, shown_, DEBUG_RECT_ARG(rect_));
+  #endif
 }
 
 void Widget::WillDestroyNaitiveWindow() {
+  #if DEBUG_DESTROY
+    DEBUG_WIDGET_PRINTF("realized=%d show=%d " DEBUG_RECT_FORMAT "\n",
+        realized_, shown_, DEBUG_RECT_ARG(rect_));
+  #endif
 }
 
 LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
@@ -235,7 +259,8 @@ LRESULT Widget::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 
     case WM_NCDESTROY:
       ASSERT(naitive_window_);
-      delete naitive_window_.release();
+      // NativeWindow::WindowProc() will delete |native_window_|.
+      naitive_window_.release();
       DidDestroyNaitiveWindow();
       return 0;
 

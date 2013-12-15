@@ -24,9 +24,11 @@ NaitiveWindow::NaitiveWindow()
 
 NaitiveWindow::~NaitiveWindow() {
   #if DEBUG_DESTROY
-    DEBUG_PRINTF("%p\n", this);
+    DEBUG_PRINTF("%p " DEBUG_WIDGET_FORMAT "\n", this,
+        DEBUG_WIDGET_ARG(widget_));
   #endif
   ASSERT(!hwnd_);
+  ASSERT(!widget_);
 }
 
 std::unique_ptr<NaitiveWindow> NaitiveWindow::Create(const Widget& widget) {
@@ -99,6 +101,7 @@ LRESULT CALLBACK NaitiveWindow::WindowProc(HWND hwnd, UINT message,
   if (message == WM_NCDESTROY) {
     window->hwnd_ = nullptr;
     window->WindowProc(message, wParam, lParam);
+    window->widget_ = nullptr;
     delete window;
     return 0;
   }
