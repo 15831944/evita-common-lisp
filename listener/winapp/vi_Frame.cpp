@@ -695,8 +695,9 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
             reinterpret_cast<HWND>(lParam));
       }
 
+      // Handle a message from BufferListPane.
       if (g_nDropTargetMsg && g_nDropTargetMsg == uMsg)
-        return reinterpret_cast<LRESULT>(this);
+        return reinterpret_cast<LRESULT>(GetActivePane());
       break;
   }
 
