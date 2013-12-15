@@ -11,7 +11,7 @@
 #include "widgets/naitive_window.h"
 #include <algorithm>
 
-#define DEBUG_FOCUS 0
+#define DEBUG_FOCUS _DEBUG
 #define DEBUG_IDLE 0
 #define DEBUG_MOUSE _DEBUG
 #define DEBUG_PAINT _DEBUG
@@ -63,12 +63,14 @@ void ContainerWidget::DispatchPaintMessage() {
   #endif
 
    for (auto& child : child_nodes()) {
-    if (!child.is_shown())
+    if (!child.is_shown() || child.has_naitive_window())
       continue;
     auto const rect = exposed_rect.Intersect(child.rect());
     if (rect) {
       #if DEBUG_PAINT
-        DEBUG_WIDGET_PRINTF("Start focus=%d " DEBUG_RECT_FORMAT "\n",
+        DEBUG_WIDGET_PRINTF("Start " DEBUG_WIDGET_FORMAT " focus=%d "
+                            DEBUG_RECT_FORMAT "\n",
+            DEBUG_WIDGET_ARG(&child),
             child.has_focus(),
             DEBUG_RECT_ARG(rect));
       #endif

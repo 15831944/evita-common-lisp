@@ -36,6 +36,9 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
     return *parent_node();
   }
   public: bool has_focus() const;
+  public: bool has_naitive_window() const { 
+    return static_cast<bool>(naitive_window_);
+  }
   public: virtual bool is_container() const { return false; }
   public: bool is_realized() const { return realized_; }
   public: bool is_shown() const { return shown_; }

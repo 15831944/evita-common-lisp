@@ -200,6 +200,9 @@ Command::KeyBindEntry* BufferListPane::MapKey(uint nKey) {
 }
 
 void BufferListPane::DidCreateNaitiveWindow() {
+  DEBUG_WIDGET_PRINTF("shown=%d " DEBUG_RECT_FORMAT "\n", is_shown(),
+      DEBUG_RECT_ARG(rect()));
+
   auto const dwExStyle = LVS_EX_DOUBLEBUFFER |
                          LVS_EX_FULLROWSELECT |
                          // LVS_EX_GRIDLINES |
@@ -215,7 +218,7 @@ void BufferListPane::DidCreateNaitiveWindow() {
                                     WC_LISTVIEW,
                                     nullptr,           // title
                                     dwStyle,
-                                    rect().left, rect().top,
+                                    0, 0,
                                     rect().width(), rect().height(),
                                     *naitive_window(),
                                     reinterpret_cast<HMENU>(ListViewId),
@@ -254,6 +257,13 @@ void BufferListPane::DidCreateNaitiveWindow() {
   }
 
   Refresh();
+}
+
+void BufferListPane::DidResize() {
+  ASSERT(m_hwndListView);
+  ::SetWindowPos(m_hwndListView, nullptr, 0, 0,
+                 rect().width(), rect().height(),
+                 SWP_NOZORDER | SWP_SHOWWINDOW);
 }
 
 void BufferListPane::onKeyDown(uint nVKey) {
@@ -300,23 +310,13 @@ LRESULT BufferListPane::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       } // switch code
       return 0;
     } // WM_NOTIFY
-
-    case WM_SETFOCUS:
-      ::SetFocus(m_hwndListView);
-      break;
-
-    case WM_WINDOWPOSCHANGED: {
-      WINDOWPOS* p = reinterpret_cast<WINDOWPOS*>(lParam);
-      if (p->flags & SWP_HIDEWINDOW) {
-        ::ShowWindow(m_hwndListView, SW_HIDE);
-      } else {
-        ::SetWindowPos(m_hwndListView, nullptr, 0, 0, p->cx, p->cy,
-                       SWP_NOZORDER | SWP_SHOWWINDOW);
-      }
-      return 0;
-    }
   }
   return Pane::OnMessage(uMsg, wParam, lParam);
+}
+
+void BufferListPane::OnPaint(const gfx::Rect) {
+  ::InvalidateRect(m_hwndListView, nullptr, true);
+  ::UpdateWindow(m_hwndListView);
 }
 
 void BufferListPane::Refresh() {

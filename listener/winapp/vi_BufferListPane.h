@@ -39,7 +39,8 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   protected: virtual void CreateNaitiveWindow() const override;
 
   // [D]
-  private: void DidCreateNaitiveWindow();
+  private: virtual void DidCreateNaitiveWindow() override;
+  private: virtual void DidResize() override;
   private: void dragFinish(POINT);
   private: void dragMove(POINT);
   private: void dragStart(int);
@@ -61,6 +62,7 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   // [O]
   private: void onKeyDown(uint);
   private: virtual LRESULT OnMessage(uint, WPARAM, LPARAM) override;
+  private: virtual void OnPaint(const gfx::Rect rect) override;
 
   DISALLOW_COPY_AND_ASSIGN(BufferListPane);
 };
