@@ -15,6 +15,8 @@
 #pragma comment(lib, "dwrite.lib")
 #pragma comment(lib, "windowscodecs.lib")
 
+#define DEBUG_DRAW 0
+
 namespace gfx {
 
 namespace {
@@ -295,7 +297,9 @@ Graphics::~Graphics() {
 }
 
 void Graphics::BeginDraw() const {
-  DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
+  #if DEBUG_DRAW
+    DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
+  #endif
   ASSERT(render_target_);
   if (!batch_nesting_level_)
     render_target_->BeginDraw();
@@ -303,7 +307,9 @@ void Graphics::BeginDraw() const {
 }
 
 bool Graphics::EndDraw() {
-  DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
+  #if DEBUG_DRAW
+    DEBUG_PRINTF("%p nesting=%d\n", render_target_, batch_nesting_level_);
+  #endif
   ASSERT(drawing());
   ASSERT(render_target_);
   --batch_nesting_level_;
