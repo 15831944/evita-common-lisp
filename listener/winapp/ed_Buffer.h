@@ -132,7 +132,10 @@ class Buffer :
 
         public: template<class T> T* StaticCast()
         {
-            return reinterpret_cast<T*>(this);
+          // warning C4946: reinterpret_cast used between related classes: 
+          // 'class1' and 'class2'
+          #pragma warning(suppress: 4946)
+          return reinterpret_cast<T*>(this);
         } // Cast
     }; // Property
 
@@ -176,7 +179,7 @@ class Buffer :
 
     // ctor/dtor
     public: Buffer(const char16*, Mode* = NULL);
-    public: ~Buffer();
+    public: virtual ~Buffer();
 
     // [C]
     public: bool      CanRedo() const;
@@ -391,8 +394,10 @@ class Buffer :
         public: void Prev()
             { m_lPosn -= 1; }
 
-        public: char16 Set(char16 wch)
-            { return m_pBuffer->SetCharAt(m_lPosn, wch); }
+        public: char16 Set(char16 wch) { 
+          m_pBuffer->SetCharAt(m_lPosn, wch); 
+          return wch;
+        }
 
         public: void SetRange(Posn lStart, Posn lEnd)
         {
@@ -573,7 +578,8 @@ class Buffer :
         public: virtual char16 GetChar(int iDelta) override
         {
             Posn lPosn = m_lCurStart + iDelta;
-            return isValidPosn(lPosn) ? m_pBuffer->GetCharAt(lPosn) : 0;
+            return static_cast<char16>(
+                isValidPosn(lPosn) ? m_pBuffer->GetCharAt(lPosn) : 0);
         } // GetChar
 
         public:          Posn GetEnd()   const { return m_lCurEnd; }

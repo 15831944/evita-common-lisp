@@ -351,7 +351,8 @@ class DynamicAbbrev :
 
             m_pFrame->ShowMessage(
                 MessageLevel_Warning,
-                m_fFound ? IDS_DA_NO_MORE : IDS_DA_NOT_FOUND,
+                static_cast<uint>(
+                    m_fFound ? IDS_DA_NO_MORE : IDS_DA_NOT_FOUND),
                 m_wsz );
             return false;
 
@@ -474,6 +475,8 @@ class DynamicAbbrev :
 
         return true;
     } // start
+
+    DISALLOW_COPY_AND_ASSIGN(DynamicAbbrev);
 }; // DynamicAbbrev
 
 const char* const DynamicAbbrev::k_pszName = "DynamicAbbrev";

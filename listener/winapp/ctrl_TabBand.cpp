@@ -291,7 +291,11 @@ class Element : public DoubleLinkedNode_<Element> {
   }
 
   public: template<class T> T* StaticCast() {
-    ASSERT(Is<T>()); return reinterpret_cast<T*>(this);
+    ASSERT(Is<T>()); 
+    // warning C4946: reinterpret_cast used between related classes: 
+    // 'class1' and 'class2'
+    #pragma warning(suppress: 4946)
+    return reinterpret_cast<T*>(this);
   }
 
   // [U]
@@ -418,7 +422,7 @@ class Item : public Element {
       m_iImage(-1),
       m_iItem(iItem),
       m_rgfState(0),
-      m_closeBox(this),
+      ALLOW_THIS_IN_INITIALIZER_LIST(m_closeBox(this)),
       m_pwsz(nullptr),
       Element(pParent) {
     SetItem(pTcItem);
@@ -487,7 +491,8 @@ class Item : public Element {
       rc.bottom = rc.bottom - 2;
 
       gfx::Brush brush(gfx, gfx::sysColor(COLOR_BTNTEXT));
-      gfx.DrawText(*gfx.work<gfx::TextFormat>(), brush, rc, m_pwsz, m_cwch);
+      gfx.DrawText(*gfx.work<gfx::TextFormat>(), brush, rc, m_pwsz, 
+                   static_cast<size_t>(m_cwch));
     }
   }
 
@@ -546,7 +551,7 @@ class Item : public Element {
 
     if (pTcItem->mask & TCIF_TEXT) {
       m_cwch = ::lstrlenW(pTcItem->pszText);
-      m_pwsz = new char16[m_cwch + 1];
+      m_pwsz = new char16[static_cast<size_t>(m_cwch + 1)];
       if (!m_pwsz) {
         return;
       }
@@ -694,7 +699,7 @@ static void loadDragTabCursor() {
     return;
   }
 
-  s_hDragTabCursor = ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_ARROW));
+  s_hDragTabCursor = ::LoadCursor(nullptr, IDC_ARROW);
 
   HMODULE hDll = ::LoadLibraryEx(
     L"ieframe.dll",
@@ -785,7 +790,7 @@ class TabBand : public Element {
       m_hwndToolTips(nullptr),
       m_iFocus(-1),
       m_nStyle(0),
-      m_oListButton(this),
+      ALLOW_THIS_IN_INITIALIZER_LIST(m_oListButton(this)),
       m_pDragItem(nullptr),
       m_pHover(nullptr),
       m_pInsertBefore(nullptr),
@@ -944,7 +949,7 @@ class TabBand : public Element {
       foreach (Elements::Enum, oEnum, &m_oElements) {
         auto const pElement = oEnum.Get();
         if (pElement->Is<Item>()) {
-          ti.uId = pElement->StaticCast<Item>()->m_iItem;
+          ti.uId = static_cast<uint>(pElement->StaticCast<Item>()->m_iItem);
 
         } else if (pElement->Is<ListButton>()) {
           ti.uId = k_TabListId;
@@ -1088,8 +1093,8 @@ class TabBand : public Element {
 
       ::AppendMenu(
           m_hTabListMenu,
-          rgfFlag,
-          pItem->m_iItem,
+          static_cast<uint>(rgfFlag),
+          static_cast<uint>(pItem->m_iItem),
           pItem->m_pwsz);
     }
 
@@ -1136,7 +1141,7 @@ class TabBand : public Element {
     oWC.cbWndExtra = 0;
     oWC.hInstance = hInstance;
     oWC.hIcon = nullptr;
-    oWC.hCursor = ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_ARROW));
+    oWC.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
     oWC.hbrBackground = nullptr;
     oWC.lpszMenuName = nullptr;
     oWC.lpszClassName = WC_TABBANDCLASS;
@@ -1231,7 +1236,7 @@ class TabBand : public Element {
       TOOLINFO ti;
       ti.cbSize = sizeof(ti);
       ti.hwnd = m_hwnd;
-      ti.uId = m_cItems;
+      ti.uId = static_cast<uint>(m_cItems);
       ::SendMessage(
           m_hwndToolTips,
           TTM_DELTOOL,
@@ -1294,7 +1299,7 @@ class TabBand : public Element {
       ti.hwnd = m_hwnd;
       ti.lpszText = LPSTR_TEXTCALLBACK;
       ti.uFlags = 0;
-      ti.uId = m_cItems - 1;
+      ti.uId = static_cast<uint>(m_cItems - 1);
       ::SendMessage(
           m_hwndToolTips,
           TTM_ADDTOOL,
@@ -1525,7 +1530,7 @@ class TabBand : public Element {
         break;
 
       case WM_USER:
-        return ::GetSysColor(COLOR_3DFACE);
+        return static_cast<LRESULT>(::GetSysColor(COLOR_3DFACE));
 
       case WM_WINDOWPOSCHANGED: {
         auto const wp = reinterpret_cast<WINDOWPOS*>(lParam);
@@ -1756,7 +1761,7 @@ class TabBand : public Element {
     TabBandNotifyData oNotify;
     oNotify.code = nCode;
     oNotify.hwndFrom = m_hwnd;
-    oNotify.idFrom = ::GetDlgCtrlID(m_hwnd);
+    oNotify.idFrom = static_cast<uint>(::GetDlgCtrlID(m_hwnd));
     oNotify.tab_index_ = tab_index;
 
     return ::SendMessage(
@@ -1772,7 +1777,7 @@ class TabBand : public Element {
     m_pInsertBefore = nullptr;
 
     ::ReleaseCapture();
-    ::SetCursor(::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_ARROW)));
+    ::SetCursor(::LoadCursor(nullptr, IDC_ARROW));
   }
 
   // [U]
@@ -1801,6 +1806,8 @@ class TabBand : public Element {
 
     return tabBand->OnMessage(uMsg, wParam, lParam);
   }
+
+  DISALLOW_COPY_AND_ASSIGN(TabBand);
 };
 
 }

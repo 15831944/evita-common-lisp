@@ -68,8 +68,13 @@ class Record
     public: template<class T> bool Is() const
         { return GetKind() == T::GetKind_(); }
 
-    public: template<class T> T* StaticCast()
-        { ASSERT(Is<T>()); return reinterpret_cast<T*>(this); }
+    public: template<class T> T* StaticCast() { 
+      ASSERT(Is<T>());
+      // warning C4946: reinterpret_cast used between related classes: 
+      // 'class1' and 'class2'
+      #pragma warning(suppress: 4946)
+      return reinterpret_cast<T*>(this); 
+    }
 
     #if DEBUG_UNDO
     public: const char16* GetSymbol() const

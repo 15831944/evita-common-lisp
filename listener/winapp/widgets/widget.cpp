@@ -14,7 +14,10 @@ namespace widgets {
 
 namespace {
 class TopLevelWidget : public ContainerWidget {
+  public: TopLevelWidget() {
+  }
   private: virtual bool is_top_level() const { return true; }
+  DISALLOW_COPY_AND_ASSIGN(TopLevelWidget);
 };
 }
 

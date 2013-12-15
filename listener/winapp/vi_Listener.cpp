@@ -154,9 +154,10 @@ void Listener::sendTextAux()
     #endif // _DEBUG
 
     // Send text to lisp thread.
+    ASSERT(lEnd >= lPosn);
     ::PostThreadMessage(
         m_dwThread,
         LISTENER_WM_SENDTEXT,
-        lEnd - lPosn,
+        static_cast<WPARAM>(lEnd - lPosn),
         reinterpret_cast<LPARAM>(m_rgwch) );
 } // Listener::sendTextAux

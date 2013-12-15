@@ -90,7 +90,7 @@ ContainerWidget& ContainerWidget::GetHostContainer() const {
 }
 
 Widget* ContainerWidget::GetWidgetAt(const gfx::Point& point) const {
-  for (auto& child: base::adoptors::reverse(child_nodes())) {
+  for (const auto& child: base::adoptors::reverse(child_nodes())) {
     if (!child.is_shown())
       continue;
     if (child.rect().Contains(point)) {

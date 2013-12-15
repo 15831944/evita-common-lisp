@@ -54,11 +54,13 @@ bool NaitiveWindow::CreateWindowEx(DWORD dwExStyle, DWORD dwStyle,
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance  = g_hInstance;
+    #pragma warning(suppress: 4302)
     wc.hIcon = ::LoadIconW(g_hResource, MAKEINTRESOURCE(IDI_APPLICATION));
     wc.hCursor = nullptr;
     wc.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
     wc.lpszMenuName = nullptr;
     wc.lpszClassName = L"EvitaNaitiveWindow";
+    #pragma warning(suppress: 4302)
     wc.hIconSm  = ::LoadIconW(g_hResource, MAKEINTRESOURCE(IDI_APPLICATION));
     s_window_class = ::RegisterClassExW(&wc);
     ASSERT(s_window_class);

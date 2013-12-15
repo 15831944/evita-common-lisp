@@ -158,6 +158,11 @@ static void caseReplace(Edit::Range* pRange, StringCase eCase)
         pRange->Downcase();
         break;
 
+    case StringCase_Mixed:
+    case StringCase_None:
+      // Nothing to do
+        break;
+
     case StringCase_Upper:
         pRange->Upcase();
         break;
@@ -362,8 +367,8 @@ bool FindDialogBox::onCommand(WPARAM wParam, LPARAM)
 /// </summary>
 bool FindDialogBox::onInitDialog()
 {
-    DWORD dwExStyle = ::GetWindowLong(*this, GWL_EXSTYLE);
-    dwExStyle |= WS_EX_LAYERED;
+    auto const dwExStyle = ::GetWindowLong(*this, GWL_EXSTYLE) |
+        WS_EX_LAYERED;
     ::SetWindowLong(*this, GWL_EXSTYLE, dwExStyle);
 
     // FIXME 2007-08-20 yosi@msn.com We should get default value of

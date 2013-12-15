@@ -114,7 +114,7 @@ void Processor::Execute(
         if (nKey >= '0' && nKey <= '9')
         {
             m_eState = State_Arg;
-            m_iArg   = nKey - '0';
+            m_iArg = static_cast<Count>(nKey - '0');
             return;
         } // if
 
@@ -187,7 +187,7 @@ void Processor::reportUnboundKeys()
     CharSink_<> oSink;
     for (uint i = 0; i < m_cKeys; i++)
     {
-        int nKey = m_rgnKey[i];
+        auto const nKey = m_rgnKey[i];
 
         if (nKey & Mod_Ctrl)
         {

@@ -3,6 +3,8 @@
 #if !defined(INCLUDE_base_adoptors_reverse_h)
 #define INCLUDE_base_adoptors_reverse_h
 
+#include <utility>
+
 namespace base {
 namespace adoptors {
 

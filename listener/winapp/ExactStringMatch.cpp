@@ -16,6 +16,8 @@ ExactStringMatch::ExactStringMatch(const SearchParameters* pSearch) :
     m_BadCharVec(pSearch),
     m_oSearch(*pSearch) {}
 
+ExactStringMatch::~ExactStringMatch() {
+}
 
 //////////////////////////////////////////////////////////////////////
 //

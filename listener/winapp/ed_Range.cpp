@@ -664,6 +664,10 @@ Posn Range::ensurePosn(Posn lPosn) const
 ///   Position of closed parenthesis, or -1 if there is no closed
 ///   parenthesis
 /// </returns>
+
+// warning C4062 enumerator 'identifier' in switch of enum 'enumeration' is not
+// handled
+#pragma warning(disable: 4062)
 Posn Range::FindCloseParen(bool fAllowMismatched)
 {
     enum State
@@ -764,6 +768,7 @@ Posn Range::FindCloseParen(bool fAllowMismatched)
 
     return -1;
 } // Range::FindCloseParen
+#pragma warning(default: 4062)
 
 /// <summary>
 ///   Find specified character in range from start.
@@ -811,6 +816,7 @@ Posn Range::FindLastChar(char16 wchFind) const
 /// <param name="wchClose">A close pareenthesis character</param>
 /// <param name="wchOpen">A open pareenthesis character</param>
 /// <returns>A position of matched open parenthesis</returns>
+
 Posn Range::FindOpenParen(bool fAllowMismatched)
 {
     class Util
@@ -858,6 +864,9 @@ Posn Range::FindOpenParen(bool fAllowMismatched)
         char16 wch = oEnum.Get();
         uint nTrait = pMode->GetCharSyntax(wch);
 
+        // warning C4062 enumerator 'identifier' in switch of enum 'enumeration' is not
+        // handled
+        #pragma warning(disable: 4062)
         switch (CharSyntax::GetSyntax(nTrait))
         {
         case CharSyntax::Syntax_CloseParen:
@@ -939,6 +948,7 @@ Posn Range::FindOpenParen(bool fAllowMismatched)
 
     return -1;
 } // Range::FindOpenParen
+#pragma warning(disable: 4062)
 
 /// <summary>
 ///   Retrive line number and column of this range.
@@ -972,8 +982,8 @@ void Range::GetInformation(Information* out_oInfo, Count n) const
 /// <seealso cref="Range::SetText(const char16*, int)"/>
 char16* Range::GetText() const
 {
-    Count cwch = m_lEnd - m_lStart;
-    char16* pwsz = new char16[cwch + 1];
+    auto const cwch = m_lEnd - m_lStart;
+    auto const pwsz = new char16[static_cast<size_t>(cwch + 1)];
     m_pBuffer->GetText(pwsz, m_lStart, m_lEnd);
     pwsz[cwch] = 0;
     return pwsz;
@@ -986,8 +996,8 @@ char16* Range::GetText() const
 /// <seealso cref="Range::SetText(const char16*, int)"/>
 char16* Range::GetText(StringResult* pString) const
 {
-    Count cwch = m_lEnd - m_lStart;
-    char16* pwsz = pString->Alloc(cwch);
+    auto const cwch = m_lEnd - m_lStart;
+    auto const pwsz = pString->Alloc(static_cast<size_t>(cwch));
     m_pBuffer->GetText(pwsz, m_lStart, m_lEnd);
     pwsz[cwch] = 0;
     return pwsz;

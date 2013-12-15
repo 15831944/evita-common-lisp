@@ -3,7 +3,7 @@
 #if !defined(INCLUDE_gfx_size_f_h)
 #define INCLUDE_gfx_size_f_h
 
-#include <d2d1.h>
+#include "gfx/forward.h"
 
 namespace gfx {
 

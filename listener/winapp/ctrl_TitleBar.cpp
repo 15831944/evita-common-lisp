@@ -29,7 +29,7 @@ int TitleBar::Realize(HWND hwnd)
 //
 bool TitleBar::IsEqual(const char16* pwch, int cwch) const
 {
-    cwch = min(cwch, lengthof(m_wsz) - 1);
+    cwch = min(cwch, static_cast<int>(lengthof(m_wsz) - 1));
     if (m_cwch != cwch) return false;
     return 0 == ::memcmp(m_wsz, pwch, sizeof(char16) * m_cwch);
 } // TitleBar::IsEqual
@@ -46,7 +46,7 @@ int TitleBar::SetText(const char16* pwch, int cwch)
         return 0;
     }
 
-    m_cwch = min(cwch, lengthof(m_wsz) - 1);
+    m_cwch = min(cwch, static_cast<int>(lengthof(m_wsz) - 1));
 
     ::CopyMemory(m_wsz, pwch, sizeof(char16) * m_cwch);
     m_wsz[cwch] = 0;
@@ -54,7 +54,7 @@ int TitleBar::SetText(const char16* pwch, int cwch)
     if (! ::SetWindowText(m_hwnd, m_wsz))
     {
         DWORD dwError = ::GetLastError();
-        return dwError;
+        return static_cast<int>(dwError);
     }
 
     return 0;

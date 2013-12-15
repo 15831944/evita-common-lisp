@@ -7,11 +7,25 @@
 #define INCLUDE_gfx_base_h
 
 #include "base/com_ptr.h"
+#include "gfx/rect.h"
 #include "gfx/rect_f.h"
 #include "./li_util.h"
 
+// warning C4263: 'function' : member function does not override any base
+// class virtual member function
+#pragma warning(disable: 4263)
+// warning C4264: 'virtual_function' : no override available for virtual
+// member function from base 'class'; function is hidden
+#pragma warning(disable: 4264)
+
 #include <dwrite.h>
+#pragma warning(default: 4263)
+#pragma warning(default: 4264)
+
+//'warning C4625: derived class' : copy constructor could not be generated because a base class copy constructor is inaccessible
+#pragma warning(disable: 4625)
 #include <wincodec.h>
+#pragma warning(default: 4625)
 
 namespace gfx {
 
@@ -28,6 +42,7 @@ class SimpleObject_ : public Object {
   protected: SimpleObject_(base::ComPtr<T>&& ptr) : ptr_(std::move(ptr)) {}
   public: operator T*() const { return ptr_; }
   public: T* operator->() const { return ptr_; }
+  DISALLOW_COPY_AND_ASSIGN(SimpleObject_);
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -47,6 +62,7 @@ class Bitmap : public SimpleObject_<ID2D1Bitmap> {
   public: Bitmap(const Graphics& gfx, HICON hIcon);
   public: Bitmap(const Graphics& gfx, SizeU size);
   public: explicit Bitmap(const Graphics& gfx);
+  DISALLOW_COPY_AND_ASSIGN(Bitmap);
 };
 
 class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
@@ -54,6 +70,7 @@ class Brush : public SimpleObject_<ID2D1SolidColorBrush> {
   #if _DEBUG
     public: ~Brush();
   #endif
+  DISALLOW_COPY_AND_ASSIGN(Brush);
 };
 
 class DpiHandler {
@@ -93,23 +110,27 @@ class FactorySet : public RefCounted_<FactorySet>,
   public: static SizeF CeilToPixel(const SizeF& size) {
     return instance().DpiHandler::CeilToPixel(size);
   }
+  DISALLOW_COPY_AND_ASSIGN(FactorySet);
 };
 
 class FontFace : public SimpleObject_<IDWriteFontFace> {
   private: const DWRITE_FONT_METRICS metrics_;
   public: FontFace(const char16* family_name);
   public: const DWRITE_FONT_METRICS& metrics() const { return metrics_; }
+  DISALLOW_COPY_AND_ASSIGN(FontFace);
 };
 
 class TextFormat : public SimpleObject_<IDWriteTextFormat> {
   private: const ScopedRefCount_<FactorySet> factory_set_;
   public: TextFormat(const LOGFONT& log_font);
   public: base::OwnPtr<TextLayout> CreateLayout(const char16*, int) const;
+  DISALLOW_COPY_AND_ASSIGN(TextFormat);
 };
 
 class TextLayout : public SimpleObject_<IDWriteTextLayout> {
   public: TextLayout(const LOGFONT& log_font);
   public: SIZE GetMetrics() const;
+  DISALLOW_COPY_AND_ASSIGN(TextLayout);
 };
 
 class Graphics : public Object, public DpiHandler {
@@ -230,7 +251,9 @@ class Graphics : public Object, public DpiHandler {
 
   // [R]
   private: void Reinitialize();
-  public: void Resize(const RECT& rc) const;
+  public: void Resize(const Rect& rc) const;
+
+  DISALLOW_COPY_AND_ASSIGN(Graphics);
 };
 
 // Helper functions

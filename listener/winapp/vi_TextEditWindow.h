@@ -125,7 +125,7 @@ class TextEditWindow
   public: void Activate();
 
   // [B]
-  public: void Blink(Posn, uint);
+  public: void Blink(Posn, int);
 
   // [C]
   public: Count ComputeMotion(Unit, Count, const gfx::PointF&, Posn*);
@@ -215,6 +215,8 @@ class TextEditWindow
   private: uint setReconvert(RECONVERTSTRING*, Posn, Posn);
   private: BOOL showImeCaret(SIZE, POINT);
   #endif // SUPPORT_IME
+
+  DISALLOW_COPY_AND_ASSIGN(TextEditWindow);
 };
 
 typedef DoubleLinkedList_<TextEditWindow, Buffer> WindowList;

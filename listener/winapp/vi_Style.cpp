@@ -21,7 +21,7 @@ bool IsCacheableChar(char16 wch) {
   return wch >= 0x20 && wch <= 0x7E;
 }
 
-bool IsCachableString(const char16* pwch, int cwch) {
+bool IsCachableString(const char16* pwch, size_t cwch) {
   for (auto s = pwch; s < pwch + cwch; ++s) {
     if (!IsCacheableChar(*s))
       return false;
@@ -90,6 +90,11 @@ class Font::FontImpl {
 
   public: float ConvertToDip(uint design_unit) const {
     return design_unit * em_size_ / metrics_.designUnitsPerEm;
+  }
+
+  public: float ConvertToDip(int design_unit) const {
+    ASSERT(design_unit >= 0);
+    return ConvertToDip(static_cast<uint>(design_unit));
   }
 
   // [D]
@@ -202,7 +207,7 @@ float Font::GetCharWidth(char16 wch) const {
   return GetTextWidth(&wch, 1);
 }
 
-float Font::GetTextWidth(const char16* pwch, uint cwch) const {
+float Font::GetTextWidth(const char16* pwch, size_t cwch) const {
   if (metrics_.fixed_width && IsCachableString(pwch, cwch))
     return metrics_.fixed_width * cwch;
 
@@ -248,7 +253,7 @@ int memhash(const void* pv, size_t cb)
         nHashCode <<= 5;
         nHashCode |= nHigh;
     } // for
-    return nHashCode & ((1<<28)-1);
+    return static_cast<int>(nHashCode & ((1<<28)-1)) & MAXINT;
 } // memhash
 
 int Font::HashKey(const Key* pKey)
@@ -275,8 +280,8 @@ class Cache_
     }; // Slot
 
     private: Slot*  m_prgSlot;
-    private: int    m_cAlloc;
-    private: int    m_cItems;
+    private: size_t m_cAlloc;
+    private: size_t m_cItems;
 
     public: Cache_() :
         m_cAlloc(t_N),
@@ -364,8 +369,8 @@ class Cache_
     private: void rehash()
     {
         Slot* prgStart = m_prgSlot;
-        int cAllocs = m_cAlloc;
-        int cItems  = m_cItems;
+        auto const cAllocs = m_cAlloc;
+        auto cItems  = m_cItems;
 
         m_cAlloc = m_cAlloc * 130 / 100;
         m_cItems  = 0;
@@ -415,10 +420,10 @@ FontSet* FontSet::Get(const StyleValues* pStyle)
             FontWeight_Bold == pStyle->GetFontWeight() ? FW_BOLD : FW_NORMAL;
 
         oLogFont.lfItalic =
-            FontStyle_Italic == pStyle->GetFontStyle() ? 1 : 0;
+            FontStyle_Italic == pStyle->GetFontStyle() ? 1u : 0u;
 
         oLogFont.lfUnderline =
-            TextDecoration_Underline == pStyle->GetDecoration() ? 1 : 0;
+            TextDecoration_Underline == pStyle->GetDecoration() ? 1u : 0u;
 
         oLogFont.lfStrikeOut     = 0;
         oLogFont.lfCharSet       = ANSI_CHARSET;;

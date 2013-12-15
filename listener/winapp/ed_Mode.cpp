@@ -352,7 +352,7 @@ int Mode::GetIcon() const
 
             if (NULL == hIcon)
             {
-                hIcon = ::LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
+                hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
             }
 
             iIcon = Application::Get()->AddIcon(hIcon);

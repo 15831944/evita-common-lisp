@@ -66,7 +66,7 @@ void InputHistory::Add(Edit::Buffer* pBuffer, Posn lStart, Posn lEnd)
 
     uint nIndex = m_nEnd % lengthof(m_rgpwsz);
     delete[] m_rgpwsz[nIndex];
-    char16* pwsz = new char16[lEnd - lStart + 1];
+    char16* pwsz = new char16[static_cast<size_t>(lEnd - lStart + 1)];
     m_rgpwsz[nIndex] = pwsz;
     pBuffer->GetText(pwsz, lStart, lEnd);
     pwsz[lEnd - lStart] = 0;

@@ -159,9 +159,10 @@ class LoadRequest : public FileIoRequest, public CharsetDecoder::Callback {
     public: Chunk(
         const char* pchStart,
         const char* pchEnd)
-        : m_pchStart(new char[pchEnd - pchStart]),
+        : m_pchStart(new char[static_cast<uint>(pchEnd - pchStart)]),
           m_pchEnd(m_pchStart + (pchEnd - pchStart)) {
-      myCopyMemory(m_pchStart, pchStart, pchEnd - pchStart);
+      myCopyMemory(m_pchStart, pchStart, 
+                   static_cast<size_t>(pchEnd - pchStart));
     }
 
     public: ~Chunk() {
@@ -235,6 +236,8 @@ class LoadRequest : public FileIoRequest, public CharsetDecoder::Callback {
 
   // [S]
   private: void sendChar(char16);
+
+  DISALLOW_COPY_AND_ASSIGN(LoadRequest);
 }; // LoadRequest
 
 class SaveRequest : public FileIoRequest {
@@ -384,11 +387,8 @@ void Buffer::UpdateFileStatus(bool const fForce) {
     return;
   }
 
-  switch (m_eObsolete) {
-    case Obsolete_Checking:
-    case Obsolete_Ignore:
+  if (m_eObsolete == Obsolete_Checking ||m_eObsolete == Obsolete_Ignore)
       return;
-  } // switch obsolete
 
   auto const tickNow = ::GetTickCount();
 
@@ -438,7 +438,7 @@ uint FileRequest::openForLoad() {
     return ERROR_NOT_ENOUGH_MEMORY;
   } // if
 
-  m_cbFile = oInfo.nFileSizeLow;
+  m_cbFile = static_cast<Count>(oInfo.nFileSizeLow);
   m_ftLastWrite = oInfo.ftLastWriteTime;
   m_nFileAttrs = oInfo.dwFileAttributes;
 
@@ -575,7 +575,7 @@ void LoadRequest::finishIo(uint const nError) {
     eNewline = m_NewlineDetector.Detect();
     if (m_CharsetDecoder == nullptr) {
       if (auto const nCodePage = m_CharsetDetector.Finish()) {
-        m_nCodePage = nCodePage;
+        m_nCodePage = static_cast<uint>(nCodePage);
         m_CharsetDecoder = CharsetDecoder::Create(
             static_cast<CodePage>(nCodePage), this);
       }
@@ -719,7 +719,7 @@ void LoadRequest::processRead(const char* start, const char* end) {
 
   if (m_CharsetDecoder == nullptr) {
     if (auto const nCodePage = m_CharsetDetector.Detect(runner, end)) {
-      m_nCodePage = nCodePage;
+      m_nCodePage = static_cast<uint>(nCodePage);
       m_CharsetDecoder = CharsetDecoder::Create(
           static_cast<CodePage>(nCodePage), this);
 
@@ -799,7 +799,7 @@ void SaveRequest::finishIo(uint const nError) {
     {
       LARGE_INTEGER li;
       li.HighPart = 0;
-      li.LowPart = m_cbFile;
+      li.LowPart = static_cast<DWORD>(m_cbFile);
       if (!::SetFilePointerEx(m_hFile, li, nullptr, FILE_BEGIN)) {
         auto const dwError = ::GetLastError();
         DEBUG_PRINTF("SetFilePointerEx: %p %ls %u\n",
@@ -1051,5 +1051,5 @@ void SaveRequest::retrieve() {
   } // for
 
   m_lPosn += static_cast<int>(pwch - pwchStart);
-  requestWrite(static_cast<int>(pch - m_rgchIoBuffer));
+  requestWrite(static_cast<uint>(pch - m_rgchIoBuffer));
 } // SaveRequest::retrieve

@@ -65,7 +65,7 @@ void StatusBar::SetParts(const int* prgiPart, int cParts)
         DEBUG_PRINTF(L"%p %d cParts=%d\n", this, ::GetTickCount(), cParts);
     #endif // DEBUG_STATUSBAR
 
-    m_cParts = min(cParts, lengthof(m_rgiPart));
+    m_cParts = min(cParts, static_cast<int>(lengthof(m_rgiPart)));
 
     myCopyMemory(m_rgiPart, prgiPart, sizeof(int) * m_cParts);
 
@@ -74,7 +74,7 @@ void StatusBar::SetParts(const int* prgiPart, int cParts)
     ::SendMessage(
         m_hwnd,
         SB_SETPARTS,
-        m_cParts,
+        static_cast<WPARAM>(m_cParts),
         reinterpret_cast<LPARAM>(m_rgiPart) );
 
     // Erase borders
@@ -83,7 +83,7 @@ void StatusBar::SetParts(const int* prgiPart, int cParts)
         ::SendMessage(
             m_hwnd,
             SB_SETTEXT,
-            i | SBT_NOBORDERS,
+            static_cast<WPARAM>(i | SBT_NOBORDERS),
             0 );
     } // for i
 } // StatusBar::SetParts

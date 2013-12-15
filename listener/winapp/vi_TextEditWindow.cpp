@@ -48,7 +48,7 @@ enum MyTimerId {
   MyTimerId_Blink = 2,
 };
 
-static int s_active_tick;
+static uint s_active_tick;
 
 } // namespace
 
@@ -119,13 +119,15 @@ void TextEditWindow::Activate() {
   SetFocus();
 }
 
-void TextEditWindow::Blink(Posn lPosn, uint nMillisecond) {
+void TextEditWindow::Blink(Posn lPosn, int nMillisecond) {
+  ASSERT(nMillisecond >= 0);
   m_pBlink->SetRange(lPosn, lPosn);
   m_fBlink = true;
   Redraw();
   if (!m_nBlinkTimerId) {
     m_nBlinkTimerId = MyTimerId_Blink;
-    ::SetTimer(AssociatedHwnd(), m_nBlinkTimerId, nMillisecond, nullptr);
+    ::SetTimer(AssociatedHwnd(), m_nBlinkTimerId, 
+               static_cast<uint>(nMillisecond), nullptr);
   }
 }
 
@@ -307,6 +309,7 @@ Count TextEditWindow::GetColumn(Posn lPosn) {
 }
 
 HCURSOR TextEditWindow::GetCursorAt(const Point&) const {
+  #pragma warning(suppress: 4302)
   return ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM));
 }
 
@@ -470,7 +473,8 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       char16 wch = static_cast<char16>(wParam);
       if (wch >= 0x20) {
         m_fBlink = false;
-        Application::Get()->Execute(this, wch, HIWORD(lParam) & KF_REPEAT);
+        Application::Get()->Execute(
+            this, wch,  static_cast<uint>(HIWORD(lParam) & KF_REPEAT));
       }
       break;
     }
@@ -498,7 +502,8 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       auto const nKey = Command::TranslateKey(nVKey);
       if (nKey) {
         m_fBlink = false;
-        Application::Get()->Execute(this, nKey, HIWORD(lParam) & KF_REPEAT);
+        Application::Get()->Execute(
+            this, nKey, static_cast<uint>(HIWORD(lParam) & KF_REPEAT));
         return 0;
       }
       break;
@@ -553,8 +558,8 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       switch (wParam) {
         case MyTimerId_AutoScroll:
           if (m_oAutoScroll.m_nTimerId) {
-              auto const iDuration = ::GetTickCount() -
-                  m_oAutoScroll.m_nStartTick;
+              auto const iDuration = static_cast<Count>(
+                  ::GetTickCount() - m_oAutoScroll.m_nStartTick);
               auto lCount = iDuration / 500;
               lCount = max(lCount, 1);
               lCount = min(lCount, 20);
@@ -598,10 +603,10 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
 
     case WM_IME_REQUEST:
       if (IMR_RECONVERTSTRING == wParam) {
-          return setReconvert(
+          return static_cast<LRESULT>(setReconvert(
               reinterpret_cast<RECONVERTSTRING*>(lParam),
               GetSelection()->GetStart(),
-              GetSelection()->GetEnd());
+              GetSelection()->GetEnd()));
       }
       break;
 
@@ -969,7 +974,7 @@ void TextEditWindow::updateScrollBar() {
   SCROLLINFO oInfo;
   oInfo.cbSize = sizeof(oInfo);
   oInfo.fMask = SIF_POS | SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL;
-  oInfo.nPage = m_pPage->GetEnd() - m_pPage->GetStart();
+  oInfo.nPage = static_cast<uint>(m_pPage->GetEnd() - m_pPage->GetStart());
   oInfo.nMin = 0;
   oInfo.nMax = lBufEnd;
   oInfo.nPos = m_pPage->GetStart();
@@ -1034,7 +1039,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam) {
 
     // Insert result string into buffer
     if (cwch >= 1) {
-      GetSelection()->SetText(rgwch, cwch);
+      GetSelection()->SetText(rgwch, static_cast<int>(cwch));
       GetSelection()->Collapse(Collapse_End);
       m_lImeEnd = GetSelection()->GetEnd();
       m_lImeStart = m_lImeEnd;
@@ -1074,7 +1079,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam) {
     ::ImmGetCompositionString(imc, GCS_COMPCLAUSE, rgnClause,
                               sizeof(rgnClause));
 
-    GetSelection()->SetText(rgwch, cwch);
+    GetSelection()->SetText(rgwch, static_cast<int>(cwch));
     GetSelection()->Collapse(Collapse_End);
     m_lImeEnd = GetSelection()->GetEnd();
     GetSelection()->SetRange(m_lImeStart + lCursor, m_lImeStart + lCursor);
@@ -1133,7 +1138,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam) {
       }
 
       m_fImeTarget = false;
-      Posn lEnd = m_lImeStart + cwch;
+      Posn lEnd = static_cast<Posn>(m_lImeStart + cwch);
       Posn lPosn = m_lImeStart;
       int iClause = 0;
       int iConverted = 0;
@@ -1169,7 +1174,7 @@ void TextEditWindow::onImeComposition(LPARAM lParam) {
         }
 
         iClause += 1;
-        Posn lNext = m_lImeStart + rgnClause[iClause];
+        Posn lNext = static_cast<Posn>(m_lImeStart + rgnClause[iClause]);
         GetBuffer()->SetStyle(lPosn, lNext, pStyle);
         lPosn = lNext;
       }
@@ -1197,14 +1202,14 @@ void TextEditWindow::onImeComposition(LPARAM lParam) {
 
       // if (m_fCancelButLeave)
       {
-          long cwch = ::ImmGetCompositionString(
+          auto const cwch = ::ImmGetCompositionString(
               imc,
               GCS_COMPSTR,
               rgwch,
               sizeof(rgwch)) / sizeof(char16);
           if (cwch >= 1)
           {
-              GetSelection()->SetText(rgwch, cwch);
+              GetSelection()->SetText(rgwch, static_cast<int>(cwch));
           }
       }
 
@@ -1243,8 +1248,8 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd) {
       goto exit;
   }
 
-  m_lImeStart = lStart + p->dwCompStrOffset / 2;
-  m_lImeEnd = m_lImeStart + p->dwCompStrLen;
+  m_lImeStart = static_cast<Posn>(lStart + p->dwCompStrOffset / 2);
+  m_lImeEnd = static_cast<Posn>(m_lImeStart + p->dwCompStrLen);
   m_fImeTarget = true;
 
   fSucceeded = ::ImmSetCompositionString(
@@ -1265,6 +1270,7 @@ void TextEditWindow::Reconvert(Posn lStart, Posn lEnd) {
 
 uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart,
                                   Posn lEnd) {
+  ASSERT(lEnd >= lStart);
   auto const cwch = lEnd - lStart;
   if (!p || !cwch)
     return 0;
@@ -1272,9 +1278,9 @@ uint TextEditWindow::setReconvert(RECONVERTSTRING* p, Posn lStart,
   auto const cb = sizeof(RECONVERTSTRING) + sizeof(char16) * (cwch + 1);
   p->dwSize = cb;
   p->dwVersion = 0;
-  p->dwStrLen = cwch;
+  p->dwStrLen = static_cast<DWORD>(cwch);
   p->dwStrOffset = sizeof(RECONVERTSTRING);
-  p->dwCompStrLen = cwch; // # of characters
+  p->dwCompStrLen = static_cast<DWORD>(cwch); // # of characters
   p->dwCompStrOffset = 0; // byte offset
   p->dwTargetStrLen = p->dwCompStrLen;
   p->dwTargetStrOffset = p->dwCompStrOffset;

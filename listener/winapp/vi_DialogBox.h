@@ -61,7 +61,7 @@ class DialogBox
         return static_cast<int>(::SendMessage(
             GetDlgItem(iCtrl),
             BM_SETCHECK,
-            fChecked ? BST_CHECKED : BST_UNCHECKED,
+            static_cast<WPARAM>(fChecked ? BST_CHECKED : BST_UNCHECKED),
             0 ) );
     } // SetCheckBox
 }; // Dialog

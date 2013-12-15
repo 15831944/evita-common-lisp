@@ -20,6 +20,9 @@ class Castable_
     public: template<class T> T* DynamicCast() const
     {
         Base_* p = static_cast<Base_*>(const_cast<Self*>(this));
+        // warning C4946: reinterpret_cast used between related classes: 
+        // 'class1' and 'class2'
+        #pragma warning(suppress: 4946)
         return T::Is_(p) ? reinterpret_cast<T*>(p) : NULL;
     } // DynamicCast
 
@@ -65,8 +68,8 @@ class CharSink_
     {
         if (m_pwsz - m_pwszBuffer >= m_cwch)
         {
-            int     cwch    = m_cwch * 13 / 10;
-            char16* pwszNew = new char16[cwch];
+            auto const cwch = m_cwch * 13 / 10;
+            char16* pwszNew = new char16[static_cast<size_t>(cwch)];
             myCopyMemory(pwszNew, m_pwsz, sizeof(char16) * m_cwch);
             releaseBuffer();
             m_pwszBuffer = pwszNew;
@@ -432,7 +435,7 @@ class StringKey
             nHashCode <<= 5;
             nHashCode |= nHigh;
         } // for p
-        return nHashCode & ((1<<28)-1);
+        return static_cast<int>(nHashCode & ((1<<28)-1)) & MAXINT;
     } // Hash
 
     public: static StringKey* Removed()
@@ -539,12 +542,12 @@ class HashTable_
     private: void rehash()
     {
         Slot* prgStart = m_prgSlot;
-        int cAllocs = m_cAlloc;
-        int cItems  = m_cItems;
+        auto const cAllocs = m_cAlloc;
+        auto cItems  = m_cItems;
         
         m_cAlloc = m_cAlloc * 130 / 100;
         m_cItems  = 0;
-        m_prgSlot = new Slot[m_cAlloc];
+        m_prgSlot = new Slot[static_cast<size_t>(m_cAlloc)];
         ::ZeroMemory(m_prgSlot, sizeof(Slot) * m_cAlloc);
 
         Slot* prgEnd = prgStart + cAllocs;

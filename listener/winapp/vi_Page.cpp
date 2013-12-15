@@ -235,6 +235,8 @@ class MarkerCell final : public Cell {
   public: virtual bool Equal(const Cell* pCell) const {
     if (!Cell::Equal(pCell))
       return false;
+    // reinterpret_cast used between related classes: 'class1' and 'class2'
+    #pragma warning(suppress: 4946)
     auto const pMarker = reinterpret_cast<const MarkerCell*>(pCell);
     if (!m_crColor.Equal(pMarker->m_crColor))
       return false;
@@ -385,6 +387,8 @@ class TextCell : public Cell {
   public: virtual bool Equal(const Cell* pCell) const {
     if (!Cell::Equal(pCell))
       return false;
+    // reinterpret_cast used between related classes: 'class1' and 'class2'
+    #pragma warning(suppress: 4946)
     auto const pText = reinterpret_cast<const TextCell*>(pCell);
     if (!m_crColor.Equal(pText->m_crColor))
       return false;
@@ -436,7 +440,9 @@ class TextCell : public Cell {
     auto const cwch = lPosn - m_lStart;
     if (!cwch)
       return 0;
-    return FloorWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, cwch));
+    return FloorWidthToPixel(
+        gfx, 
+        m_pFont->GetTextWidth(m_pwch, static_cast<uint>(cwch)));
   }
 
   public: virtual Posn MapXToPosn(const gfx::Graphics& gfx,
@@ -446,7 +452,7 @@ class TextCell : public Cell {
     for (uint k = 1; k <= m_cwch; ++k) {
       auto const cx = FloorWidthToPixel(gfx, m_pFont->GetTextWidth(m_pwch, k));
       if (x < cx)
-        return m_lStart + k - 1;
+        return static_cast<Posn>(m_lStart + k - 1);
     }
     return m_lEnd;
   }
@@ -486,17 +492,32 @@ class TextCell : public Cell {
         drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
         break;
 
-        case TextDecoration_ImeInactiveA:
+      case TextDecoration_ImeInactiveA:
         drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
         break;
 
-        case TextDecoration_ImeInactiveB:
+      case TextDecoration_ImeInactiveB:
         drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
         break;
 
-        case TextDecoration_ImeActive:
+      case TextDecoration_ImeActive:
         drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 3);
         drawHLine(gfx, text_brush, rect.left, rect.right - 4, y + 2);
+        break;
+
+      case TextDecoration_None:
+        break;
+
+      case TextDecoration_GreenWave:
+        // TODO: Implement TextDecoration_RedWave
+        break;
+
+      case TextDecoration_RedWave:
+        // TODO: Implement TextDecoration_RedWave
+        break;
+
+      case TextDecoration_Underline:
+        // TODO: Implement TextDecoration_Underline
         break;
     }
     #endif
@@ -581,8 +602,8 @@ class EnumCI {
   }
 
   private: void fill() {
-    auto const cwch = m_pBuffer->GetText(m_rgwch, m_lPosn,
-                                         m_lPosn + lengthof(m_rgwch));
+    auto const cwch = m_pBuffer->GetText(
+        m_rgwch, m_lPosn, static_cast<Posn>(m_lPosn + lengthof(m_rgwch)));
 
     m_lBufStart = m_lPosn;
     m_lBufEnd   = m_lPosn + cwch;
@@ -814,7 +835,7 @@ Cell* Formatter::formatChar(
   if (!pFont) {
     auto const pFont = FontSet::Get(m_gfx, pStyle)->FindFont(m_gfx, 'u');
     char16 rgwch[5];
-    int cwch;
+    size_t cwch;
 
     if (wch < 0x20) {
         rgwch[0] = '^';

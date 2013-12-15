@@ -50,7 +50,7 @@ class CompileContext : public Regex::ICompileContext
         m_prgbBlob(NULL),
         m_prgoCapture(NULL) {}
 
-    public: ~CompileContext()
+    public: virtual ~CompileContext()
     {
         delete m_prgbBlob;
         delete m_prgoCapture;
@@ -65,7 +65,7 @@ class CompileContext : public Regex::ICompileContext
 
         m_cCaptures   = cCaptures;
         m_prgbBlob    = new uint8[cb];
-        m_prgoCapture = new Capture[cCaptures + 1];
+        m_prgoCapture = new Capture[static_cast<size_t>(cCaptures + 1)];
 
         return m_prgbBlob;
     } // Alloc
@@ -73,7 +73,7 @@ class CompileContext : public Regex::ICompileContext
     private: virtual bool SetCapture(int iNth, const char16* pwsz) override
     {
         int cwch = ::lstrlenW(pwsz);
-        char16* pwszSave = new char16[cwch + 1];
+        char16* pwszSave = new char16[static_cast<size_t>(cwch + 1)];
         ::lstrcpy(pwszSave, pwsz);
         m_prgoCapture[iNth].m_pwszName = pwszSave;
         return true;
@@ -118,7 +118,7 @@ class BufferMatchContext : public Regex::IMatchContext
         ASSERT(NULL != prgoCapture);
     } // BufferMatchContext
 
-    public: ~BufferMatchContext()
+    public: virtual ~BufferMatchContext()
     {
         delete m_pCompileContext;
     } // ~BufferMatchContext
@@ -472,7 +472,7 @@ RegexMatcher::RegexMatcher(
         pCompileContext,
         m_oSearch.m_wsz,
         ::lstrlenW(m_oSearch.m_wsz),
-        rgfFlag );
+        static_cast<int>(rgfFlag));
 
     if (NULL == m_pIRegex)
     {

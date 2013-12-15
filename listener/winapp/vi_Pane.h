@@ -61,6 +61,8 @@ class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
 
   // [U]
   public: virtual void UpdateStatusBar() {}
+
+  DISALLOW_COPY_AND_ASSIGN(Pane);
 };
 
 #endif //!defined(INCLUDE_vi_Pane_h)

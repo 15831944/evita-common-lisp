@@ -13,7 +13,9 @@ namespace {
 
 template<typename T> class ScopedArray_ {
   private: T* const array_;
-  public: ScopedArray_(int const size) : array_(new T[size]) {}
+  public: ScopedArray_(int const size) 
+    : array_(new T[static_cast<size_t>(size)]) {
+  }
   public: ~ScopedArray_() { delete[] array_; }
   public: operator T*() const { return array_; }
   DISALLOW_COPY_AND_ASSIGN(ScopedArray_);
@@ -39,16 +41,16 @@ class DecodeHelper {
     ASSERT(start != nullptr);
     ASSERT(start <= end);
 
-    uint cch = static_cast<uint>(end - start);
-    ScopedArray_<char16> buf(cch);
+    auto const cch = static_cast<uint>(end - start);
+    ScopedArray_<char16> buf(static_cast<int>(cch));
 
     auto const cwch = ::MultiByteToWideChar(
         code_page_,
         MB_ERR_INVALID_CHARS,
         start,
-        cch,
+        static_cast<int>(cch),
         buf,
-        cch);
+        static_cast<int>(cch));
 
     if (cch == static_cast<uint>(cwch)) {
       callback_->DecoderOutput(buf, buf + cwch);
@@ -62,8 +64,8 @@ class DecodeHelper {
     uint8* buf = reinterpret_cast<uint8*>(in);
     auto const iRow = buf[0] < 95 ? 112 : 176;
     auto const iCell = buf[0] & 1 ? (buf[1] > 95 ? 32 : 31) : 126;
-    buf[0] = static_cast<char>(((buf[0] + 1) >> 1) + iRow);
-    buf[1] = static_cast<char>(buf[1] + iCell);
+    buf[0] = static_cast<uint8>(((buf[0] + 1) >> 1) + iRow);
+    buf[1] = static_cast<uint8>(buf[1] + iCell);
   }
 
   protected: void Decode(int const buflen) {
@@ -79,8 +81,8 @@ class DecodeHelper {
     if (cwch == 1) {
       callback_->DecoderOutput(buf, buf + 1);
     } else {
-      buf[0] = bytes_[0];
-      buf[1] = bytes_[1];
+      buf[0] = static_cast<char16>(bytes_[0]);
+      buf[1] = static_cast<char16>(bytes_[1]);
       callback_->DecoderOutput(buf, buf + buflen);
     }
   }
@@ -151,14 +153,14 @@ class DbcsDecoder : public CharsetDecoder, public DecodeHelper {
             SendBytes(ascii_start, runner);
             ascii_start = nullptr;
 
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             state_ = StateLeadByte;
 
           } else if (ch > 0x7F && code_page_ == CP_SHIFT_JIS) {
             SendBytes(ascii_start, runner);
             ascii_start = nullptr;
 
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             Decode(1);
 
           } else {
@@ -170,7 +172,7 @@ class DbcsDecoder : public CharsetDecoder, public DecodeHelper {
 
         case StateLeadByte:
           ASSERT(ascii_start == nullptr);
-          bytes_[1] = ch;
+          bytes_[1] = static_cast<char>(ch);
           Decode(2);
           state_ = StateAscii;
           break;
@@ -199,6 +201,8 @@ class DbcsDecoder : public CharsetDecoder, public DecodeHelper {
         CAN_NOT_HAPPEN();
     }
   }
+
+  DISALLOW_COPY_AND_ASSIGN(DbcsDecoder);
 }; // DbcsDecoder
 
 // EUC-JP
@@ -300,7 +304,7 @@ class EucJpDecoder : public CharsetDecoder, public DecodeHelper {
             ConvertJisToShiftJis(bytes_);
             Decode(2);
           } else {
-            bytes_[1] = ch;
+            bytes_[1] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 2);
           }
           state_ = STATE_EUC_0;
@@ -310,11 +314,11 @@ class EucJpDecoder : public CharsetDecoder, public DecodeHelper {
           ASSERT(ascii_start == nullptr);
           // Half-width katakana
           if (ch >= 0xA1 || ch<= 0xFE) {
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             Decode(1);
           } else {
             bytes_[0] = static_cast<uint8>(EUC_SS2);
-            bytes_[1] = ch;
+            bytes_[1] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 2);
           }
           state_ = STATE_EUC_0;
@@ -323,7 +327,7 @@ class EucJpDecoder : public CharsetDecoder, public DecodeHelper {
           case STATE_EUC_3_2:
             // Windows doesn't support EUC-JP code set 3.
             bytes_[0] = static_cast<uint8>(EUC_SS3);
-            bytes_[1] = ch;
+            bytes_[1] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 2);
             state_ = STATE_EUC_0;
             break;
@@ -364,6 +368,8 @@ class EucJpDecoder : public CharsetDecoder, public DecodeHelper {
         CAN_NOT_HAPPEN();
     }
   }
+
+  DISALLOW_COPY_AND_ASSIGN(EucJpDecoder);
 }; // EucJpDecoder
 
 // ISO-2022-1986 = JIS X 0202-1991
@@ -493,18 +499,18 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
             state_ = STATE_ESC;
 
           } else if (ch >= 0x21 && ch <= 0x7E) {
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             state_ = STATE_DBC_2;
 
           } else {
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 1);
             state_ = STATE_SBC;
           }
           break;
 
         case STATE_DBC_2:
-          bytes_[1] = ch;
+          bytes_[1] = static_cast<char>(ch);
           if (ch >= 0x21 && ch <= 0x7E) {
             ConvertJisToShiftJis(bytes_);
             Decode(2);
@@ -525,13 +531,13 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
               break;
 
             case ISO2022_ESC:  // ESC ESC
-              bytes_[0] = ch;
+              bytes_[0] = static_cast<char>(ch);
               SendBytes(bytes_, bytes_ + 1);
               break;
 
             default:
               bytes_[0] = static_cast<uint8>(ISO2022_ESC);
-              bytes_[1] = ch;
+              bytes_[1] = static_cast<char>(ch);
               SendBytes(bytes_, bytes_ + 2);
               state_ = STATE_SBC;
               break;
@@ -556,9 +562,9 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
               break;
 
             default:
-              bytes_[0] = static_cast<uint8>(ISO2022_ESC);
+              bytes_[0] = static_cast<char>(ISO2022_ESC);
               bytes_[1] = '$';
-              bytes_[2] = ch;
+              bytes_[2] = static_cast<char>(ch);
               SendBytes(bytes_, bytes_ + 3);
               state_ = STATE_SBC;
               break;
@@ -584,10 +590,10 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
                break;
 
             default:
-              bytes_[0] = static_cast<uint8>(ISO2022_ESC);
+              bytes_[0] = ISO2022_ESC;
               bytes_[1] = '$';
               bytes_[2] = '(';
-              bytes_[3] = ch;
+              bytes_[3] = static_cast<char>(ch);
               SendBytes(bytes_, bytes_ + 4);
               state_ = STATE_SBC;
               break;
@@ -608,9 +614,9 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
               break;
 
             default:
-              bytes_[0] = static_cast<uint8>(ISO2022_ESC);
+              bytes_[0] = ISO2022_ESC;
               bytes_[1] = '$';
-              bytes_[2] = ch;
+              bytes_[2] = static_cast<char>(ch);
               SendBytes(bytes_, bytes_ + 3);
               state_ = STATE_SBC;
               break;
@@ -652,6 +658,8 @@ class IsoJpDecoder : public CharsetDecoder, public DecodeHelper {
         CAN_NOT_HAPPEN();
     }
   }
+
+  DISALLOW_COPY_AND_ASSIGN(IsoJpDecoder);
 }; // IsoJpDecoder
 
 // Single Byte Charset decoder.
@@ -676,7 +684,9 @@ class SbcsDecoder : public CharsetDecoder, public DecodeHelper {
       bytes_[0] = *runner;
       Decode(1);
     }
-  }
+  } 
+
+  DISALLOW_COPY_AND_ASSIGN(SbcsDecoder);
 }; // SbcsDecoder
 
 // UTF-8 Charset decoder.
@@ -720,7 +730,7 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
             SendBytes(ascii_start, runner);
             ascii_start = nullptr;
 
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             char16_ = static_cast<char16>((ch & 0x1F) << 6);
             state_ = Utf8_2;
 
@@ -728,7 +738,7 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
             SendBytes(ascii_start, runner);
             ascii_start = nullptr;
 
-            bytes_[0] = ch;
+            bytes_[0] = static_cast<char>(ch);
             char16_ = static_cast<char16>((ch & 0x0F) << 12);
             state_ = Utf8_3;
 
@@ -745,7 +755,7 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
             char16_ |= ch & 0x3F;
             SendChar(char16_);
           } else {
-            bytes_[1] = ch;
+            bytes_[1] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 2);
           }
           state_ = Utf8_0;
@@ -753,7 +763,7 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
 
         case Utf8_3:
           ASSERT(ascii_start == nullptr);
-          bytes_[1] = ch;
+          bytes_[1] = static_cast<char>(ch);
           if (ch >= 0x80 && ch <= 0xBF) {
             char16_ |= (ch & 0x3f) << 6;
             state_ = Utf8_3_2;
@@ -770,7 +780,7 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
             char16_ |= ch & 0x3f;
             SendChar(char16_);
           } else {
-            bytes_[2] = ch;
+            bytes_[2] = static_cast<char>(ch);
             SendBytes(bytes_, bytes_ + 3);
           }
           state_ = Utf8_0;
@@ -810,6 +820,8 @@ class Utf8Decoder : public CharsetDecoder, public DecodeHelper {
         CAN_NOT_HAPPEN();
     }
   } // Finish
+
+  DISALLOW_COPY_AND_ASSIGN(Utf8Decoder);
 }; // Utf8Decoder
 
 } // namespace

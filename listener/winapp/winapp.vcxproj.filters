@@ -177,9 +177,6 @@
     <ClCompile Include="RegexMatch.cpp">
       <Filter>Buffer</Filter>
     </ClCompile>
-    <ClCompile Include="precomp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vcsupport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -210,6 +207,7 @@
     <ClCompile Include="gfx\rect.cpp">
       <Filter>gfx</Filter>
     </ClCompile>
+    <ClCompile Include="precomp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -231,9 +229,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="listener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
@@ -368,9 +363,6 @@
     <ClInclude Include="RegexMatch.h">
       <Filter>Buffer</Filter>
     </ClInclude>
-    <ClInclude Include="precomp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\charset\CharsetDetector.h">
       <Filter>Charset</Filter>
     </ClInclude>
@@ -443,6 +435,8 @@
     <ClInclude Include="gfx\rect_f.h">
       <Filter>gfx</Filter>
     </ClInclude>
+    <ClInclude Include="precomp.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico">

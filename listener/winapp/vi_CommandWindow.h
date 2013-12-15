@@ -42,6 +42,8 @@ class CommandWindow : public widgets::ContainerWidget {
 
     // [M]
     public: virtual Command::KeyBindEntry* MapKey(uint) = 0;
+
+    DISALLOW_COPY_AND_ASSIGN(CommandWindow);
 }; // CommandWindow
 
 
@@ -67,6 +69,8 @@ class CommandWindow_ : public Parent_
     public: virtual const char* GetClass() const override {
       return T::GetClass_();
     }
+
+    DISALLOW_COPY_AND_ASSIGN(CommandWindow_);
 }; // CommandWindow_
 
 #endif //!defined(INCLUDE_visual_CommandWindow_h)

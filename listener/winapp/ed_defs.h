@@ -130,13 +130,15 @@ enum StringCase
 //
 inline char16 CharDowncase(char16 wch)
 {
-    return (char16) ::CharLower((char16*) wch);
+    return static_cast<char16>(
+        reinterpret_cast<UINT_PTR>(::CharLower((char16*) wch)));
 } // CharDowncase
 
 
 inline char16 CharUpcase(char16 wch)
 {
-    return (char16) ::CharUpper((char16*) wch);
+    return static_cast<char16>(
+        reinterpret_cast<UINT_PTR>(::CharUpper((char16*) wch)));
 } // CharUpcase
 
 inline bool IsLowerCase(char16 wch)
@@ -212,7 +214,7 @@ class String
 //
 class StringResult
 {
-    private: int        m_cwch;
+    private: size_t     m_cwch;
     private: char16*    m_pwch;
 
     public: StringResult() :
@@ -226,7 +228,7 @@ class StringResult
 
     public: operator const char16*() { return m_pwch; }
 
-    public: char16* Alloc(int n)
+    public: char16* Alloc(size_t n)
     {
         delete[] m_pwch;
         m_cwch = n;

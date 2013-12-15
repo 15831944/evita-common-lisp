@@ -23,39 +23,43 @@
 #define WIN32_LEAN_AND_MEAN
 #define ISOLATION_AWARE_ENABLED 1
 
-// warning C6385: Invalid data: accessing 'rgchFullModulePath'
+// Disable warning in windows.h.
+
+// warning C4191: 'operator/operation' : unsafe conversion from 'type of
+// expression' to 'type required'
+#pragma warning(disable: 4191)
+
+// warning C4668: 'symbol' is not defined as a preprocessor macro, replacing
+// with '0' for 'directives'
+#pragma warning(disable: 4668)
+
+// warning C4820: 'bytes' bytes padding added after construct 'member_name'
+#pragma warning(disable: 4820)
+
+// warning C6385:  invalid data: accessing <buffer name>, the readable size is
+// <size1> bytes, but <size2> bytes may be read: Lines: x, y
 #pragma warning(disable: 6385)
 #include <windows.h>
-#pragma warning(default: 6385)
+#pragma warning(default: 4191)
+//#pragma warning(default: 4820)
+//#pragma warning(default: 4668)
+//#pragma warning(default: 6385)
+
+//#pragma warning(disable: 4820)
 #include <ShellAPI.h>   // HDROP
+//#pragma warning(default: 4820)
+
 #include <stddef.h>     // ptrdiff_t
 #include <windowsx.h>   // GET_X_LPARAM
 
-// Theme (Visual Style )
+// Theme (Visual Style)
+#pragma warning(disable: 4191)
 #include <uxtheme.h>
-#if _MSC_VER < 1700 // Before Visual Studio 2012
-#include <vssym32.h>
-#define final
-#endif
+#pragma warning(default: 4191)
 
 #ifndef DragQueryFile
     #error "We must include ShellAPI.h"
 #endif
-
-#if ! defined(_WIN64)
-    #undef GetWindowLongPtr
-
-    inline LONG_PTR GetWindowLongPtr(HWND hwnd, int idx)
-    {
-        return static_cast<LONG_PTR>(GetWindowLong(hwnd, idx));
-    } // GetWindowLongPtr
-
-    #undef SetWindowLongPtr
-    inline LONG_PTR SetWindowLongPtr(HWND hwnd, int idx, LONG_PTR val)
-    {
-        return SetWindowLong(hwnd, idx, static_cast<LONG>(val));
-    } // SetWindowLongPtr
-#endif // ! defined(_WIN64)
 
 // undocumented SWP flags. See http://www.winehq.org.
 #if !defined(SWP_NOCLIENTSIZE)
@@ -70,9 +74,6 @@
 #endif
 
 #define WM_SYSTIMER 0x118
-
-// warning C4481: nonstandard extension used: override specifier 'override'
-//#pragma warning(disable:4481)
 
 // warning C4373: previous versions of the compiler did not override when
 // parameters only differed by const/volatile qualifiers
@@ -167,9 +168,10 @@ class FileTime : public FILETIME
 
     public: int Compare(const FILETIME* p) const
     {
-        int iDiff = dwHighDateTime - p->dwHighDateTime;
-        if (0 != iDiff) return iDiff;
-        return dwLowDateTime - p->dwLowDateTime;
+        auto const iDiff = dwHighDateTime - p->dwHighDateTime;
+        if (!iDiff)
+          return 0;
+        return iDiff > 0 ? 1 : -1;
     } // Compare
 }; // FileTime
 
@@ -294,10 +296,7 @@ class RegKey
 typedef Edit::Count Count;
 typedef Edit::Posn  Posn;
 
-#include <commctrl.h>
-
-
-#if NDEBUG
+#if defined(NDEBUG)
     #if defined (_M_IX86)
         #pragma function(memcpy)
         //#pragma function(memset)
@@ -317,5 +316,31 @@ char16* lstrchrW(const char16*, char16);
 char16* lstrrchrW(const char16*, char16);
 
 #define DEBUG_DESTROY _DEBUG
+
+#if !defined(_NDEBUG)
+#define _ITERATOR_DEBUG_LEVEL 2
+#endif
+
+// warning C4061: enumerator 'identifier' in switch of enum 'enumeration' is
+// not explicitly handled by a case label
+#pragma warning(disable: 4061)
+
+// warning C4350: behavior change: 'member1' called instead of 'member2'
+// An rvalue cannot be bound to a non-const reference. In previous versions
+// of Visual C++, it was possible to bind an rvalue to a non-const reference
+// in a direct initialization. This code now gives a warning.
+#pragma warning(disable: 4350)
+
+
+// warning C4062: enumerator 'identifier' in switch of enum 'enumeration' is
+// not handled
+// e.g. We don't want to have |case State_Limit|, |cast Kind_Max|, etc.
+#pragma warning(disable: 4062)
+
+// warning: C4640 'instance' : construction of local static object is not
+// thread-safe
+#define DEFINE_STATIC_LOCAL(mp_type, mp_name, mp_args) \
+  __pragma(warning(suppress: 4640)) \
+  static mp_type mp_name mp_args
 
 #endif //!defined(INCLUDE_listener_winapp_precomp_h)

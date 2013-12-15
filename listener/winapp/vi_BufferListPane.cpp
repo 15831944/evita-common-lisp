@@ -150,7 +150,7 @@ void BufferListPane::dragMove(POINT pt) {
   if (pPane && pPane->Is<EditPane>())
       hCursor = loadCursor(&sm_hDragCursor, L"ole32.dll", 3);
   else
-      hCursor = ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_NO));
+      hCursor = ::LoadCursor(nullptr, IDC_NO);
 
   ::SetCursor(hCursor);
 }
@@ -349,10 +349,10 @@ void BufferListPane::Refresh() {
       ++it;
 
       char16* pwsz = wsz;
-      *pwsz++ = buffer.IsModified() ? '*' : '-';
-      *pwsz++ = buffer.IsReadOnly() ? '%' : '-';
-      *pwsz++ = buffer.IsNotReady() ? '!' : '-';
-      *pwsz++ = it == buffer.windows().end() ? '-' : 'w';
+      *pwsz++ = static_cast<char16>(buffer.IsModified() ? '*' : '-');
+      *pwsz++ = static_cast<char16>(buffer.IsReadOnly() ? '%' : '-');
+      *pwsz++ = static_cast<char16>(buffer.IsNotReady() ? '!' : '-');
+      *pwsz++ = static_cast<char16>(it == buffer.windows().end() ? '-' : 'w');
       *pwsz = 0;
 
       oItem.iSubItem = 2;

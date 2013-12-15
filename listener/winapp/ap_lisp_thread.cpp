@@ -164,8 +164,12 @@ uint LispThread::Init()
             return dwError;
         } // if
 
-        GetEngineFn GetEngine = reinterpret_cast<GetEngineFn>(
-            ::GetProcAddress(m_hDll, "GetEngine") );
+        // warning C4191: 'operator/operation': unsafe conversion from 'type 
+        // of expression' to 'type required'
+        #define DEFINE_DLL_ENTRY(type, name) \
+          __pragma(warning(suppress: 4191)) \
+          type name = reinterpret_cast<type>(::GetProcAddress(m_hDll, #name));
+        DEFINE_DLL_ENTRY(GetEngineFn, GetEngine);
         if (GetEngine == NULL)
         {
             DWORD dwError = ::GetLastError();
@@ -200,7 +204,7 @@ uint LispThread::Init()
             char16 wsz[100];
             ::wsprintf(wsz, L"LoadImage %s 0x%08X", wszImage, hr);
             ::MessageBox(NULL, wsz, L"Listener", 0);
-            return hr;
+            return static_cast<uint>(hr);
         } // if
     } // if
 
@@ -264,5 +268,5 @@ DWORD LispThread::threadProc()
 
     m_pvLisp = sm_pIEngine->Bless(k_cbThread, &oInfo);
 
-    return sm_pIEngine->Start(NULL);
+    return static_cast<DWORD>(sm_pIEngine->Start(NULL));
 } // Listener::threadProc

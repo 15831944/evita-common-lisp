@@ -19,14 +19,23 @@
 
 #include "./listener.h"
 
+namespace {
+ListenerBuffer* ToListenerBuffer(Buffer* buffer) {
+  ASSERT(buffer);
+  // warning C4946: reinterpret_cast used between related classes: 
+  // 'class1' and 'class2'
+  #pragma warning(suppress: 4946)
+  return reinterpret_cast<ListenerBuffer*>(buffer);
+}
+}
+
 Command::KeyBinds* ListenerBuffer::sm_pKeyBinds;
 
 void Listener_BackwardLine(const Command::Context* pCtx)
 {
     Selection* pSelection = pCtx->GetSelection();
 
-    ListenerBuffer* pListener = reinterpret_cast<ListenerBuffer*>(
-        pSelection->GetBuffer() );
+    auto const pListener = ToListenerBuffer(pSelection->GetBuffer());
 
     Count lCount = pCtx->GetArg();
 
@@ -51,8 +60,7 @@ void Listener_CtrlC(const Command::Context* pCtx)
 
     if (pSelection->GetType() == Selection_None )
     {
-        ListenerBuffer* pListener = reinterpret_cast<ListenerBuffer*>(
-            pSelection->GetBuffer() );
+        auto const pListener = ToListenerBuffer(pSelection->GetBuffer());
 
         pListener->Interrupt();
     }
@@ -66,8 +74,7 @@ void Listener_Enter(const Command::Context* pCtx)
 {
     Selection* pSelection = pCtx->GetSelection();
 
-    ListenerBuffer* pListener = reinterpret_cast<ListenerBuffer*>(
-        pSelection->GetBuffer() );
+    auto const pListener = ToListenerBuffer(pSelection->GetBuffer());
 
     #if 0
     // Listener doesn't accept user input until listener gets output
@@ -91,8 +98,7 @@ void Listener_ForwardLine(const Command::Context* pCtx)
     Selection* pSelection = pCtx->GetSelection();
     Count lCount = pCtx->GetArg();
 
-    ListenerBuffer* pListener = reinterpret_cast<ListenerBuffer*>(
-        pSelection->GetBuffer() );
+    auto const pListener = ToListenerBuffer(pSelection->GetBuffer());
 
     Posn lOutputEnd = pListener->m_oGateway.GetOutput()->GetEnd();
 
@@ -114,9 +120,7 @@ void Listener_TypeChar(const Command::Context* pCtx)
     Selection* pSelection = pCtx->GetSelection();
     //Count lCount = pCtx->GetArg();
 
-    ListenerBuffer* pListener = reinterpret_cast<ListenerBuffer*>(
-        pSelection->GetBuffer() );
-
+    auto const pListener = ToListenerBuffer(pSelection->GetBuffer());
 
     pListener->AdjustSelection(pSelection);
     Command::TypeChar(pCtx);

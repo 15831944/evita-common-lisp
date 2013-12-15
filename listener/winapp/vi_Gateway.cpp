@@ -57,7 +57,7 @@ LRESULT Gateway::onMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         // Text from thread.
         const char16* pwch = reinterpret_cast<char16*>(lParam);
-        uint cwch = static_cast<uint>(wParam);
+        auto const cwch = static_cast<int>(wParam);
 
         Buffer* pBuffer = GetBuffer();
 
@@ -169,10 +169,11 @@ void Gateway::sendTextAux()
     #endif // _DEBUG
 
     // Send text to lisp thread.
+    ASSERT(lEnd >= lPosn);
     ::PostThreadMessage(
         m_dwThread,
         LISTENER_WM_SENDTEXT,
-        lEnd - lPosn,
+        static_cast<WPARAM>(lEnd - lPosn),
         reinterpret_cast<LPARAM>(m_rgwch) );
 } // Gateway::sendTextAux
 

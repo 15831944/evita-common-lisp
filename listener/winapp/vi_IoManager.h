@@ -21,6 +21,8 @@ class Buffer;
 //
 class IoManager : public widgets::NaitiveWindow
 {
+    public: IoManager();
+
     // [F]
     public: static void FinishLoad(
         Buffer*,
@@ -53,6 +55,8 @@ class IoManager : public widgets::NaitiveWindow
 
     // [W]
     protected: virtual LRESULT WindowProc(UINT, WPARAM, LPARAM) override;
+
+    DISALLOW_COPY_AND_ASSIGN(IoManager);
 }; // IoManager
 
 

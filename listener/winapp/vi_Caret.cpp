@@ -24,6 +24,8 @@ class Caret::BackingStore {
   public: ~BackingStore();
   public: void Restore(const gfx::Graphics& gfx);
   public: void Save(const gfx::Graphics& gfx, const gfx::RectF& rect);
+        
+  DISALLOW_COPY_AND_ASSIGN(BackingStore);
 };
 
 Caret::BackingStore::BackingStore()

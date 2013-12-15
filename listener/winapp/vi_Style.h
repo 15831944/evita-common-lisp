@@ -14,21 +14,8 @@
 #include "./vi_defs.h"
 
 #include "./ed_Style.h"
+#include "gfx/forward.h"
 #include "./li_util.h"
-
-#include <d2d1.h>
-
-namespace gfx {
-class Brush;
-class FontFace;
-class Graphics;
-template<typename base, typename element> class Size_;
-template<typename base, typename size> class Point_;
-template<typename base, typename point, typename size> class Rect_;
-typedef Size_<D2D1_SIZE_F, float> SizeF;
-typedef Point_<D2D1_POINT_2F, SizeF> PointF;
-typedef Rect_<D2D1_RECT_F, PointF, SizeF> RectF;
-};
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -72,7 +59,7 @@ class Font {
     // [G]
     public: float GetCharWidth(char16) const;
     public: const Key* GetKey() const { return &m_oLogFont; }
-    public: float GetTextWidth(const char16* pwch, uint cwch) const;
+    public: float GetTextWidth(const char16* pwch, size_t cwch) const;
 
     // [H]
     public: bool HasCharacter(char16) const;

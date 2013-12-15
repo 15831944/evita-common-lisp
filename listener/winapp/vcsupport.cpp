@@ -2,7 +2,7 @@
 
 typedef unsigned char uint8;
 
-#if NDEBUG
+#if defined(NDEBUG)
 extern "C"
 {
 
@@ -58,7 +58,7 @@ void* myCopyMemory(void* dst, const void* src, size_t count)
 #endif // !defined(_DEBUG)
 
 
-#if NDEBUG
+#if defined(NDEBUG)
 extern "C"
 {
 

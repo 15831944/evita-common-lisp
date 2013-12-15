@@ -189,7 +189,7 @@ class LexerBase
 
         oStyleValues.m_crBackground = RGB(255, 255, 255);
         oStyleValues.m_crColor      = nColor;
-        oStyleValues.m_nSyntax      = nSyntax;
+        oStyleValues.m_nSyntax      = static_cast<int>(nSyntax);
 
         m_pBuffer->SetStyle(lStart, lEnd, &oStyleValues);
     } // setColor
@@ -242,7 +242,7 @@ class Mode
 
     // ctor/dtor
     protected: Mode(ModeFactory*, Buffer*);
-    public:   ~Mode();
+    public: virtual ~Mode();
 
     // [D]
     public: virtual bool DoColor(Count) = 0;

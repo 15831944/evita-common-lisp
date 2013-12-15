@@ -354,7 +354,7 @@ void Graphics::Reinitialize() {
   auto const pixel_format = D2D1::PixelFormat(
       DXGI_FORMAT_B8G8R8A8_UNORM,
       D2D1_ALPHA_MODE_PREMULTIPLIED);
-  auto const size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+  auto const size = SizeU(rc.right - rc.left, rc.bottom - rc.top);
   COM_VERIFY(FactorySet::d2d1().CreateHwndRenderTarget(
       D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
                                    pixel_format),
@@ -367,8 +367,8 @@ void Graphics::Reinitialize() {
   render_target_->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
 }
 
-void Graphics::Resize(const RECT& rc) const {
-  auto size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+void Graphics::Resize(const Rect& rc) const {
+  SizeU size(rc.width(), rc.height());
   COM_VERIFY(render_target().Resize(size));
 }
 

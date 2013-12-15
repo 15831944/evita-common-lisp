@@ -584,9 +584,11 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
         RECT rcClient = { 0 };
         ::AdjustWindowRectEx(
             &rcClient,
-            ::GetWindowLong(*naitive_window(), GWL_STYLE),
+            static_cast<DWORD>(
+                ::GetWindowLong(*naitive_window(), GWL_STYLE)),
             false,
-            ::GetWindowLong(*naitive_window(), GWL_EXSTYLE));
+            static_cast<DWORD>(
+                ::GetWindowLong(*naitive_window(), GWL_EXSTYLE)));
 
         if (ptMouse.y >= rcWindow.top
             && ptMouse.y < rcWindow.top - rcClient.top + m_cyTabBand) {
@@ -608,8 +610,8 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
         case CtrlId_TabBand:
           switch (pNotify->code) {
             case TABBAND_NOTIFY_CLOSE: {
-                auto const tab_index =
-                    reinterpret_cast<TabBandNotifyData*>(pNotify)->tab_index_;
+              auto const tab_index = TabBandNotifyData::FromNmhdr(
+                    pNotify)->tab_index_;
                 if (auto const pPane = getPaneFromTab(tab_index))
                   pPane->Destroy();
                 break;
@@ -766,7 +768,7 @@ void Frame::CreateNaitiveWindow() const {
   gfx::SizeF size(font.GetCharWidth('M') * cColumns,
                   font.height() * cRows);
   gfx::RectF rect(gfx::PointF(), gfx::FactorySet::AlignToPixel(size));
-  Rect rc = rect;
+  Rect rc(rect);
   ::AdjustWindowRectEx(&rc, dwStyle, TRUE, dwExStyle);
   rc.right += ::GetSystemMetrics(SM_CXVSCROLL) + 10;
 
@@ -801,7 +803,7 @@ void Frame::SetStatusBar(int const ePart, const char16* const pwszMsg) const {
   ::SendMessage(
       m_oStatusBar,
       SB_SETTEXT,
-      ePart | SBT_NOBORDERS,
+      static_cast<WPARAM>(ePart | SBT_NOBORDERS),
       reinterpret_cast<LPARAM>(pwszMsg));
 }
 
@@ -870,7 +872,7 @@ void Frame::ShowMessage(
     ::wvsprintf(wsz, wszFormat, args);
     va_end(args);
 
-    auto const cwch = ::lstrlenW(wsz);
+    auto const cwch = static_cast<size_t>(::lstrlenW(wsz));
     auto const pwsz = new char16[cwch + 1];
     myCopyMemory(pwsz, wsz, sizeof(char16) * (cwch + 1));
     m_rgpwszMessage[iLevel] = pwsz;

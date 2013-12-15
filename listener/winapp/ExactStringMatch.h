@@ -54,7 +54,9 @@ class ExactStringMatch : public IStringMatcher
 
             m_iShift = m + 1;
 
-            m_prgi = new int[m_nMaxChar - m_nMinChar + 1];
+            auto const size = static_cast<size_t>(
+                m_nMaxChar - m_nMinChar + 1);
+            m_prgi = new int[size];
             
             if (pSearch->IsBackward())
             {
@@ -118,6 +120,7 @@ class ExactStringMatch : public IStringMatcher
 
     // ctor
     public: ExactStringMatch(const SearchParameters*);
+    public: virtual ~ExactStringMatch();
 
     // [F]
     public: virtual bool FirstMatch(IStringCursor*) override;

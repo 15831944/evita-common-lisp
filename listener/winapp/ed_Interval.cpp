@@ -23,9 +23,9 @@ extern StyleValues g_DefaultStyle;
 /// </summary>
 int TreapRandom()
 {
-    static uint32 s_nRandom = ::GetTickCount();
+    DEFINE_STATIC_LOCAL(uint32, s_nRandom, (::GetTickCount()));
     s_nRandom =  s_nRandom * 1664525 + 1013904223;
-    return s_nRandom & ((1<<28)-1);
+    return static_cast<int>(s_nRandom & ((1<<28)-1)) & MAXINT;
 } // TreapRandom
 
 namespace Edit

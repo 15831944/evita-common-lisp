@@ -61,6 +61,8 @@ class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
   // [O]
   private: void onKeyDown(uint);
   private: virtual LRESULT OnMessage(uint, WPARAM, LPARAM) override;
+
+  DISALLOW_COPY_AND_ASSIGN(BufferListPane);
 };
 
 #endif //!defined(INCLUDE_visual_BufferListPane_h)

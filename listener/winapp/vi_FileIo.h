@@ -33,7 +33,7 @@ class IoRequest
     } // IoRequest
 
     // ctor
-    public: ~IoRequest()
+    public: virtual ~IoRequest()
     {
         if (INVALID_HANDLE_VALUE != m_hFile)
         {
