@@ -66,7 +66,6 @@ class EditPane::Box : public DoubleLinkedNode_<EditPane::Box>,
     public: void set_outer(LayoutBox& outer) { outer_ = &outer; }
     public: virtual void CloseAllBut(Window*) = 0;
     public: virtual uint CountLeafBox() const = 0;
-    public: virtual void DidChangeOwnerFrame() = 0;
     public: virtual void Destroy() = 0;
     public: virtual void DrawSplitters(const gfx::Graphics&) { }
     public: virtual LeafBox* FindLeafBoxFromWidget(
@@ -99,7 +98,6 @@ class EditPane::LayoutBox : public EditPane::Box {
   public: virtual void CloseAllBut(Window*) override final;
   public: virtual uint CountLeafBox() const override final;
   public: virtual void Destroy() override final;
-  public: virtual void DidChangeOwnerFrame() override final;
   protected: virtual void DidRemoveBox(Box*, Box*, const gfx::Rect&) = 0;
   public: virtual void MoveSplitter(const gfx::Point&, Box&) = 0;
   public: virtual LeafBox* GetActiveLeafBox() const override final;
@@ -141,7 +139,6 @@ class EditPane::LeafBox final : public EditPane::Box {
   public: virtual uint CountLeafBox() const  override final { return 1; }
 
   // [D]
-  public: virtual void DidChangeOwnerFrame() override;
   public: virtual void Destroy() override;
   public: void DetachWindow();
 
@@ -479,6 +476,7 @@ EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
       pBelow->GetWindow()->GetHost<EditPane>(),
       pBelow->GetWindow()->GetBuffer(),
       pBelow->GetWindow()->GetStart());
+  edit_pane_->AppendChild(*pWindow);
 
   auto const pSelection = pBelow->GetWindow()->GetSelection();
 
@@ -597,12 +595,6 @@ uint EditPane::LayoutBox::CountLeafBox() const {
   return count;
 }
 
-void EditPane::LayoutBox::DidChangeOwnerFrame() {
-  for (auto& box: boxes_) {
-    box.DidChangeOwnerFrame();
-  }
-}
-
 void EditPane::LayoutBox::Destroy() {
   DEBUG_PRINTF("%p\n", this);
   ASSERT(!is_removed());
@@ -717,14 +709,6 @@ void EditPane::LeafBox::Destroy() {
     GetWindow()->Destroy();
 }
 
-void EditPane::LeafBox::DidChangeOwnerFrame() {
-#if 0
-  if (m_hwndVScrollBar)
-    ::SetParent(m_hwndVScrollBar, edit_pane_->frame());
-  ::SetParent(*m_pWindow, edit_pane_->frame());
-#endif
-}
-
 void EditPane::LeafBox::DetachWindow() {
   m_pWindow = nullptr;
 }
@@ -806,7 +790,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
                      reinterpret_cast<LONG_PTR>(m_pWindow));
 
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
-  m_pWindow->Realize(*edit_pane, edit_pane_->GetFrame()->gfx(), window_rect);
+  m_pWindow->Realize(edit_pane_->GetFrame()->gfx(), window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
   SetRect(rect);
 }
@@ -1063,6 +1047,7 @@ EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
       pBelow->GetWindow()->GetHost<EditPane>(),
       pBelow->GetWindow()->GetBuffer(),
       pBelow->GetWindow()->GetStart());
+  edit_pane_->AppendChild(*pWindow);
 
   auto const pSelection = pBelow->GetWindow()->GetSelection();
 
@@ -1194,7 +1179,8 @@ EditPane::EditPane(Buffer* pBuffer, Posn lStart)
           root_box_(*new VerticalLayoutBox(this, nullptr))),
       ALLOW_THIS_IN_INITIALIZER_LIST(
           splitter_controller_(new SplitterController(*this))) {
-  auto pWindow = new TextEditWindow(this, pBuffer, lStart);
+  auto const pWindow = new TextEditWindow(this, pBuffer, lStart);
+  AppendChild(*pWindow);
   ScopedRefCount_<LeafBox> box(*new LeafBox(this, root_box_, pWindow));
   root_box_->Add(*box);
   m_pwszName = pBuffer->GetName();
@@ -1220,17 +1206,6 @@ void EditPane::Activate() {
 
 void EditPane::CloseAllBut(Window* window) {
   root_box_->CloseAllBut(window);
-}
-
-void EditPane::DidChangeOwnerFrame() {
- root_box_->DidChangeOwnerFrame();
- auto const rect = frame().GetPaneRect();
- if (is_shown()) {
-   gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
-   ResizeTo(rect);
- } else {
-   ResizeTo(rect);
- }
 }
 
 void EditPane::DidRealize() {

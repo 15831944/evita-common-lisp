@@ -26,9 +26,11 @@ class ContainerWidget
   public: virtual bool is_container() const override { return true; }
 
   // [D]
-  private: virtual void DidHide() override;
+  public: virtual void DidAddChildWidget(const Widget& widget);
+  protected: virtual void DidHide() override;
   public: virtual void DidRealizeWidget(const Widget& widget);
-  private: virtual void DidShow() override;
+  public: virtual void DidRemoveChildWidget(const Widget& widget);
+  protected: virtual void DidShow() override;
   private: void DispatchPaintMessage();
 
   // [G]
@@ -65,6 +67,7 @@ class ContainerWidget
   public: virtual void WillDestroyChildWidget(const Widget&);
   protected: virtual LRESULT WindowProc(UINT uMsg, WPARAM  wParam,
                                         LPARAM lParam) override;
+  public: virtual void WillRemoveChildWidget(const Widget& widget);
 
   DISALLOW_COPY_AND_ASSIGN(ContainerWidget);
 };

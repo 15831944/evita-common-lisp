@@ -223,6 +223,14 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
   }
 }
 
+void TextEditWindow::DidChangeParentWidget() {
+  auto const parent_hwnd = AssociatedHwnd();
+  if (auto const hwnd = m_oHoriScrollBar.GetHwnd())
+    ::SetParent(hwnd, parent_hwnd);
+  if (auto const hwnd = m_oVertScrollBar.GetHwnd())
+    ::SetParent(hwnd, parent_hwnd);
+}
+
 void TextEditWindow::DidHide() {
   // Note: It is OK that hidden window have focus.
   #if DEBUG_SHOW_HIDE
@@ -703,16 +711,16 @@ void TextEditWindow::onVScroll(uint nCode) {
   }
 }
 
-void TextEditWindow::Realize(const widgets::ContainerWidget& container,
-                             const gfx::Graphics& gfx, const Rect& rect) {
-  DEBUG_TEXT_EDIT_PRINTF("container=" DEBUG_WIDGET_FORMAT " "
-                         DEBUG_RECT_FORMAT "\n",
-    DEBUG_WIDGET_ARG(&container), rect);
+void TextEditWindow::Realize(const gfx::Graphics& gfx, const Rect& rect) {
+  #if DEBUG_FOCUS
+    DEBUG_TEXT_EDIT_PRINTF(DEBUG_RECT_FORMAT "\n", rect);
+  #endif
   ASSERT(!m_gfx);
   ASSERT(!is_shown());
-  // TODO: We should not touch AssociatedHwnd().
   m_gfx = &gfx;
-  ParentClass::Realize(container, rect);
+  ParentClass::Realize(rect);
+  // TODO We should use Widget::DidRealizeChildWidget() instead of
+  // EditPane::DidRealizeWindow().
   GetHost<EditPane>()->DidRealizeWindow(*this);
 }
 

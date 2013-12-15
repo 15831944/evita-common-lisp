@@ -132,6 +132,7 @@ class TextEditWindow
   protected: Posn computeGoalX(float, Posn);
 
   // [D]
+  private: virtual void DidChangeParentWidget() override;
   private: virtual void DidHide() override;
   private: virtual void DidKillFocus() override;
   private: virtual void DidResize() override;
@@ -191,8 +192,7 @@ class TextEditWindow
   private: void onVScroll(uint);
 
   // [R]
-  public: void Realize(const widgets::ContainerWidget& container,
-                       const gfx::Graphics& gfx, const Rect& rect);
+  public: void Realize(const gfx::Graphics& gfx, const Rect& rect);
   public: void Redraw();
   protected: void redraw(bool);
   private: void Render();

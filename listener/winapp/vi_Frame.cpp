@@ -82,6 +82,14 @@ class CompositionState {
 #endif
   }
 };
+
+Pane* AsPane(const widgets::Widget& widget) {
+  // warning C4946: reinterpret_cast used between related classes: 
+  // 'class1' and 'class2'
+  #pragma warning(suppress: 4946)
+  return reinterpret_cast<Pane*>(&const_cast<widgets::Widget&>(widget));
+}
+
 } // namespace
 
 #define USE_TABBAND_EDGE 0
@@ -117,12 +125,14 @@ void Frame::AddPane(Pane* const pane) {
   ASSERT(!pane->GetFrame());
   ASSERT(!pane->is_realized());
   m_oPanes.Append(this, pane);
+  AppendChild(*pane);
   if (is_realized()) {
-    pane->Realize(*this, GetPaneRect());
+    pane->Realize(GetPaneRect());
     AddTab(pane);
   }
 }
 
+// Adopt pane in another frame into this frame.
 void Frame::AdoptPane(Pane* const pane) {
   ASSERT(!!pane);
   ASSERT(pane->is_realized());
@@ -131,22 +141,7 @@ void Frame::AdoptPane(Pane* const pane) {
   ASSERT(!!frame);
   ASSERT(frame != this);
   ASSERT(frame->is_realized());
-
-  auto const tab_index = frame->getTabFromPane(pane);
-  ASSERT(tab_index >= 0);
-  TabCtrl_DeleteItem(frame->m_hwndTabBand, tab_index);
-
-  frame->m_oPanes.Delete(pane);
-  m_oPanes.Append(this, pane);
-
-  if (!is_realized())
-    return;
-
-  pane->Hide();
-  pane->DidChangeOwnerFrame();
-  AddTab(pane);
-  if (frame->m_oPanes.IsEmpty())
-    frame->Destroy();
+  pane->SetParentWidget(*this);
 }
 
 void Frame::AddTab(Pane* const pane) {
@@ -195,6 +190,18 @@ void Frame::DidActivatePane(Pane* const pane) {
 
   if (tab_index != selected_index)
     TabCtrl_SetCurSel(m_hwndTabBand, tab_index);
+}
+
+void Frame::DidAddChildWidget(const widgets::Widget& widget) {
+  auto const pane = AsPane(widget);
+  m_oPanes.Append(this, pane);
+  if (!is_realized())
+    return;
+  if (pane->is_realized())
+    pane->ResizeTo(GetPaneRect());
+  else
+    pane->Realize(GetPaneRect());
+  pane->SetFocus();
 }
 
 void Frame::DidChangeTabSelection(int selected_index) {
@@ -278,15 +285,17 @@ void Frame::DidCreateNaitiveWindow() {
   ASSERT(!m_oPanes.IsEmpty());
   auto const pane_rect = GetPaneRect();
   for (auto& pane: m_oPanes) {
-    if (pane.is_realized())
-      pane.DidChangeOwnerFrame();
-    else
-      pane.Realize(*this, pane_rect);
+    pane.Realize(pane_rect);
     AddTab(&pane);
   }
 
   if (m_oPanes.GetFirst())
     m_oPanes.GetFirst()->Activate();
+}
+
+void Frame::DidRemoveChildWidget(const widgets::Widget&) {
+  if (m_oPanes.IsEmpty())
+    Destroy();
 }
 
 void Frame::DidResize() {
@@ -930,4 +939,14 @@ void Frame::WillDestroyPane(Pane* pane) {
   // Tab control activate another tab if needed.
   TabCtrl_DeleteItem(m_hwndTabBand, tab_index);
   ASSERT(m_pActivePane != pane);
+}
+
+void Frame::WillRemoveChildWidget(const Widget& widget) {
+  if (!is_realized())
+    return;
+  auto const pane = AsPane(widget);
+  auto const tab_index = getTabFromPane(pane);
+  ASSERT(tab_index >= 0);
+  TabCtrl_DeleteItem(m_hwndTabBand, tab_index);
+  m_oPanes.Delete(pane);
 }

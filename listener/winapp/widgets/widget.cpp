@@ -91,6 +91,9 @@ void Widget::Destroy() {
   delete this;
 }
 
+void Widget::DidChangeParentWidget() {
+}
+
 void Widget::DidCreateNaitiveWindow() {
 }
 
@@ -158,23 +161,27 @@ void Widget::OnMouseMove(uint, const gfx::Point&) {
 void Widget::OnPaint(const gfx::Rect) {
 }
 
-void Widget::Realize(const ContainerWidget& container_widget,
-                     const gfx::Rect& rect) {
-  ASSERT(!realized_);
-  ASSERT(container_widget.is_realized());
-  const_cast<ContainerWidget&>(container_widget).AppendChild(*this);
-  ASSERT(container_widget.Contains(*this));
+void Widget::Realize(const gfx::Rect& rect) {
+  ASSERT(parent_node());
+  ASSERT(container_widget().is_realized());
+  if (is_realized()) {
+    if (auto const window = naitive_window())
+      ::SetParent(*window, container_widget().AssociatedHwnd());
+    DidChangeParentWidget();
+    ResizeTo(rect);
+    return;
+  }
+
   realized_ = true;
   rect_ = rect;
   if (naitive_window_) {
+    // On WM_CREATE, we call DidCreateNaitiveWindow() instead of DidRealized().
     CreateNaitiveWindow();
     return;
   }
-  auto const parent_style = ::GetWindowLong(AssociatedHwnd(), GWL_STYLE);
-  if (parent_style & WS_VISIBLE)
-    ++shown_;
+
   DidRealize();
-  this->container_widget().DidRealizeWidget(*this);
+  container_widget().DidRealizeWidget(*this);
 }
 
 void Widget::RealizeTopLevelWidget() {
@@ -222,6 +229,23 @@ void Widget::SetFocus() {
     return;
   }
   container_widget().SetFocusTo(*this);
+}
+
+void Widget::SetParentWidget(const ContainerWidget& new_parent) {
+  auto const old_parent = parent_node();
+  if (new_parent == old_parent)
+    return;
+  if (old_parent)
+    old_parent->WillRemoveChildWidget(*this);
+  const_cast<ContainerWidget&>(new_parent).AppendChild(*this);
+  if (new_parent.is_realized()) {
+    if (auto const window = naitive_window())
+      ::SetParent(*window, new_parent.AssociatedHwnd());
+    DidChangeParentWidget();
+  }
+  if (old_parent)
+    old_parent->DidRemoveChildWidget(*this);
+  const_cast<ContainerWidget&>(new_parent).DidAddChildWidget(*this);
 }
 
 void Widget::Show() {

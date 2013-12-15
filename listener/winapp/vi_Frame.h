@@ -84,9 +84,13 @@ class Frame final : public widgets::ContainerWidget,
   private: virtual void CreateNaitiveWindow() const override;
 
   // [D]
+  private: virtual void DidAddChildWidget(
+      const widgets::Widget& widget) override;
   public: void DidActivatePane(Pane*);
   private: void DidChangeTabSelection(int selected_index);
   private: virtual void DidCreateNaitiveWindow() override;
+  private: virtual void DidRemoveChildWidget(
+      const widgets::Widget& widget) override;
   private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
 
@@ -135,6 +139,8 @@ class Frame final : public widgets::ContainerWidget,
 
   // [W]
   public: void WillDestroyPane(Pane*);
+  private: void WillRemoveChildWidget(
+      const widgets::Widget& widget) override;
 
   DISALLOW_COPY_AND_ASSIGN(Frame);
 };

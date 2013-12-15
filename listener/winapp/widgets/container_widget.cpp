@@ -32,6 +32,9 @@ ContainerWidget::ContainerWidget()
 ContainerWidget::~ContainerWidget() {
 }
 
+void ContainerWidget::DidAddChildWidget(const Widget&) {
+}
+
 void ContainerWidget::DidHide() {
   for (auto& child: child_nodes()) {
     child.Hide();
@@ -40,6 +43,9 @@ void ContainerWidget::DidHide() {
 
 void ContainerWidget::DidRealizeWidget(const Widget& widget) {
   AppendChild(const_cast<Widget&>(widget));
+}
+
+void ContainerWidget::DidRemoveChildWidget(const Widget&) {
 }
 
 void ContainerWidget::DidShow() {
@@ -222,6 +228,10 @@ void ContainerWidget::WillDestroyChildWidget(const Widget& widget) {
     ASSERT(it != child_nodes().end());
   }
   #endif
+  RemoveChild(const_cast<Widget&>(widget));
+}
+
+void ContainerWidget::WillRemoveChildWidget(const Widget& widget) {
   RemoveChild(const_cast<Widget&>(widget));
 }
 

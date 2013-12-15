@@ -58,6 +58,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
 
   // [D]
   public: void Destroy();
+  protected: virtual void DidChangeParentWidget();
   // Called on WM_CREATE
   protected: virtual void DidCreateNaitiveWindow();
   // Called on WM_NCDESTORY
@@ -86,8 +87,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
 
   // [R]
   // Realize widget, one of container must be realized with naitive widnow.
-  public: void Realize(const ContainerWidget& container,
-                       const gfx::Rect& rect);
+  public: void Realize(const gfx::Rect& rect);
 
   // Realize top-level widget with naitive window.
   public: void RealizeTopLevelWidget();
@@ -97,6 +97,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
   // [S]
   public: void SetCapture() const;
   public: virtual void SetFocus();
+  public: void SetParentWidget(const ContainerWidget& new_parent);
   public: virtual void Show();
 
   // [T]

@@ -76,7 +76,6 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: void CloseAllBut(Window*);
 
   // [D]
-  public: virtual void DidChangeOwnerFrame() override;
   public: void DidRealize();
   public: void DidRealizeWindow(const Window&);
   private: virtual void DidResize() override;
