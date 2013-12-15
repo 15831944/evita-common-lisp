@@ -41,8 +41,7 @@ void ContainerWidget::DidHide() {
   }
 }
 
-void ContainerWidget::DidRealizeWidget(const Widget& widget) {
-  AppendChild(const_cast<Widget&>(widget));
+void ContainerWidget::DidRealizeChildWidget(const Widget&) {
 }
 
 void ContainerWidget::DidRemoveChildWidget(const Widget&) {

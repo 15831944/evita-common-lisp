@@ -11,6 +11,7 @@
 #if !defined(INCLUDE_vi_Pane_h)
 #define INCLUDE_vi_Pane_h
 
+#include "./li_util.h"
 #include "./vi_CommandWindow.h"
 #include "widgets/container_widget.h"
 
@@ -21,6 +22,11 @@ class Graphics;
 class Frame;
 
 class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
+  protected: typedef widgets::ContainerWidget ContainerWidget;
+  protected: typedef widgets::Widget Widget;
+
+  DECLARE_CASTABLE_CLASS(Pane, CommandWindow);
+
   protected: uint             m_nActiveTick;
   protected: const char16*    m_pwszName;
 

@@ -3,8 +3,9 @@
 #if !defined(INCLUDE_widgets_widget_h)
 #define INCLUDE_widgets_widget_h
 
+#include "base/castable.h"
 #include "base/tree/node.h"
-#include "./li_util.h"
+//#include "./li_util.h"
 #include "gfx/rect.h"
 #include <memory>
 
@@ -18,7 +19,10 @@ class NaitiveWindow;
 // Widget
 //
 class Widget : public base::tree::Node_<Widget, ContainerWidget,
-                                        std::unique_ptr<NaitiveWindow>&&> {
+                                        std::unique_ptr<NaitiveWindow>&&>,
+               public base::Castable {
+  DECLARE_CASTABLE_CLASS(Widget, Castable);
+
   // Life time of naitive_window_ ends at WM_NCDESTROY rather than
   // destruction of Widget.
   private: std::unique_ptr<NaitiveWindow> naitive_window_;
@@ -120,7 +124,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
 
 #define DEBUG_WIDGET_FORMAT "%s@%p"
 #define DEBUG_WIDGET_ARG(mp_widget) \
-  ((mp_widget) ? (mp_widget)->GetClass() : "null"), (mp_widget)
+  ((mp_widget) ? (mp_widget)->class_name() : "null"), (mp_widget)
 
 } // namespace widgets
 

@@ -14,6 +14,8 @@ class ConstChildWidgets;
 class ContainerWidget 
     : public base::tree::ContainerNode_<Widget, ContainerWidget,
                                         std::unique_ptr<NaitiveWindow>&&> {
+  DECLARE_CASTABLE_CLASS(ContainerWidget, Widget);
+
   private: Widget* capture_widget_;
   private: Widget* focus_widget_;
 
@@ -28,15 +30,12 @@ class ContainerWidget
   // [D]
   public: virtual void DidAddChildWidget(const Widget& widget);
   protected: virtual void DidHide() override;
-  public: virtual void DidRealizeWidget(const Widget& widget);
+  public: virtual void DidRealizeChildWidget(const Widget& widget);
   public: virtual void DidRemoveChildWidget(const Widget& widget);
   protected: virtual void DidShow() override;
   private: void DispatchPaintMessage();
 
   // [G]
-  public: virtual const char* GetClass() const override {
-    return "ContainerWidget";
-  }
   private: ContainerWidget& GetHostContainer() const;
   private: Widget* GetWidgetAt(const gfx::Point& point) const;
 

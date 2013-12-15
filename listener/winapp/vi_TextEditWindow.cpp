@@ -223,12 +223,20 @@ Count TextEditWindow::ComputeMotion(Unit eUnit, Count n,
   }
 }
 
-void TextEditWindow::DidChangeParentWidget() {
+
+void TextEditWindow::DidChangeFrame() {
+  auto const frame = Frame::FindFrame(*this);
+  ASSERT(frame);
+  m_gfx = &frame->gfx();
   auto const parent_hwnd = AssociatedHwnd();
   if (auto const hwnd = m_oHoriScrollBar.GetHwnd())
     ::SetParent(hwnd, parent_hwnd);
   if (auto const hwnd = m_oVertScrollBar.GetHwnd())
     ::SetParent(hwnd, parent_hwnd);
+}
+
+void TextEditWindow::DidChangeParentWidget() {
+  DidChangeFrame();
 }
 
 void TextEditWindow::DidHide() {
@@ -246,6 +254,12 @@ void TextEditWindow::DidKillFocus() {
   #endif
   ParentClass::DidKillFocus();
   caret_->Give(*m_gfx);
+}
+
+void TextEditWindow::DidRealize() {
+  auto const frame = Frame::FindFrame(*this);
+  ASSERT(frame);
+  m_gfx = &frame->gfx();
 }
 
 void TextEditWindow::DidResize() {
@@ -709,19 +723,6 @@ void TextEditWindow::onVScroll(uint nCode) {
     default:
       return;
   }
-}
-
-void TextEditWindow::Realize(const gfx::Graphics& gfx, const Rect& rect) {
-  #if DEBUG_FOCUS
-    DEBUG_TEXT_EDIT_PRINTF(DEBUG_RECT_FORMAT "\n", rect);
-  #endif
-  ASSERT(!m_gfx);
-  ASSERT(!is_shown());
-  m_gfx = &gfx;
-  ParentClass::Realize(rect);
-  // TODO We should use Widget::DidRealizeChildWidget() instead of
-  // EditPane::DidRealizeWindow().
-  GetHost<EditPane>()->DidRealizeWindow(*this);
 }
 
 void TextEditWindow::Redraw() {

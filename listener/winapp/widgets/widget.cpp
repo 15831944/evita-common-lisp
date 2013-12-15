@@ -181,7 +181,7 @@ void Widget::Realize(const gfx::Rect& rect) {
   }
 
   DidRealize();
-  container_widget().DidRealizeWidget(*this);
+  container_widget().DidRealizeChildWidget(*this);
 }
 
 void Widget::RealizeTopLevelWidget() {
@@ -202,6 +202,12 @@ void Widget::ReleaseCapture() const {
 
 void Widget::ResizeTo(const gfx::Rect& rect) {
   ASSERT(realized_);
+
+#if 0
+  // TODO: We should enable this check.
+  if (rect == rect_)
+    return;
+#endif
   if (naitive_window_) {
     ::SetWindowPos(*naitive_window_.get(), nullptr, rect.left, rect.top,
                    rect.width(), rect.height(), SWP_NOACTIVATE);

@@ -43,6 +43,8 @@ class TextEditWindow
     : public CommandWindow_<TextEditWindow>,
       public DoubleLinkedNode_<TextEditWindow>,
       public DoubleLinkedNode_<TextEditWindow, Buffer> {
+  DECLARE_CASTABLE_CLASS(TextEditWindow, CommandWindow);
+
   private: typedef DoubleLinkedNode_<TextEditWindow> WindowItem;
   private: typedef CommandWindow ParentClass;
 
@@ -132,9 +134,11 @@ class TextEditWindow
   protected: Posn computeGoalX(float, Posn);
 
   // [D]
+  public: void DidChangeFrame();
   private: virtual void DidChangeParentWidget() override;
   private: virtual void DidHide() override;
   private: virtual void DidKillFocus() override;
+  private: virtual void DidRealize() override;
   private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
   private: virtual void DidShow() override;
@@ -192,7 +196,6 @@ class TextEditWindow
   private: void onVScroll(uint);
 
   // [R]
-  public: void Realize(const gfx::Graphics& gfx, const Rect& rect);
   public: void Redraw();
   protected: void redraw(bool);
   private: void Render();

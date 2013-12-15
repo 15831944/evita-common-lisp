@@ -780,7 +780,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
         L"SCROLLBAR",
         nullptr, // title
         WS_CHILD | WS_VISIBLE | SBS_VERT,
-        rect.left, rect.top, rect.width(), rect.height(),
+        0, 0, 0, 0,
         edit_pane->AssociatedHwnd(),
         nullptr, // menu
         g_hInstance,
@@ -790,8 +790,9 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
                      reinterpret_cast<LONG_PTR>(m_pWindow));
 
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
-  m_pWindow->Realize(edit_pane_->GetFrame()->gfx(), window_rect);
+  m_pWindow->Realize(window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
+  // Resize scrollbar
   SetRect(rect);
 }
 
@@ -1208,12 +1209,18 @@ void EditPane::CloseAllBut(Window* window) {
   root_box_->CloseAllBut(window);
 }
 
+void EditPane::DidChangeParentWidget() {
+  for (auto& window: m_oWindows) {
+    window.DidChangeFrame();
+  }
+}
+
 void EditPane::DidRealize() {
   m_eState = State_Realized;
   root_box_->Realize(this, rect());
 }
 
-void EditPane::DidRealizeWindow(const Window& window) {
+void EditPane::DidRealizeChildWidget(const Widget& window) {
   auto const box = root_box_->FindLeafBoxFromWidget(window);
   if (!box)
     return;
@@ -1232,8 +1239,10 @@ void EditPane::DidResize() {
   DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rect().left, rect().top,
     rect().right, rect().bottom);
   root_box_->SetRect(rect());
-  if (is_shown())
+  if (is_shown()) {
+    gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
     root_box_->DrawSplitters(frame().gfx());
+  }
 }
 
 void EditPane::DidSetFocus() {

@@ -16,6 +16,7 @@
 #include "./ctrl_StatusBar.h"
 #include "./ctrl_TabBand.h"
 #include "./ctrl_TitleBar.h"
+#include "./li_util.h"
 
 namespace gfx {
 class Graphics;
@@ -46,6 +47,10 @@ class Pane;
 /// </summary>
 class Frame final : public widgets::ContainerWidget,
                     public DoubleLinkedNode_<Frame> {
+  private: typedef widgets::ContainerWidget ContainerWidget;
+  private: typedef widgets::Widget Widget;
+  DECLARE_CASTABLE_CLASS(Frame, ContainerWidget);
+
   private: enum CtrlId {
     CtrlId_TabBand  = 1,
     CtrlId_StatusBar,
@@ -85,12 +90,12 @@ class Frame final : public widgets::ContainerWidget,
 
   // [D]
   private: virtual void DidAddChildWidget(
-      const widgets::Widget& widget) override;
+      const Widget& widget) override;
   public: void DidActivatePane(Pane*);
   private: void DidChangeTabSelection(int selected_index);
   private: virtual void DidCreateNaitiveWindow() override;
   private: virtual void DidRemoveChildWidget(
-      const widgets::Widget& widget) override;
+      const Widget& widget) override;
   private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
 
@@ -106,6 +111,9 @@ class Frame final : public widgets::ContainerWidget,
   public: gfx::Rect GetPaneRect() const;
   private: int getTabFromPane(Pane*) const;
   private: const char16* getToolTip(NMTTDISPINFO*) const;
+
+  // [F]
+  public: static Frame* FindFrame(const Widget& widget);
 
   // [H]
   private: bool hasFocus() const;
@@ -140,7 +148,7 @@ class Frame final : public widgets::ContainerWidget,
   // [W]
   public: void WillDestroyPane(Pane*);
   private: void WillRemoveChildWidget(
-      const widgets::Widget& widget) override;
+      const Widget& widget) override;
 
   DISALLOW_COPY_AND_ASSIGN(Frame);
 };

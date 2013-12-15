@@ -21,6 +21,8 @@ class TextEditWindow;
 // EditPane is a container of multiple TextEditWindow windows and layouts
 // them vertically with draggable splitter.
 class EditPane final : public CommandWindow_<EditPane, Pane> {
+  DECLARE_CASTABLE_CLASS(EditPane, Pane);
+
   private: enum Limits {
     k_cxSplitter = 8,
     k_cxSplitterBig = 11,
@@ -76,8 +78,9 @@ class EditPane final : public CommandWindow_<EditPane, Pane> {
   public: void CloseAllBut(Window*);
 
   // [D]
-  public: void DidRealize();
-  public: void DidRealizeWindow(const Window&);
+  private: virtual void DidChangeParentWidget() override;
+  private: virtual void DidRealize() override;
+  private: virtual void DidRealizeChildWidget(const Widget&) override;
   private: virtual void DidResize() override;
   private: virtual void DidSetFocus() override;
 

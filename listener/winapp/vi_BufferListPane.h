@@ -18,6 +18,8 @@
 class Buffer;
 
 class BufferListPane : public CommandWindow_<BufferListPane, Pane> {
+  DECLARE_CASTABLE_CLASS(BufferListPane, Pane);
+
   private: enum Constant {
       ListViewId = 1234,
   };
