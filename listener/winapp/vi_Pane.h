@@ -34,17 +34,6 @@ class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
   // [D]
   public: virtual void DidChangeOwnerFrame() {}
 
-  public: virtual bool DidCreateHwnd(HWND) {
-    // TODO: Once make EditPane isn't derived from Pane, we should remove
-    // Pane::DidCreateHwnd().
-    return false;
-  }
-  public: virtual bool DidDestroyHwnd(HWND) {
-    // TODO: Once make EditPane isn't derived from Pane, we should remove
-    // Pane::DidDestoryHwnd().
-    return false;
-  }
-
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
   public: static const char* GetClass_() { return "Pane"; }

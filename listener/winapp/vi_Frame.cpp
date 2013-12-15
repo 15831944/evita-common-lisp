@@ -677,27 +677,6 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
         return 0;
     }
 
-    case WM_PARENTNOTIFY:
-      switch (wParam) {
-        case WM_DESTROY: {
-          auto const hwnd = reinterpret_cast<HWND>(lParam);
-          for (auto& pane: m_oPanes) {
-            if (pane.DidDestroyHwnd(hwnd))
-              break;
-          }
-          break;
-        }
-        case WM_CREATE: {
-          auto const hwnd = reinterpret_cast<HWND>(lParam);
-          for (auto& pane: m_oPanes) {
-            if (pane.DidCreateHwnd(hwnd))
-              break;
-          }
-          break;
-        }
-      }
-      return 0;
-
     case WM_SETCURSOR:
       if (auto const pane = GetActivePane()) {
         Point point;
@@ -786,6 +765,7 @@ void Frame::CreateNaitiveWindow() const {
   // Note: WS_EX_LAYERED doesn't show window with Win7+.
   DWORD dwExStyle =
       WS_EX_APPWINDOW
+      | WS_EX_NOPARENTNOTIFY
       | WS_EX_WINDOWEDGE;
 
   DWORD dwStyle =
