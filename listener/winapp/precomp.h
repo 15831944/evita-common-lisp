@@ -316,6 +316,6 @@ typedef Edit::Posn  Posn;
 char16* lstrchrW(const char16*, char16);
 char16* lstrrchrW(const char16*, char16);
 
-#define DEBUG_DESTROY 1
+#define DEBUG_DESTROY _DEBUG
 
 #endif //!defined(INCLUDE_listener_winapp_precomp_h)
