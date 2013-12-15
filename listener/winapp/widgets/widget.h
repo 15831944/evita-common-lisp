@@ -57,7 +57,7 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
   public: void Destroy();
   // Called on WM_CREATE
   protected: virtual void DidCreateNaitiveWindow();
-  // Called on WM_CREATE
+  // Called on WM_NCDESTORY
   protected: virtual void DidDestroyNaitiveWindow();
   public: virtual void DidHide() {}
   public: virtual void DidKillFocus() {}
