@@ -42,8 +42,8 @@ class ContainerNode_ : public NodeClass {
   }
 
   public: void AppendChild(NodeClass& node) {
-    if (node.parent_node_ == this)
-      node.parent_node_->RemoveChild(node);
+    if (auto const old_parent = node.parent_node_)
+      old_parent->RemoveChild(node);
     ASSERT(!node.parent_node());
     ASSERT(!node.next_sibling())
     ASSERT(!node.previous_sibling())
@@ -68,8 +68,8 @@ class ContainerNode_ : public NodeClass {
     }
     ASSERT(node != ref_node);
     ASSERT(ref_node->parent_node == this);
-    if (node.parent_node_ && node_parent_node_ != this)
-      node.parent_node_->RemoveChild(node);
+    if (auto const old_parent = node.parent_node_)
+      old_parent->RemoveChild(node);
     auto const next = ref_node->next;
     if (next) {
       next->previous_sibling_ = &node;
@@ -90,8 +90,8 @@ class ContainerNode_ : public NodeClass {
     }
     ASSERT(node != ref_node);
     ASSERT(ref_node->parent_node_ == this);
-    if (node.parent_node_ && node.parent_node_ != this)
-      node.parent_node_->RemoveChild(node);
+    if (auto const old_parent = node.parent_node_)
+      old_parent->RemoveChild(node);
     auto const previous = ref_node->previous_sibling_;
     if (previous) {
       previous->next_sibling_ = &node;
@@ -106,8 +106,8 @@ class ContainerNode_ : public NodeClass {
   }
 
   public: void PrependChild(NodeClass& node) {
-    if (node.parent_node_ == this)
-      node.parent_node_->RemoveChild(node);
+    if (auto const old_parent = node.parent_node_)
+      old_parent->RemoveChild(node);
     ASSERT(!node.parent_node());
     ASSERT(!node.next_sibling())
     ASSERT(!node.previous_sibling())
