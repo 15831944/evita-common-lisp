@@ -1534,13 +1534,12 @@ bool Page::ScrollDown(const gfx::Graphics& gfx) {
     return false;
   }
 
-  pLine->Reset();
-
   auto const lGoal  = m_lStart - 1;
   auto const lStart = m_pBuffer->ComputeStartOf(Unit_Paragraph, lGoal);
   Formatter formatter(gfx, m_oFormatBuf.GetHeap(), this, lStart);
 
   do {
+    pLine->Reset();
     formatter.FormatLine(pLine);
   } while (lGoal >= pLine->GetEnd());
 
