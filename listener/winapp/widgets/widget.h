@@ -85,11 +85,11 @@ class Widget : public base::tree::Node_<Widget, ContainerWidget,
   public: virtual void OnPaint(const gfx::Rect rect);
 
   // [R]
-  // Realize widget, one of container must be realized with native widnow.
+  // Realize widget, one of container must be realized with naitive widnow.
   public: void Realize(const ContainerWidget& container,
                        const gfx::Rect& rect);
 
-  // Realize top-level widget with native window.
+  // Realize top-level widget with naitive window.
   public: void RealizeTopLevelWidget();
   public: void ReleaseCapture() const;
   public: void ResizeTo(const gfx::Rect& rect);

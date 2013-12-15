@@ -347,7 +347,7 @@ k_rgpwszJavaKeyword[] =
     L"int",
     L"interface",
     L"long",
-    L"native",
+    L"naitive",
     L"new",
     L"package",
     L"private",

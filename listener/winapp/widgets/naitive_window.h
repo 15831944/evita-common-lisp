@@ -1,7 +1,7 @@
 // Copyright (C) 1996-2013 by Project Vogue.
 // Written by Yoshifumi "VOGUE" INOUE. (yosi@msn.com)
-#if !defined(INCLUDE_widgets_native_widget_h)
-#define INCLUDE_widgets_native_widget_h
+#if !defined(INCLUDE_widgets_naitive_widget_h)
+#define INCLUDE_widgets_naitive_window_h
 
 #include "./li_util.h"
 #include "widgets/widget.h"
@@ -21,7 +21,7 @@ class NaitiveWindow {
 
   private: explicit NaitiveWindow(const Widget& widget);
 
-  // For Widget-less native window.
+  // For Widget-less naitive window.
   protected: explicit NaitiveWindow();
 
   // Make destructor of NaitiveWindow for OwnPtr<T>. You should not
@@ -88,4 +88,4 @@ class NaitiveWindow {
 
 } // namespace widgets
 
-#endif //!defined(INCLUDE_widgets_native_widget_h)
+#endif //!defined(INCLUDE_widgets_naitive_widget_h)
