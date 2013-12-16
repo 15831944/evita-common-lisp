@@ -65,6 +65,9 @@ class Rect_ : public BaseType {
                  right * size.width, bottom * size.height);
   }
 
+  public: operator bool() const { return !is_empty(); }
+  public: bool operator!() const { return is_empty(); }
+
   public: Rect_& operator*=(const SizeType& size) {
     left *= size.width;
     top *= size.height;
@@ -73,8 +76,15 @@ class Rect_ : public BaseType {
     return *this;
   }
 
-  public: operator bool() const { return !is_empty(); }
-  public: bool operator!() const { return is_empty(); }
+  public: bool operator==(const Rect_& other) const {
+    return left == other.left && top == other.top &&
+           right == other.right && bottom == other.bottom;
+  }
+
+  public: bool operator!=(const Rect_& other) const {
+    return left != other.left || top != other.top ||
+           right != other.right || bottom != other.bottom;
+  }
 
   public: UnitType height() const { return bottom - top; }
 
