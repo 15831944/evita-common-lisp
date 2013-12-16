@@ -331,8 +331,7 @@ Count TextEditWindow::GetColumn(Posn lPosn) {
 }
 
 HCURSOR TextEditWindow::GetCursorAt(const Point&) const {
-  #pragma warning(suppress: 4302)
-  return ::LoadCursor(nullptr, MAKEINTRESOURCE(IDC_IBEAM));
+  return ::LoadCursor(nullptr, IDC_IBEAM);
 }
 
 
