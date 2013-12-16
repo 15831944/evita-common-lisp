@@ -202,7 +202,7 @@ void Frame::DidAddChildWidget(const widgets::Widget& widget) {
     pane->ResizeTo(GetPaneRect());
   else
     pane->Realize(GetPaneRect());
-  pane->SetFocus();
+  AddTab(pane);
 }
 
 void Frame::DidChangeTabSelection(int selected_index) {
