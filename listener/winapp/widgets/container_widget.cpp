@@ -214,19 +214,7 @@ void ContainerWidget::Show() {
   }
 }
 
-void ContainerWidget::WillDestroyChildWidget(const Widget& widget) {
-  #if DEBUG_DESTROY
-    DEBUG_WIDGET_PRINTF(DEBUG_WIDGET_FORMAT "\n", DEBUG_WIDGET_ARG(&widget));
-  #endif
-
-  #if _DEBUG
-  {
-    auto it = std::find(child_nodes().begin(), child_nodes().end(),
-                        &widget);
-    ASSERT(it != child_nodes().end());
-  }
-  #endif
-  RemoveChild(const_cast<Widget&>(widget));
+void ContainerWidget::WillDestroyChildWidget(const Widget&) {
 }
 
 void ContainerWidget::WillRemoveChildWidget(const Widget& widget) {

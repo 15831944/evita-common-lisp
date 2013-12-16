@@ -88,6 +88,7 @@ void Widget::Destroy() {
   }
   WillDestroyWidget();
   container_widget().WillDestroyChildWidget(*this);
+  container_widget().RemoveChild(*this);
   delete this;
 }
 
