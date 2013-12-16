@@ -213,6 +213,9 @@ class TextEditWindow
   protected: void updateScreen();
   protected: void updateScrollBar();
 
+  // [W]
+  private: virtual void WillDestroyWidget() override;
+
   #if SUPPORT_IME
   private: void onImeComposition(LPARAM);
   public: void Reconvert(Posn, Posn);

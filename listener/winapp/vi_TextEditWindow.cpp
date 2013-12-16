@@ -109,7 +109,6 @@ TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
 }
 
 TextEditWindow::~TextEditWindow() {
-  GetSelection()->GetBuffer()->RemoveWindow(this);
 }
 
 void TextEditWindow::Activate() {
@@ -995,6 +994,10 @@ void TextEditWindow::updateScrollBar() {
   }
 
   m_oVertScrollBar.SetInfo(&oInfo, true);
+}
+
+void TextEditWindow::WillDestroyWidget() {
+  GetSelection()->GetBuffer()->RemoveWindow(this);
 }
 
 #if SUPPORT_IME
