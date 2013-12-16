@@ -87,7 +87,7 @@ void TextEditWindow::ScrollBar::ShowWindow(int code) const {
 }
 
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
-    : caret_(new Caret()),
+    : ALLOW_THIS_IN_INITIALIZER_LIST(caret_(std::move(Caret::Create(*this)))),
       m_eDragMode(DragMode_None),
       m_fBlink(false),
       m_gfx(nullptr),
@@ -253,7 +253,7 @@ void TextEditWindow::DidKillFocus() {
     DEBUG_TEXT_EDIT_PRINTF("focus=%d show=%d\n", has_focus(), is_shown());
   #endif
   ParentClass::DidKillFocus();
-  caret_->Give(*m_gfx);
+  caret_->Give();
 }
 
 void TextEditWindow::DidRealize() {
@@ -823,7 +823,7 @@ void TextEditWindow::Render() {
     return;
 
   gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-  caret_->Hide(*m_gfx);
+  caret_->Hide();
   m_pPage->Render(*m_gfx);
 
   {
@@ -860,7 +860,7 @@ void TextEditWindow::Render() {
     }
   #endif // SUPPORT_IME
 
-  caret_->Show(*m_gfx, caret_rect);
+  caret_->Show(caret_rect);
 }
 
 void TextEditWindow::selectWord(Posn lPosn) {
