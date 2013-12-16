@@ -242,8 +242,10 @@ void Widget::SetParentWidget(const ContainerWidget& new_parent) {
   auto const old_parent = parent_node();
   if (new_parent == old_parent)
     return;
-  if (old_parent)
+  if (old_parent) {
     old_parent->WillRemoveChildWidget(*this);
+    old_parent->RemoveChild(*this);
+  }
   const_cast<ContainerWidget&>(new_parent).AppendChild(*this);
   if (new_parent.is_realized()) {
     if (auto const window = naitive_window())

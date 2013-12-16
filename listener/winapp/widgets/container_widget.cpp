@@ -217,8 +217,7 @@ void ContainerWidget::Show() {
 void ContainerWidget::WillDestroyChildWidget(const Widget&) {
 }
 
-void ContainerWidget::WillRemoveChildWidget(const Widget& widget) {
-  RemoveChild(const_cast<Widget&>(widget));
+void ContainerWidget::WillRemoveChildWidget(const Widget&) {
 }
 
 LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
