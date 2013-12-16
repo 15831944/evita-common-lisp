@@ -10,7 +10,7 @@
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/vi_EditPane.cpp#3 $
 //
 #define DEBUG_REDRAW 0
-#define DEBUG_RESIZE _DEBUG
+#define DEBUG_RESIZE 0
 #define DEBUG_SPLIT 0
 #include "./vi_EditPane.h"
 
@@ -254,7 +254,9 @@ void EditPane::Box::Realize(EditPane*, const gfx::Rect& rect) {
 }
 
 void EditPane::Box::Removed() {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
   ASSERT(!is_removed());
   is_removed_ = true;
   outer_ = nullptr;
@@ -271,7 +273,9 @@ EditPane::HorizontalLayoutBox::HorizontalLayoutBox(EditPane* edit_pane,
 }
 
 EditPane::HorizontalLayoutBox::~HorizontalLayoutBox() {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
 }
 
 void EditPane::HorizontalLayoutBox::DidRemoveBox(
@@ -511,7 +515,9 @@ EditPane::LeafBox& EditPane::HorizontalLayoutBox::Split(
 void EditPane::HorizontalLayoutBox::StopSplitter(
     const gfx::Point& pt,
     Box& below_box) {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
   if (!below_box.GetPrev()) {
     return;
   }
@@ -596,7 +602,9 @@ uint EditPane::LayoutBox::CountLeafBox() const {
 }
 
 void EditPane::LayoutBox::Destroy() {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
   ASSERT(!is_removed());
   auto runner = boxes_.GetFirst();
   while (runner) {
@@ -689,7 +697,9 @@ EditPane::Window* EditPane::HitTestResult::window() const {
 
 // LeafBox
 EditPane::LeafBox::~LeafBox() {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
   ASSERT(!m_pWindow);
 
   if (m_hwndVScrollBar) {
@@ -834,7 +844,9 @@ EditPane::VerticalLayoutBox::VerticalLayoutBox(EditPane* edit_pane,
     : LayoutBox(edit_pane, outer) {}
 
 EditPane::VerticalLayoutBox::~VerticalLayoutBox() {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
 }
 
 void EditPane::VerticalLayoutBox::DidRemoveBox(
@@ -1083,7 +1095,9 @@ EditPane::LeafBox& EditPane::VerticalLayoutBox::Split(
 void EditPane::VerticalLayoutBox::StopSplitter(
     const gfx::Point& pt,
     Box& below_box) {
-  DEBUG_PRINTF("%p\n", this);
+  #if DEBUG_RESIZE
+    DEBUG_PRINTF("%p\n", this);
+  #endif
   if (!below_box.GetPrev()) {
     return;
   }
@@ -1236,8 +1250,9 @@ void EditPane::DidRealizeChildWidget(const Widget& window) {
 }
 
 void EditPane::DidResize() {
-  DEBUG_PRINTF("%p (%d,%d)+(%d,%d)\n", this, rect().left, rect().top,
-    rect().right, rect().bottom);
+  #if DEBUG_RESIZE
+    DEBUG_WIDGET_PRINTF(DEBUG_RECT_FORMAT "\n", DEBUG_RECT_ARG(rect()));
+  #endif
   root_box_->SetRect(rect());
   if (is_shown()) {
     gfx::Graphics::DrawingScope drawing_scope(frame().gfx());
@@ -1480,7 +1495,9 @@ void EditPane::WillDestroyChildWidget(const Widget& child) {
   if (!box)
     return;
 
-  DEBUG_PRINTF("box=%p\n", box);
+  #if DEBUG_RESIZE
+    DEBUG_WIDGET_PRINTF("box=%p\n", box);
+  #endif
   m_oWindows.Delete(box->GetWindow());
   box->DetachWindow();
   auto const outer = box->outer();
