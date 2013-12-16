@@ -158,12 +158,12 @@ bool ContainerWidget::SetCursor() {
   gfx::Point point;
   if (!::GetCursorPos(&point))
     return false;
-  if (::ScreenToClient(*naitive_window(), &point))
+  if (!::ScreenToClient(*naitive_window(), &point))
     return false;
   auto const widget = GetWidgetAt(point);
   if (!widget)
     return false;
-  auto const hCursor = GetCursorAt(point);
+  auto const hCursor = widget->GetCursorAt(point);
   if (!hCursor)
     return false;
   ::SetCursor(hCursor);
