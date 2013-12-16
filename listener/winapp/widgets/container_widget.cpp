@@ -156,10 +156,9 @@ void ContainerWidget::SetCaptureTo(const Widget& widget) {
 
 bool ContainerWidget::SetCursor() {
   gfx::Point point;
-  if (!::GetCursorPos(&point))
-    return false;
-  if (!::ScreenToClient(*naitive_window(), &point))
-    return false;
+  WIN32_VERIFY(::GetCursorPos(&point));
+  WIN32_VERIFY(::MapWindowPoints(HWND_DESKTOP, *naitive_window(),
+                                 &point, 1));
   auto const widget = GetWidgetAt(point);
   if (!widget)
     return false;
@@ -280,17 +279,21 @@ LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
     if (capture_widget_) {
       capture_widget_->OnMessage(message, wParam, lParam);
     } else {
-      const gfx::Point point(MAKEPOINTS(lParam));
+      gfx::Point point(MAKEPOINTS(lParam));
+      if (message == WM_MOUSEWHEEL) {
+        WIN32_VERIFY(::MapWindowPoints(HWND_DESKTOP, *naitive_window(),
+                                       &point, 1));
+      }
       #if DEBUG_MOUSE
-        if (message == WM_LBUTTONDOWN) {
-          DEBUG_WIDGET_PRINTF("WM_LBUTTONDOWN " DEBUG_POINT_FORMAT "\n",
+        if (message == WM_MOUSEWHEEL) {
+          DEBUG_WIDGET_PRINTF("WM_MOUSEWHEEL " DEBUG_POINT_FORMAT "\n",
               DEBUG_POINT_ARG(point));
         }
       #endif
       if (auto child = GetWidgetAt(point)) {
         #if DEBUG_MOUSE
-          if (message == WM_LBUTTONDOWN) {
-            DEBUG_WIDGET_PRINTF("WM_LBUTTONDOWN to "
+          if (message == WM_MOUSEWHEEL) {
+            DEBUG_WIDGET_PRINTF("WM_MOUSEWHEEL to "
                 DEBUG_WIDGET_FORMAT " " DEBUG_RECT_FORMAT "\n",
                 DEBUG_WIDGET_ARG(child), child->rect());
           }
