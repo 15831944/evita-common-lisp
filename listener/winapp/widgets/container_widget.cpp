@@ -279,6 +279,8 @@ LRESULT ContainerWidget::WindowProc(UINT message, WPARAM wParam,
     if (capture_widget_) {
       capture_widget_->OnMessage(message, wParam, lParam);
     } else {
+      // Note: We send WM_MOUSEWHEEL message to a widget under mouse pointer
+      // rather than active widget.
       gfx::Point point(MAKEPOINTS(lParam));
       if (message == WM_MOUSEWHEEL) {
         WIN32_VERIFY(::MapWindowPoints(HWND_DESKTOP, *naitive_window(),
