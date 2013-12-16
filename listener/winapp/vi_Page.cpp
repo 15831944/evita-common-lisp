@@ -969,7 +969,7 @@ void Page::fillBottom(const gfx::Graphics& gfx, float y) const {
 void Page::fillRight(const gfx::Graphics& gfx, const Line* pLine,
                      float y) const {
   gfx::RectF rc;
-  rc.left  = pLine->GetWidth();
+  rc.left  = m_oFormatBuf.left() + pLine->GetWidth();
   rc.right = m_oFormatBuf.right();
   if (rc.left < rc.right) {
     rc.top = y;
