@@ -802,6 +802,7 @@ void EditPane::LeafBox::Realize(EditPane* edit_pane, const gfx::Rect& rect) {
   Rect window_rect(rect.left, rect.top, scroll_bar_rect.left, rect.bottom);
   m_pWindow->Realize(window_rect);
   m_pWindow->SetScrollBar(m_hwndVScrollBar, SB_VERT);
+  m_pWindow->Show();
   // Resize scrollbar
   SetRect(rect);
 }
