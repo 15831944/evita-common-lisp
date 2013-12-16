@@ -13,7 +13,7 @@
 
 #define DEBUG_FOCUS 0
 #define DEBUG_IDLE 0
-#define DEBUG_MOUSE 0
+#define DEBUG_MOUSE 1
 #define DEBUG_PAINT 0
 
 namespace widgets {
@@ -97,7 +97,11 @@ ContainerWidget& ContainerWidget::GetHostContainer() const {
 }
 
 Widget* ContainerWidget::GetWidgetAt(const gfx::Point& point) const {
-  for (const auto& child: base::adoptors::reverse(child_nodes())) {
+  // On release build by MSVS2013, using reverse() causes AV.
+  // for (const auto& child: base::adoptors::reverse(child_nodes()))
+  for (auto runner = last_child(); runner;
+       runner = runner->previous_sibling()) {
+    const auto& child = *runner;
     if (!child.is_shown())
       continue;
     if (child.rect().Contains(point)) {
