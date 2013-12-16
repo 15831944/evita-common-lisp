@@ -708,8 +708,9 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
       break;
 
     case WM_VSCROLL: {
+      auto const hwnd_scrollbar = reinterpret_cast<HWND>(lParam);
       auto const widget = reinterpret_cast<Widget*>(
-        ::GetWindowLongPtr(*naitive_window(), GWLP_USERDATA));
+        ::GetWindowLongPtr(hwnd_scrollbar, GWLP_USERDATA));
       if (widget) {
         widget->OnMessage(uMsg, wParam, lParam);
         return 0;
