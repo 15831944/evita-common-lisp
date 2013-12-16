@@ -695,18 +695,6 @@ LRESULT Frame::OnMessage(uint const uMsg, WPARAM const wParam,
         return 0;
     }
 
-    case WM_SETCURSOR:
-      if (auto const pane = GetActivePane()) {
-        Point point;
-        if (::GetCursorPos(&point) && ScreenToClient(*naitive_window(), &point))
-          if (auto const hCursor = pane->GetCursorAt(point)) {
-            ::SetCursor(hCursor);
-            return true;
-          }
-      }
-      // Ask Windows set cursor for non-client area.
-      break;
-
     case WM_VSCROLL: {
       auto const hwnd_scrollbar = reinterpret_cast<HWND>(lParam);
       auto const widget = reinterpret_cast<Widget*>(
