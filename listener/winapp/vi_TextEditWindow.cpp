@@ -739,8 +739,9 @@ void TextEditWindow::Redraw() {
 
 void TextEditWindow::redraw(bool fSelectionIsActive) {
   #if DEBUG_REDRAW
-    DEBUG_TEXT_EDIT_PRINTF("Start selection_is_active=%d\n",
-                           fSelectionIsActive);
+    DEBUG_TEXT_EDIT_PRINTF(DEBUG_RECT_FORMAT
+                           " ~~~~~~~~~~Start selection_is_active=%d\n",
+        DEBUG_RECT_ARG(rect()), fSelectionIsActive);
   #endif
   Posn lCaretPosn;
   Posn lSelStart;
@@ -812,8 +813,9 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
   Render();
 
   #if DEBUG_REDRAW
-    DEBUG_TEXT_EDIT_PRINTF("~~~~~~~~~~ End Page=[%d,%d]\n",
-        m_pPage->GetStart(), m_pPage->GetEnd());
+    DEBUG_TEXT_EDIT_PRINTF(DEBUG_RECT_FORMAT
+                           " ~~~~~~~~~~ End Page=[%d,%d]\n",
+        DEBUG_RECT_ARG(rect()), m_pPage->GetStart(), m_pPage->GetEnd());
   #endif
 }
 
@@ -822,7 +824,7 @@ void TextEditWindow::Render() {
     return;
 
   gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-    caret_->Hide(*m_gfx);
+  caret_->Hide(*m_gfx);
   m_pPage->Render(*m_gfx);
 
   {
