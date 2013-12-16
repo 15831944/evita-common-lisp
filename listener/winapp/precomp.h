@@ -33,6 +33,9 @@
 // with '0' for 'directives'
 #pragma warning(disable: 4668)
 
+// warning C4710: 'function' : function not inlined
+#pragma warning(disable: 4710)
+
 // warning C4820: 'bytes' bytes padding added after construct 'member_name'
 #pragma warning(disable: 4820)
 
@@ -150,7 +153,6 @@ swap(T& rx, T& ry)
     #define SUPPORT_IME 1
 #endif // ! defined(SUPPORT_IME)
 
-
 class FileTime : public FILETIME
 {
     public: FileTime()
@@ -174,7 +176,6 @@ class FileTime : public FILETIME
         return iDiff > 0 ? 1 : -1;
     } // Compare
 }; // FileTime
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -221,7 +222,6 @@ class FileHandle
     } // Release
 }; // FileHandle
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Handle
@@ -267,7 +267,6 @@ class Handle
     } // Release
 }; // Handle
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // RegKey
@@ -290,7 +289,6 @@ class RegKey
     public: operator HKEY() const { return h; }
 }; // RegKey
 
-
 #include "./ed_defs.h"
 
 typedef Edit::Count Count;
@@ -311,13 +309,12 @@ typedef Edit::Posn  Posn;
 
 #endif // NDEBUG
 
-
 char16* lstrchrW(const char16*, char16);
 char16* lstrrchrW(const char16*, char16);
 
 #define DEBUG_DESTROY _DEBUG
 
-#if !defined(_NDEBUG)
+#if defined(_DEBUG)
 #define _ITERATOR_DEBUG_LEVEL 2
 #endif
 
@@ -325,17 +322,20 @@ char16* lstrrchrW(const char16*, char16);
 // not explicitly handled by a case label
 #pragma warning(disable: 4061)
 
+// warning C4062: enumerator 'identifier' in switch of enum 'enumeration' is
+// not handled
+// e.g. We don't want to have |case State_Limit|, |cast Kind_Max|, etc.
+#pragma warning(disable: 4062)
+
+// TODO: We should not disable warning C4350.
 // warning C4350: behavior change: 'member1' called instead of 'member2'
 // An rvalue cannot be bound to a non-const reference. In previous versions
 // of Visual C++, it was possible to bind an rvalue to a non-const reference
 // in a direct initialization. This code now gives a warning.
 #pragma warning(disable: 4350)
 
-
-// warning C4062: enumerator 'identifier' in switch of enum 'enumeration' is
-// not handled
-// e.g. We don't want to have |case State_Limit|, |cast Kind_Max|, etc.
-#pragma warning(disable: 4062)
+// warning C4711: function 'function' selected for inline expansion
+#pragma warning(disable: 4711)
 
 // warning: C4640 'instance' : construction of local static object is not
 // thread-safe

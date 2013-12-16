@@ -45,8 +45,8 @@ class ContainerNode_ : public NodeClass {
     if (auto const old_parent = node.parent_node_)
       old_parent->RemoveChild(node);
     ASSERT(!node.parent_node());
-    ASSERT(!node.next_sibling())
-    ASSERT(!node.previous_sibling())
+    ASSERT(!node.next_sibling());
+    ASSERT(!node.previous_sibling());
     node.previous_sibling_ = last_child_;
     if (last_child_) {
       ASSERT(first_child_);

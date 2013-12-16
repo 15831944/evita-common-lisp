@@ -871,7 +871,7 @@ void TextEditWindow::selectWord(Posn lPosn) {
 }
 
 void TextEditWindow::SetScrollBar(HWND hwnd, int nBar) {
-  ASSERT(nBar == SB_VERT)
+  ASSERT(nBar == SB_VERT);
   m_oVertScrollBar.Set(hwnd, SB_CTL);
 }
 
