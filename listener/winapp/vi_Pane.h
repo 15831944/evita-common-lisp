@@ -37,9 +37,6 @@ class Pane : public CommandWindow_<Pane>, public ChildNode_<Frame, Pane> {
   // [A]
   public: virtual void Activate();
 
-  // [D]
-  public: virtual void DidChangeOwnerFrame() {}
-
   // [G]
   public: uint GetActiveTick() const { return m_nActiveTick; }
   public: static const char* GetClass_() { return "Pane"; }
