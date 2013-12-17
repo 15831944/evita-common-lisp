@@ -11,6 +11,8 @@
 //
 #include "./mode_Cxx.h"
 
+#define DEBUG_LEXER 0
+
 namespace Edit
 {
 
@@ -1040,7 +1042,9 @@ class ClikeLexer : public NewLexer::LexerBase
     {
         m_oEnumChar.SyncEnd();
 
-        DEBUG_PRINTF("Backtrack from %d\n", m_oChange.GetStart());
+        #if DEBUG_LEXER
+          DEBUG_PRINTF("Backtrack from %d\n", m_oChange.GetStart());
+        #endif
 
         m_eState   = State_StartLine;
 
@@ -1066,8 +1070,9 @@ class ClikeLexer : public NewLexer::LexerBase
             }
         } // for
 
-        DEBUG_PRINTF("restart from %d state=%d\n",
-            lStart, m_eState );
+        #if DEBUG_LEXER
+          DEBUG_PRINTF("restart from %d state=%d\n", lStart, m_eState);
+        #endif
 
         m_oToken.Reset(lStart);
 

@@ -490,7 +490,9 @@ UndoManager::UndoManager(Buffer* pBuffer) :
 {
     m_hObjHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
 
-    DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
+    #if DEBUG_UNDO
+      DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
+    #endif
 } // UndoManager::UndoManager
 
 
@@ -666,7 +668,9 @@ void UndoManager::CheckPoint()
 //
 void UndoManager::Empty()
 {
-    DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
+    #if DEBUG_UNDO
+      DEBUG_PRINTF("%p: heap=%p\n", this, m_hObjHeap);
+    #endif
 
     if (NULL != m_hObjHeap)
     {
@@ -681,7 +685,9 @@ void UndoManager::Empty()
     m_pRedo  = NULL;
     m_pUndo  = NULL;
 
-    DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
+    #if DEBUG_UNDO
+      DEBUG_PRINTF("%p: new heap=%p\n", this, m_hObjHeap);
+    #endif
 } // UndoManager::Empty
 
 

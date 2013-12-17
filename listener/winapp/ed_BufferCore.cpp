@@ -13,6 +13,8 @@
 
 #include "./li_util.h"
 
+#define DEBUG_LIFE 0
+
 namespace Edit
 {
 
@@ -29,7 +31,9 @@ BufferCore::BufferCore() :
     m_hHeap = ::HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
     ASSERT(NULL != m_hHeap);
 
-    DEBUG_PRINTF("%p: new heap=%p\n", this, m_hHeap);
+    #if DEBUG_LIFE
+      DEBUG_PRINTF("%p: new heap=%p\n", this, m_hHeap);
+    #endif
 
     m_pwch = reinterpret_cast<char16*>(
         ::HeapAlloc(m_hHeap, 0, sizeof(char16) * m_cwch) );
@@ -42,7 +46,9 @@ BufferCore::BufferCore() :
 //
 BufferCore::~BufferCore()
 {
-    DEBUG_PRINTF("%p: heap=%p\n", this, m_hHeap);
+    #if DEBUG_LIFE
+      DEBUG_PRINTF("%p: heap=%p\n", this, m_hHeap);
+    #endif
     if (NULL != m_hHeap) ::HeapDestroy(m_hHeap);
 } // BufferCore::~BufferCore
 

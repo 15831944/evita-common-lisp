@@ -537,7 +537,7 @@ DWORD WINAPI IoRequest::threadProc(void*) {
       if (!fSucceeded) {
         auto const dwError = ::GetLastError();
 
-        #if _DEBUG
+        #if DEBUG_IO
           DEBUG_PRINTF("GetQueuedCompletionStatus:"
               " err=%u key=%p ov=%p\n",
               dwError, ulpKey, pOverlapped);
@@ -941,21 +941,16 @@ void SaveRequest::requestWrite(uint const cbWrite) {
       cbWrite,
       nullptr,
       &m_oOverlapped);
-  if (!fSucceeded) {
-    auto const dwError = ::GetLastError();
-    DEBUG_PRINTF("WriteFile: %p %ls %u\n",
-        this, m_wszFileName, dwError);
-
-    switch (dwError) {
-      case ERROR_IO_PENDING:
-        break;
-
-      default:
-        finishIo(dwError);
-        break;
-    } // switch
+  if (fSucceeded)
     return;
-  } // if
+
+  auto const dwError = ::GetLastError();
+  if (dwError == ERROR_IO_PENDING)
+    return;
+
+  DEBUG_PRINTF("WriteFile: %p %ls %u\n",
+    this, m_wszFileName, dwError);
+  finishIo(dwError);
 } // SaveRequest::requestWrite
 
 void SaveRequest::retrieve() {

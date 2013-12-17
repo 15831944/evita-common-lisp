@@ -9,6 +9,7 @@
 //
 // @(#)$Id: //proj/evcl3/mainline/listener/winapp/ed_Buffer.cpp#5 $
 //
+#define DEBUG_INTERVAL 0
 #define DEBUG_STYLE 0
 #include "./ed_Buffer.h"
 
@@ -871,9 +872,10 @@ void Buffer::relocate(Posn lPosn, Count iDelta)
                 m_oIntervals.Delete(pRunner);
                 m_oIntervalTree.Delete(pRunner);
 
-                DEBUG_PRINTF("destroyObject: interval [%d,%d] @ posn=%d%d\n",
-                    pRunner->m_lStart, pRunner->m_lEnd, lPosn, iDelta );
-
+                #if DEBUG_INTERVAL
+                  DEBUG_PRINTF("destroyObject: interval [%d,%d] @ posn=%d%d\n",
+                      pRunner->m_lStart, pRunner->m_lEnd, lPosn, iDelta );
+                #endif
                 destroyObject(pRunner);
             }
         } // for each interval
