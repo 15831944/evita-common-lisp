@@ -59,7 +59,7 @@ class TimerController : public Singleton<TimerController> {
                           uint next_fire_interval_ms,
                           uint repeat_interval_ms) {
     if (!timer->entry_) {
-      timer->entry_ = new TimerEntry(timer, repeat_interval_ms);
+      timer->entry_.reset(new TimerEntry(timer, repeat_interval_ms));
       timer->entry_->timer = timer;
     } else {
       timer->entry_->repeat_interval_ms = repeat_interval_ms;
@@ -70,7 +70,7 @@ class TimerController : public Singleton<TimerController> {
 
   public: void StopTimer(AbstractTimer* timer) {
     ::KillTimer(*message_window_, ComputeCookie(timer));
-    timer->entry_->Release();
+    timer->entry_.reset();
   }
 
   private: static void CALLBACK TimerProc(HWND, UINT, UINT_PTR cookie,
@@ -80,12 +80,16 @@ class TimerController : public Singleton<TimerController> {
       return;
     entry->timer->Fire();
     // Fire() may remove associated timer object in |entry|.
-    if (!entry->timer)
+    auto const timer = entry->timer;
+    if (!timer)
       return;
-    if (entry->repeat_interval_ms)
-      instance().SetTimer(entry->timer, entry->repeat_interval_ms);
-    else
-      instance().StopTimer(entry->timer);
+    if (entry->repeat_interval_ms) {
+      if (!timer->entry_)
+        timer->entry_ = entry;
+      instance().SetTimer(timer, entry->repeat_interval_ms);
+    } else {
+      instance().StopTimer(timer);
+    }
   }
 
   DISALLOW_COPY_AND_ASSIGN(TimerController);
