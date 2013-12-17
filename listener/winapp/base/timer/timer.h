@@ -15,6 +15,7 @@ class AbstractTimer {
   private: base::scoped_refptr<TimerEntry> entry_;
   protected: AbstractTimer();
   public: virtual ~AbstractTimer();
+  public: bool is_active() const { return entry_; }
   public: void Start(uint next_fire_interval_ms, uint repeat_interval_ms);
   public: void Stop();
   protected: virtual void Fire() = 0;
