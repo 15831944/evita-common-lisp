@@ -339,8 +339,8 @@ char16* lstrrchrW(const char16*, char16);
 
 // warning: C4640 'instance' : construction of local static object is not
 // thread-safe
-#define DEFINE_STATIC_LOCAL(mp_type, mp_name, mp_args) \
+#define DEFINE_STATIC_LOCAL(mp_type, mp_name, ...) \
   __pragma(warning(suppress: 4640)) \
-  static mp_type mp_name mp_args
+  static mp_type mp_name __VA_ARGS__
 
 #endif //!defined(INCLUDE_listener_winapp_precomp_h)
