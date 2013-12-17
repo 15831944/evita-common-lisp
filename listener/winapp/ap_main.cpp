@@ -12,6 +12,7 @@
 // Example options:
 //  -dll vanilla.dll -image evcl3.image -multiple
 //
+#define DEBUG_BUSY 0
 #define DEBUG_IDLE 0
 
 #if USE_LISTENER
@@ -157,7 +158,7 @@ static void NoReturn fatalExit(const char16* pwsz) {
 }
 
 static bool IsKeepIdleMessage(uint message) {
-  return message == WM_PAINT || message == WM_SYSTIMER || message == WM_TIMER;
+  return message == WM_SYSTIMER || message == WM_TIMER;
 }
 
 static int MainLoop(EnumArg* pEnumArg) {
@@ -239,6 +240,9 @@ static int MainLoop(EnumArg* pEnumArg) {
         uint nCount = 0;
         while (Application::Get()->OnIdle(nCount)) {
           if (::PeekMessage(&oMsg, nullptr, 0, 0, PM_REMOVE)) {
+            #if DEBUG_BUSY
+              DEBUG_PRINTF("Idle loop is breaked by 0x%04X\n", oMsg.message);
+            #endif
             fGotMessage = true;
             break;
           }
@@ -261,7 +265,7 @@ static int MainLoop(EnumArg* pEnumArg) {
     ::DispatchMessage(&oMsg);
 
     if (!IsKeepIdleMessage(oMsg.message)) {
-      #if DEBUG_IDLE
+      #if DEBUG_BUSY || DEBUG_IDLE
         DEBUG_PRINTF("Enable idle by messgage=0x%04X\n", oMsg.message);
       #endif
       iIdle = 1;
