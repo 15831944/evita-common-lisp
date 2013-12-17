@@ -174,7 +174,9 @@ class TextEditWindow::CaretBlinker {
   }
   public: Range& range() const { return *range_; }
   private: void RestoreCaret(base::OneShotTimer<CaretBlinker>*) {
-    editor_->caret_blinker_.reset();
+    auto const editor = editor_;
+    editor->caret_blinker_.reset();
+    editor->Redraw();
   }
   DISALLOW_COPY_AND_ASSIGN(CaretBlinker);
 };
