@@ -26,6 +26,8 @@ class RefCounted {
 
 template<class T> class scoped_refptr {
   private: T* data_;
+  public: scoped_refptr() : data_(nullptr) {
+  }
   public: scoped_refptr(T& data) : data_(&data) {
     data->AddRef();
   }
@@ -58,13 +60,14 @@ template<class T> class scoped_refptr {
       data_->AddRef();
   }
 
-  public: scoped_refptr& operator=(const scoped_refptr&& other) {
+  public: scoped_refptr& operator=(scoped_refptr&& other) {
     if (data_)
       data_->Release();
     data_ = other.data_;
     other.data_ = nullptr;
     if (data_)
       data_->AddRef();
+    return *this;
   }
 
   public: T* get() const { return data_; }
