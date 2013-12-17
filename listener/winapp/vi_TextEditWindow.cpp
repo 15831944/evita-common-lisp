@@ -44,42 +44,78 @@ uint TranslateKey(uint);
 
 namespace {
 
-enum MyTimerId {
-  MyTimerId_AutoScroll = 1,
-};
-
 static uint s_active_tick;
 
 } // namespace
 
-void TextEditWindow::AutoScroll::Continue(HWND hwnd) {
-  #if DEBUG_AUTOSCROLL
-    DEBUG_PRINTF("\n");
-  #endif // DEBUG_AUTOSCROLL
+//////////////////////////////////////////////////////////////////////
+//
+// Autoscroller
+//
+class TextEditWindow::Autoscroller {
+  private: uint kAutoscrollIntervalMs = 50;
+  private: uint kScrollSpeedIntervalMs = 100;
+  private: int direction_;
+  private: TextEditWindow* editor_;
+  private: uint started_at_;
+  private: base::RepeatingTimer<Autoscroller> timer_;
 
-  m_nTimerId = MyTimerId_AutoScroll;
-  ::SetTimer(hwnd, m_nTimerId, 50, nullptr);
-}
-
-void TextEditWindow::AutoScroll::Start(HWND hwnd, int iDir) {
-  if (!m_nTimerId) {
-    m_nStartTick = ::GetTickCount();
-    Continue(hwnd);
+  public: Autoscroller(TextEditWindow* edtior)
+    : direction_(0),
+      editor_(edtior),
+      started_at_(0),
+      ALLOW_THIS_IN_INITIALIZER_LIST(
+          timer_(this, &Autoscroller::DidFireTime)) {
   }
-  m_iDirection = iDir;
-}
 
-void TextEditWindow::AutoScroll::Stop(HWND hwnd) {
-  if (!m_nTimerId)
-    return;
+  private: void DidFireTime(base::RepeatingTimer<Autoscroller>*) {
+    auto const duration = ::GetTickCount() - started_at_;
+    auto const scroll_amount = static_cast<Count>(
+        min(max(duration / kScrollSpeedIntervalMs, 1), 20));
+    #if DEBUG_AUTOSCROLL
+      DEBUG_PRINTF("dir=%d am=%d duration=%dms\n",
+        direction_, scroll_amount, duration);
+    #endif
+    if (Scroll(scroll_amount))
+      editor_->Redraw();
+    else
+      Stop();
+  }
 
-  #if DEBUG_AUTOSCROLL
-    DEBUG_PRINTF("id=%d\n", m_nTimterid);
-  #endif // DEBUG_AUTOSCROLL
+  private: Count Scroll(Count amount) {
+    if (direction_ > 0)
+      return editor_->GetSelection()->MoveDown(Unit_Line, amount, true);
+     return editor_->GetSelection()->MoveUp(Unit_Line, amount, true);
+  }
 
-  ::KillTimer(hwnd, m_nTimerId);
-  m_nTimerId = 0;
-}
+  public: void Start(int direction) {
+    #if DEBUG_AUTOSCROLL
+      DEBUG_PRINTF("active=%d dir=%d start=%d\n",
+        timer_.is_active(), direction_, started_at_);
+    #endif
+    if (timer_.is_active()) {
+      if (direction_ != direction) {
+        direction_ = direction;
+        started_at_ = ::GetTickCount();
+      }
+      return;
+    }
+    direction_ = direction;
+    started_at_ = ::GetTickCount();
+    timer_.Start(kAutoscrollIntervalMs);
+  }
+
+  public: void Stop() {
+    if (!timer_.is_active())
+      return;
+    #if DEBUG_AUTOSCROLL
+      DEBUG_PRINTF("\n");
+    #endif
+    timer_.Stop();
+  }
+
+  DISALLOW_COPY_AND_ASSIGN(Autoscroller);
+};
 
 void TextEditWindow::ScrollBar::ShowWindow(int code) const {
   if (m_hwnd)
@@ -92,7 +128,9 @@ void TextEditWindow::ScrollBar::ShowWindow(int code) const {
 //
 
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
-    : caret_(std::move(Caret::Create())),
+    : ALLOW_THIS_IN_INITIALIZER_LIST(
+        autoscroller_(new Autoscroller(this))),
+      caret_(std::move(Caret::Create())),
       m_eDragMode(DragMode_None),
       m_gfx(nullptr),
       m_lCaretPosn(-1),
@@ -589,39 +627,6 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       #endif
       return 0;
 
-    case WM_TIMER: {
-      #if DEBUG_AUTOSCROLL
-      DEBUG_TEXT_EDIT_PRINTF("WM_TIMER: %d dir=%d\n",
-          wParam, m_oAutoScroll.m_iDirection);
-      #endif // DEBUG_AUTOSCROLL
-
-      switch (wParam) {
-        case MyTimerId_AutoScroll:
-          if (m_oAutoScroll.m_nTimerId) {
-              auto const iDuration = static_cast<Count>(
-                  ::GetTickCount() - m_oAutoScroll.m_nStartTick);
-              auto lCount = iDuration / 500;
-              lCount = max(lCount, 1);
-              lCount = min(lCount, 20);
-
-              Count k;
-              if (m_oAutoScroll.m_iDirection > 0) {
-                  k = selection_->MoveDown(Unit_Line, lCount, true);
-              } else {
-                  k = selection_->MoveUp(Unit_Line, lCount, true);
-              }
-
-              if (!k) {
-                m_oAutoScroll.Stop(AssociatedHwnd());
-              } else {
-                m_oAutoScroll.Continue(AssociatedHwnd());
-              }
-          }
-          break;
-      }
-      break;
-    }
-
     case WM_VSCROLL:
       onVScroll(LOWORD(wParam));
       return 0;
@@ -684,11 +689,11 @@ void TextEditWindow::OnMouseMove(uint, const Point& point) {
   #endif // DEBUG_FORMAT
 
   if (point.y < rect().top)
-    m_oAutoScroll.Start(AssociatedHwnd(), -1);
+    autoscroller_->Start(-1);
   else if (point.y > rect().bottom)
-    m_oAutoScroll.Start(AssociatedHwnd(), 1);
+    autoscroller_->Start(1);
   else
-    m_oAutoScroll.Stop(AssociatedHwnd());
+    autoscroller_->Stop();
 }
 
 void TextEditWindow::OnPaint(const gfx::Rect) {
@@ -972,8 +977,8 @@ Posn TextEditWindow::startOfLineAux(const gfx::Graphics& gfx, Posn lPosn) {
 }
 
 void TextEditWindow::stopDrag() {
-  m_oAutoScroll.Stop(AssociatedHwnd());
- m_eDragMode = DragMode_None;
+  autoscroller_->Stop();
+  m_eDragMode = DragMode_None;
 }
 
 void TextEditWindow::updateScreen() {

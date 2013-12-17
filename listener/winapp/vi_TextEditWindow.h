@@ -49,22 +49,6 @@ class TextEditWindow
 
   protected: typedef Edit::Range Range;
 
-  protected: struct AutoScroll {
-    int m_iDirection;
-    uint m_nStartTick;
-    uint m_nTimerId;
-
-    AutoScroll()
-        : m_iDirection(0),
-          m_nStartTick(0),
-          m_nTimerId(0) {
-    }
-
-    void Continue(HWND);
-    void Start(HWND, int);
-    void Stop(HWND);
-  };
-
   protected: struct ScrollBar {
     HWND m_hwnd;
     int m_nBar;
@@ -94,8 +78,10 @@ class TextEditWindow
     }
   };
 
+  private: class Autoscroller;
   private: class CaretBlinker;
 
+  private: std::unique_ptr<Autoscroller> autoscroller_;
   private: std::unique_ptr<Caret> caret_;
   private: std::unique_ptr<CaretBlinker> caret_blinker_;
   protected: DragMode m_eDragMode;
@@ -104,7 +90,6 @@ class TextEditWindow
   protected: Posn m_lCaretPosn;
   protected: uint m_nActiveTick;
   protected: int m_nCharTick;
-  protected: AutoScroll m_oAutoScroll;
   protected: ScrollBar m_oHoriScrollBar;
   protected: ScrollBar m_oVertScrollBar;
   protected: Page* m_pPage;
