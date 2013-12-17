@@ -12,7 +12,7 @@
 #define DEBUG_DRAW 0
 #define DEBUG_SHOW 0
 
-static const auto kBlinkInterval = 250; // milliseconds
+static const auto kBlinkInterval = 500; // milliseconds
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -71,13 +71,11 @@ void Caret::BackingStore::Save(const gfx::Graphics& gfx,
 //
 Caret::Caret(const widgets::Widget& owner)
   : backing_store_(new BackingStore()),
-    blink_count_(0),
     gfx_(nullptr),
     owner_(owner),
     shown_(false),
     should_blink_(false),
-    taken_(false),
-    updated_at_(0) {
+    taken_(false) {
 }
 
 Caret::~Caret() {
@@ -115,18 +113,17 @@ void Caret::Hide() {
 void Caret::OnTimer() {
   if (!taken_ || !should_blink_ || !rect_)
     return;
-  auto const now = ::GetTickCount();
   #if DEBUG_BLINK
-    DEBUG_PRINTF("show=%d blink_count=%d %dms\n",
-        shown_, blink_count_, now - updated_at_);
+    auto now = ::GetTickCount();
+    static decltype(now) last_at;
+    DEBUG_PRINTF("show=%d %dms\n", shown_, now - last_at);
+    last_at = now;
   #endif
-  updated_at_ = now;
-  blink_count_ = (blink_count_ + 1) % 4;
   gfx::Graphics::DrawingScope drawing_scope(*gfx_);
-  if (blink_count_)
-    Show();
-  else
+  if (shown_)
     Hide();
+  else
+    Show();
 }
 
 void Caret::Show() {

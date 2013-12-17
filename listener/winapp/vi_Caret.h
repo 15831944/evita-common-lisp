@@ -26,14 +26,12 @@ class Caret : public base::RefCounted<Caret> {
   private: class BackingStore;
 
   private: const base::OwnPtr<BackingStore> backing_store_;
-  private: int blink_count_;
   private: const gfx::Graphics* gfx_;
   private: const widgets::Widget& owner_;
   private: gfx::RectF rect_;
   private: bool shown_;
   private: bool should_blink_;
   private: bool taken_;
-  private: uint updated_at_;
 
   private: Caret(const widgets::Widget& widget);
   private: ~Caret();
