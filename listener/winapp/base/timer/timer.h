@@ -39,12 +39,12 @@ class Timer : public AbstractTimer {
 } // namespace impl
 
 template<class Receiver>
-class OneShortTimer : public impl::Timer<Receiver, OneShortTimer<Receiver>> {
-  public: OneShortTimer(Receiver* receiver, FiredFunction function)
+class OneShotTimer : public impl::Timer<Receiver, OneShotTimer<Receiver>> {
+  public: OneShotTimer(Receiver* receiver, FiredFunction function)
       : Timer(receiver, function) {
   }
   public: void Start(uint interval_ms) { Timer::Start(interval_ms, 0); }
-  DISALLOW_COPY_AND_ASSIGN(OneShortTimer);
+  DISALLOW_COPY_AND_ASSIGN(OneShotTimer);
 };
 
 template<class Receiver>
