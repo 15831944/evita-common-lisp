@@ -439,8 +439,10 @@ bool TextEditWindow::OnIdle(uint count) {
     DEBUG_TEXT_EDIT_PRINTF("count=%d more=%d\n", count, more);
   #endif
 
-  gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
-  Redraw();
+  if (is_shown()) {
+    gfx::Graphics::DrawingScope drawing_scope(*m_gfx);
+    Redraw();
+  }
   return more;
 }
 
