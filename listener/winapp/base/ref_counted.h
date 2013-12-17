@@ -53,11 +53,7 @@ template<class T> class scoped_refptr {
   public: T& operator*() const { return *data_; }
 
   public: scoped_refptr& operator=(const scoped_refptr& other) {
-    if (data_)
-      data_->Release();
-    data_ = other.data_;
-    if (data_)
-      data_->AddRef();
+    reset(other.data_);
   }
 
   public: scoped_refptr& operator=(scoped_refptr&& other) {
@@ -72,7 +68,7 @@ template<class T> class scoped_refptr {
 
   public: T* get() const { return data_; }
 
-  public: void reset(T* new_data) {
+  public: void reset(T* new_data = nullptr) {
     if (data_)
       data_->Release();
     data_ = new_data;
