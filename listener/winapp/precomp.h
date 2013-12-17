@@ -168,12 +168,12 @@ class FileTime : public FILETIME
         return *this;
     } // opeator =
 
-    public: int Compare(const FILETIME* p) const
-    {
-        auto const iDiff = dwHighDateTime - p->dwHighDateTime;
-        if (!iDiff)
-          return 0;
-        return iDiff > 0 ? 1 : -1;
+    public: int Compare(const FILETIME* p) const {
+      if (dwHighDateTime - p->dwHighDateTime)
+        return dwHighDateTime > p->dwHighDateTime ? 1 : -1;
+      if (dwLowDateTime - p->dwLowDateTime)
+        return dwLowDateTime > p->dwLowDateTime ? 1 : -1;
+      return 0;
     } // Compare
 }; // FileTime
 
