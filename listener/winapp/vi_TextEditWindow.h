@@ -16,6 +16,7 @@
 #include "./gfx_base.h"
 #include "./vi_CommandWindow.h"
 #include "./vi_Page.h"
+#include <memory>
 
 class Buffer;
 class Caret;
@@ -96,7 +97,7 @@ class TextEditWindow
     }
   };
 
-  private: base::scoped_refptr<Caret> caret_;
+  private: std::unique_ptr<Caret> caret_;
   protected: DragMode m_eDragMode;
   protected: bool m_fBlink;
   protected: bool m_fHasFocus;

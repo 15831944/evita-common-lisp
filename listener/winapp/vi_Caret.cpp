@@ -4,7 +4,6 @@
 #include "./vi_Caret.h"
 
 #include "./gfx_base.h"
-#include "widgets/widget.h"
 #include <math.h>
 #include <utility>
 
@@ -69,10 +68,10 @@ void Caret::BackingStore::Save(const gfx::Graphics& gfx,
 //
 // Caret
 //
-Caret::Caret(const widgets::Widget& owner)
+Caret::Caret()
   : backing_store_(new BackingStore()),
+    ALLOW_THIS_IN_INITIALIZER_LIST(blink_timer_(this, &Caret::Blink)),
     gfx_(nullptr),
-    owner_(owner),
     shown_(false),
     should_blink_(false),
     taken_(false) {
@@ -82,8 +81,24 @@ Caret::~Caret() {
   ASSERT(!taken_);
 }
 
-base::scoped_refptr<Caret> Caret::Create(const widgets::Widget& owner) {
-  return std::move(base::scoped_refptr<Caret>(new Caret(owner)));
+void Caret::Blink(base::RepeatingTimer<Caret>*) {
+  if (!taken_ || !should_blink_ || !rect_)
+    return;
+  #if DEBUG_BLINK
+    auto now = ::GetTickCount();
+    static decltype(now) last_at;
+    DEBUG_PRINTF("show=%d %dms\n", shown_, now - last_at);
+    last_at = now;
+  #endif
+  gfx::Graphics::DrawingScope drawing_scope(*gfx_);
+  if (shown_)
+    Hide();
+  else
+    Show();
+}
+
+std::unique_ptr<Caret> Caret::Create() {
+  return std::move(std::unique_ptr<Caret>(new Caret()));
 }
 
 void Caret::Give() {
@@ -91,8 +106,7 @@ void Caret::Give() {
     DEBUG_PRINTF("gfx=%p\n", gfx_);
   #endif
   ASSERT(taken_);
-  ::KillTimer(owner_.AssociatedHwnd(), reinterpret_cast<UINT_PTR>(this));
-  Release();
+  blink_timer_.Stop();
   gfx::Graphics::DrawingScope drawing_scope(*gfx_);
   Hide();
   taken_ = false;
@@ -108,22 +122,6 @@ void Caret::Hide() {
     return;
   backing_store_->Restore(*gfx_);
   shown_ = false;
-}
-
-void Caret::OnTimer() {
-  if (!taken_ || !should_blink_ || !rect_)
-    return;
-  #if DEBUG_BLINK
-    auto now = ::GetTickCount();
-    static decltype(now) last_at;
-    DEBUG_PRINTF("show=%d %dms\n", shown_, now - last_at);
-    last_at = now;
-  #endif
-  gfx::Graphics::DrawingScope drawing_scope(*gfx_);
-  if (shown_)
-    Hide();
-  else
-    Show();
 }
 
 void Caret::Show() {
@@ -145,17 +143,11 @@ void Caret::Take(const gfx::Graphics& gfx) {
   #endif
   taken_ = true;
   gfx_ = &gfx;
-  AddRef();
-  ::SetTimer(owner_.AssociatedHwnd(), reinterpret_cast<UINT_PTR>(this),
-             kBlinkInterval, &Caret::TimerProc);
+  blink_timer_.Start(kBlinkInterval);
   if (!rect_)
     return;
   gfx::Graphics::DrawingScope drawing_scope(*gfx_);
   Show();
-}
-
-void Caret::TimerProc(HWND, UINT, UINT_PTR self, DWORD) {
-  reinterpret_cast<Caret*>(self)->OnTimer();
 }
 
 void Caret::Update(const gfx::RectF& new_rect) {

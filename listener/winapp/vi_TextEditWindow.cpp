@@ -87,7 +87,7 @@ void TextEditWindow::ScrollBar::ShowWindow(int code) const {
 }
 
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
-    : ALLOW_THIS_IN_INITIALIZER_LIST(caret_(std::move(Caret::Create(*this)))),
+    : caret_(std::move(Caret::Create())),
       m_eDragMode(DragMode_None),
       m_fBlink(false),
       m_gfx(nullptr),

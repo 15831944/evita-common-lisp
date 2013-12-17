@@ -11,35 +11,35 @@
 #if !defined(INCLUDE_listener_winapp_visual_caret_h)
 #define INCLUDE_listener_winapp_visual_caret_h
 
-#include "base/ref_counted.h"
-#include "./gfx_base.h"
+#include "base/timer/timer.h"
+#include "gfx/rect_f.h"
+#include "./li_util.h"
+#include <memory>
 
-namespace widgets {
-class Widget;
+namespace gfx {
+class Grapchis;
 }
 
 // Represents caret in per-thread queue. To blink caret, we must track
 // caret size. If we call CreateCaret, caret doesn't blink.
 // Note: Caret should be lived until timer is fired.
-class Caret : public base::RefCounted<Caret> {
-  friend class base::RefCounted<Caret>;
+class Caret {
   private: class BackingStore;
 
   private: const base::OwnPtr<BackingStore> backing_store_;
+  private: base::RepeatingTimer<Caret> blink_timer_;
   private: const gfx::Graphics* gfx_;
-  private: const widgets::Widget& owner_;
   private: gfx::RectF rect_;
   private: bool shown_;
   private: bool should_blink_;
   private: bool taken_;
 
-  private: Caret(const widgets::Widget& widget);
-  private: ~Caret();
-  public: static base::scoped_refptr<Caret>
-      Create(const widgets::Widget& widget);
+  private: Caret();
+  public: ~Caret();
+  private: void Blink(base::RepeatingTimer<Caret>*);
+  public: static std::unique_ptr<Caret> Create();
   public: void Hide();
   public: void Give();
-  private: void OnTimer();
   private: void Show();
   // TODO: We should pass Widget to Caret::Take() instead of gfx::Graphics.
   public: void Take(const gfx::Graphics& gfx);
