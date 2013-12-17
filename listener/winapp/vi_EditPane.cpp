@@ -1216,8 +1216,7 @@ void EditPane::Activate() {
   auto const window = GetActiveWindow();
   if (!window)
     return;
-  window->Activate();
-  window->GetBuffer()->UpdateFileStatus(true);
+  window->SetFocus();
 }
 
 void EditPane::CloseAllBut(Window* window) {

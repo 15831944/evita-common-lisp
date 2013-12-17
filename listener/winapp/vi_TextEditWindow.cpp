@@ -334,6 +334,7 @@ void TextEditWindow::DidSetFocus() {
   caret_->Take(*m_gfx);
   s_active_tick += 1;
   m_nActiveTick = s_active_tick;
+  GetBuffer()->UpdateFileStatus(true);
   ASSERT(has_focus());
 }
 
