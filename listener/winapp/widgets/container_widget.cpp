@@ -153,8 +153,8 @@ void ContainerWidget::SetCaptureTo(const Widget& widget) {
                         DEBUG_WIDGET_FORMAT "\n",
         DEBUG_WIDGET_ARG(host.capture_widget_), DEBUG_WIDGET_ARG(&widget));
   #endif
-  ASSERT(!host.capture_widget_);
-  ::SetCapture(*host.naitive_window());
+  if (!host.capture_widget_)
+    ::SetCapture(*host.naitive_window());
   host.capture_widget_ = const_cast<Widget*>(&widget);
 }
 
