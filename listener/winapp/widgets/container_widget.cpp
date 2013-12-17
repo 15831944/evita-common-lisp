@@ -13,7 +13,7 @@
 
 #define DEBUG_FOCUS 0
 #define DEBUG_IDLE 0
-#define DEBUG_MOUSE 1
+#define DEBUG_MOUSE 0
 #define DEBUG_PAINT 0
 
 namespace widgets {
