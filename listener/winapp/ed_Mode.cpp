@@ -21,6 +21,9 @@
 #include "./mode_Python.h"
 #include "./mode_Xml.h"
 
+#include <string>
+#include <unordered_map>
+
 namespace Edit
 {
 
@@ -195,14 +198,16 @@ uint ModeFactory::GetCharSyntax(char16 wch) const
     return CharSyntax::Syntax_None;
 } // ModeFactory::GetCharSyntax
 
+namespace {
+
 //////////////////////////////////////////////////////////////////////
 //
-// getIconFromRegistry
+// LoadIconFromRegistry
 //
 // REVIEW 2007-08-05 yosi@msn.com Should we use SHGetFileInfo even if
 // it requirres CoInitialize?
 //
-static HICON getIconFromRegistry(const char16* pwszExt)
+HICON LoadIconFromRegistry(const char16* pwszExt)
 {
     long lError;
 
@@ -300,9 +305,39 @@ static HICON getIconFromRegistry(const char16* pwszExt)
     }
 
     return hIcon;
-} // getIconFromRegistry
+} // LoadIconFromRegistry
 
-static HashTable_<StringKey, int> s_oIconMap;
+typedef std::basic_string<char16> string16;
+
+class IconCache {
+  private: std::unordered_map<string16, int> map_;
+
+  public: void Add(const string16& name, int index) {
+    map_[name] = index;
+  }
+
+  public: int Intern(const string16& name) {
+    auto const it = map_.find(name);
+    if (it != map_.end())
+      return it->second + 1;
+
+    if (auto const icon = LoadIconFromRegistry(name.c_str())) {
+      auto const icon_index = Application::Get()->AddIcon(icon);
+      map_[name] = icon_index;
+      return icon_index + 1;
+    }
+
+    return 0;
+  }
+};
+
+string16 GetExtension(const string16& name,
+                             const string16& default_extension) {
+  auto const index = name.find_last_of('.');
+  return index == string16::npos ? default_extension : name.substr(index);
+}
+
+} // namespace
 
 /// <summary>
 ///  Get icon handle from registry.
@@ -311,60 +346,20 @@ static HashTable_<StringKey, int> s_oIconMap;
 ///    <item><term>HKCR/{filekey}/DefaultIcon/@ = {path},{index}</term></item>
 ///  </list>
 /// </summary>
-int Mode::GetIcon() const
-{
-    const char16* const pwszDefault = L".txt";
+int Mode::GetIcon() const {
+  DEFINE_STATIC_LOCAL(IconCache, s_icon_cache);
+  DEFINE_STATIC_LOCAL(const string16, default_ext, (L".txt"));
 
-    const char16* pwszExt = lstrrchrW(GetBuffer()->GetName(), '.');
+  const string16 ext = GetExtension(GetBuffer()->GetName(), default_ext);
+  if (auto const icon_index = s_icon_cache.Intern(ext))
+    return icon_index - 1;
 
-    if (NULL == pwszExt)
-    {
-        pwszExt = pwszDefault;
-    }
+  auto const default_icon_index = s_icon_cache.Intern(default_ext);
+  ASSERT(default_icon_index);
 
-    StringKey oKey(pwszExt);
-
-    int* piIcon = s_oIconMap.Get(&oKey);
-    if (NULL != piIcon)
-    {
-        return *piIcon;
-    }
-
-    HICON hIcon = getIconFromRegistry(pwszExt);
-
-    int iIcon;
-
-    if (NULL != hIcon)
-    {
-        iIcon = Application::Get()->AddIcon(hIcon);
-    }
-    else
-    {
-        StringKey oKey(pwszDefault);
-        piIcon = s_oIconMap.Get(&oKey);
-        if (NULL != piIcon)
-        {
-            iIcon = *piIcon;
-        }
-        else
-        {
-            hIcon = getIconFromRegistry(pwszDefault);
-
-            if (NULL == hIcon)
-            {
-                hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
-            }
-
-            iIcon = Application::Get()->AddIcon(hIcon);
-
-            s_oIconMap.Put(new StringKey(pwszDefault), iIcon);
-        }
-    }
-
-    s_oIconMap.Put(new StringKey(pwszExt), iIcon);
-
-    return iIcon;
-} // Mode::GetIcon
+  s_icon_cache.Add(ext, default_icon_index - 1);
+  return default_icon_index - 1;
+}
 
 /// <summary>
 ///  Enumerate file property
