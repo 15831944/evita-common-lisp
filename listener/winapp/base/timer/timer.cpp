@@ -76,14 +76,16 @@ class TimerController : public Singleton<TimerController> {
   private: static void CALLBACK TimerProc(HWND, UINT, UINT_PTR cookie,
                                           DWORD) {
     auto const entry = reinterpret_cast<TimerEntry*>(cookie);
-    auto const timer = entry->timer;
-    if (!timer)
+    if (!entry->timer)
       return;
-    timer->Fire();
+    entry->timer->Fire();
+    // Fire() may remove associated timer object in |entry|.
+    if (!entry->timer)
+      return;
     if (entry->repeat_interval_ms)
-      instance().SetTimer(timer, entry->repeat_interval_ms);
+      instance().SetTimer(entry->timer, entry->repeat_interval_ms);
     else
-      instance().StopTimer(timer);
+      instance().StopTimer(entry->timer);
   }
 
   DISALLOW_COPY_AND_ASSIGN(TimerController);
