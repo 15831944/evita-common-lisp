@@ -21,6 +21,7 @@
 #define DEBUG_SHOW_HIDE 0
 #include "./vi_TextEditWindow.h"
 
+#include "base/timer/timer.h"
 #include "./ed_Style.h"
 #include "./gfx_base.h"
 #include "./vi_Application.h"
@@ -45,7 +46,6 @@ namespace {
 
 enum MyTimerId {
   MyTimerId_AutoScroll = 1,
-  MyTimerId_Blink = 2,
 };
 
 static uint s_active_tick;
@@ -86,15 +86,17 @@ void TextEditWindow::ScrollBar::ShowWindow(int code) const {
     ::ShowWindow(m_hwnd, code);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// TextEditWindow
+//
+
 TextEditWindow::TextEditWindow(void* pvHost, Buffer* pBuffer, Posn lStart)
     : caret_(std::move(Caret::Create())),
       m_eDragMode(DragMode_None),
-      m_fBlink(false),
       m_gfx(nullptr),
       m_lCaretPosn(-1),
       m_nActiveTick(0),
-      m_nBlinkTimerId(0),
-      m_pBlink(pBuffer->CreateRange(0,0)),
       m_pPage(new Page()),
       ALLOW_THIS_IN_INITIALIZER_LIST(selection_(
           new(pBuffer->GetHeap()) Selection(this, pBuffer))),
@@ -118,16 +120,32 @@ void TextEditWindow::Activate() {
   SetFocus();
 }
 
-void TextEditWindow::Blink(Posn lPosn, int nMillisecond) {
-  ASSERT(nMillisecond >= 0);
-  m_pBlink->SetRange(lPosn, lPosn);
-  m_fBlink = true;
-  Redraw();
-  if (!m_nBlinkTimerId) {
-    m_nBlinkTimerId = MyTimerId_Blink;
-    ::SetTimer(AssociatedHwnd(), m_nBlinkTimerId, 
-               static_cast<uint>(nMillisecond), nullptr);
+class TextEditWindow::CaretBlinker {
+  private: TextEditWindow* const editor_;
+  private: Range* range_;
+  private: base::OneShotTimer<CaretBlinker> timer_;
+  public: CaretBlinker(TextEditWindow* editor, Posn posn, uint interval_ms)
+      : editor_(editor),
+        range_(editor->GetBuffer()->CreateRange(posn, posn)),
+        ALLOW_THIS_IN_INITIALIZER_LIST(
+          timer_(this, &CaretBlinker::RestoreCaret)) {
+    timer_.Start(interval_ms);
   }
+  public: ~CaretBlinker() {
+    range_->destroy();
+  }
+  public: Range& range() const { return *range_; }
+  private: void RestoreCaret(base::OneShotTimer<CaretBlinker>*) {
+    editor_->caret_blinker_.reset();
+  }
+  DISALLOW_COPY_AND_ASSIGN(CaretBlinker);
+};
+
+void TextEditWindow::Blink(Posn posn, int interval_ms) {
+  ASSERT(interval_ms >= 0);
+  caret_blinker_.reset(std::move(
+      new CaretBlinker(this, posn, static_cast<uint>(interval_ms))));
+  Redraw();
 }
 
 Posn TextEditWindow::computeGoalX(float xGoal, Posn lGoal) {
@@ -494,7 +512,7 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       // Ctrl+<key> is handled by WM_KEYDOWN.
       char16 wch = static_cast<char16>(wParam);
       if (wch >= 0x20) {
-        m_fBlink = false;
+        caret_blinker_.reset();
         Application::Get()->Execute(
             this, wch,  static_cast<uint>(HIWORD(lParam) & KF_REPEAT));
       }
@@ -523,7 +541,7 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
       auto const nVKey = static_cast<uint>(wParam);
       auto const nKey = Command::TranslateKey(nVKey);
       if (nKey) {
-        m_fBlink = false;
+        caret_blinker_.reset();
         Application::Get()->Execute(
             this, nKey, static_cast<uint>(HIWORD(lParam) & KF_REPEAT));
         return 0;
@@ -599,12 +617,6 @@ LRESULT TextEditWindow::OnMessage(uint uMsg, WPARAM wParam, LPARAM lParam) {
                 m_oAutoScroll.Continue(AssociatedHwnd());
               }
           }
-          break;
-
-        case MyTimerId_Blink:
-          ::KillTimer(AssociatedHwnd(), wParam);
-          m_nBlinkTimerId = 0;
-          m_fBlink = false;
           break;
       }
       break;
@@ -747,9 +759,9 @@ void TextEditWindow::redraw(bool fSelectionIsActive) {
   Posn lSelStart;
   Posn lSelEnd;
 
-  if (m_fBlink) {
-    lSelStart = m_pBlink->GetStart();
-    lSelEnd = m_pBlink->GetEnd();
+  if (auto const blinker = caret_blinker_.get()) {
+    lSelStart = blinker->range().GetStart();
+    lSelEnd = blinker->range().GetEnd();
   } else {
     lSelStart = selection_->GetStart();
     lSelEnd = selection_->GetEnd();

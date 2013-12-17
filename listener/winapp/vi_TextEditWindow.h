@@ -35,9 +35,6 @@ enum DragMode
 // TextEditWindow
 //
 // Member Variables:
-// m_pBlink
-// A range contains the restore position after blinking matched
-// parenthesis.
 // m_pViewRange
 // A range contains the start position of window.
 //
@@ -97,19 +94,19 @@ class TextEditWindow
     }
   };
 
+  private: class CaretBlinker;
+
   private: std::unique_ptr<Caret> caret_;
+  private: std::unique_ptr<CaretBlinker> caret_blinker_;
   protected: DragMode m_eDragMode;
-  protected: bool m_fBlink;
   protected: bool m_fHasFocus;
   private: const gfx::Graphics* m_gfx;
   protected: Posn m_lCaretPosn;
   protected: uint m_nActiveTick;
-  protected: uint m_nBlinkTimerId;
   protected: int m_nCharTick;
   protected: AutoScroll m_oAutoScroll;
   protected: ScrollBar m_oHoriScrollBar;
   protected: ScrollBar m_oVertScrollBar;
-  protected: Range* m_pBlink;
   protected: Page* m_pPage;
   // TODO(yosi): Manage life time of selection.
   protected: Selection* selection_;
