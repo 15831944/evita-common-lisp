@@ -859,7 +859,7 @@ void TextEditWindow::Render() {
     }
   #endif // SUPPORT_IME
 
-  caret_->Show(caret_rect);
+  caret_->Update(caret_rect);
 }
 
 void TextEditWindow::selectWord(Posn lPosn) {

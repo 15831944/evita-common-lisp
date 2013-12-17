@@ -31,20 +31,22 @@ class Caret : public base::RefCounted<Caret> {
   private: const widgets::Widget& owner_;
   private: gfx::RectF rect_;
   private: bool shown_;
+  private: bool should_blink_;
   private: bool taken_;
+  private: uint updated_at_;
 
   private: Caret(const widgets::Widget& widget);
   private: ~Caret();
   public: static base::scoped_refptr<Caret>
       Create(const widgets::Widget& widget);
-  private: void Draw();
   public: void Hide();
   public: void Give();
   private: void OnTimer();
-  public: void Show(const gfx::RectF& rect);
+  private: void Show();
   // TODO: We should pass Widget to Caret::Take() instead of gfx::Graphics.
   public: void Take(const gfx::Graphics& gfx);
   private: static void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD);
+  public: void Update(const gfx::RectF& rect);
 
   DISALLOW_COPY_AND_ASSIGN(Caret);
 };

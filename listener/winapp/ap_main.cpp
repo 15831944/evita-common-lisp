@@ -157,7 +157,7 @@ static void NoReturn fatalExit(const char16* pwsz) {
 }
 
 static bool IsKeepIdleMessage(uint message) {
-  return message == WM_PAINT || message == WM_SYSTIMER;
+  return message == WM_PAINT || message == WM_SYSTIMER || message == WM_TIMER;
 }
 
 static int MainLoop(EnumArg* pEnumArg) {
