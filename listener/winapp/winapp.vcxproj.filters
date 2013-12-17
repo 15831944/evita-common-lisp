@@ -40,6 +40,9 @@
     <Filter Include="gfx">
       <UniqueIdentifier>{d1749aaa-2980-425e-8e0a-039655e65171}</UniqueIdentifier>
     </Filter>
+    <Filter Include="base\timer">
+      <UniqueIdentifier>{ed0b3b4c-ea97-4215-bf6c-f6bc7a078c27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ap_input_history.cpp">
@@ -208,6 +211,9 @@
       <Filter>gfx</Filter>
     </ClCompile>
     <ClCompile Include="precomp.cpp" />
+    <ClCompile Include="base\timer\timer.cpp">
+      <Filter>base\timer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ap_input_history.h">
@@ -437,6 +443,18 @@
     </ClInclude>
     <ClInclude Include="precomp.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="base\timer\timer.h">
+      <Filter>base\timer</Filter>
+    </ClInclude>
+    <ClInclude Include="base\castable.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="base\ref_counted.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="base\singleton.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\evcl.ico">

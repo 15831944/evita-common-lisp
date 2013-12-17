@@ -266,6 +266,7 @@
     <ClCompile Include="ap_lisp_thread.cpp" />
     <ClCompile Include="ap_listener_buffer.cpp" />
     <ClCompile Include="ap_main.cpp" />
+    <ClCompile Include="base\timer\timer.cpp" />
     <ClCompile Include="cm_CmdProc.cpp" />
     <ClCompile Include="cm_Commands.cpp" />
     <ClCompile Include="gfx\rect.cpp" />
@@ -330,7 +331,11 @@
     <ClInclude Include="ap_lisp_thread.h" />
     <ClInclude Include="ap_listener_buffer.h" />
     <ClInclude Include="base\adoptors\reverse.h" />
+    <ClInclude Include="base\castable.h" />
     <ClInclude Include="base\com_ptr.h" />
+    <ClInclude Include="base\ref_counted.h" />
+    <ClInclude Include="base\singleton.h" />
+    <ClInclude Include="base\timer\timer.h" />
     <ClInclude Include="base\tree\abstract_node_iterator.h" />
     <ClInclude Include="base\tree\ancestors_or_self.h" />
     <ClInclude Include="base\tree\child_nodes.h" />
